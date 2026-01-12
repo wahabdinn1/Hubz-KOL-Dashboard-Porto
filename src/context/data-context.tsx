@@ -27,6 +27,7 @@ interface DataContextType {
     removeKOLFromCampaignDB: (campaignId: string, kolId: string) => Promise<void>;
     updateCampaign: (id: string, updates: Partial<Campaign>) => Promise<void>;
     campaign: Campaign;
+    loading: boolean;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -36,7 +37,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     const [campaigns, setCampaigns] = useState<Campaign[]>([]);
     const [categories, setCategories] = useState<Category[]>([]);
     const [activeCampaignId, setActiveCampaignId] = useState<string | null>(null);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [loading, setLoading] = useState(true);
 
     const activeCampaign = campaigns.find(c => c.id === activeCampaignId) || null;
@@ -478,7 +478,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 removeCampaignDeliverable, addKOLToCampaign,
                 addCategory, deleteCategory, updateCategoryOrder,
                 deleteCampaign, updateCampaignDeliverableDB,
-                removeKOLFromCampaignDB, updateCampaign
+                removeKOLFromCampaignDB, updateCampaign,
+                loading
             }}
         >
             {children}

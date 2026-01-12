@@ -29,11 +29,13 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { HelpCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 // Content Component that uses the Context
 function CampaignDetailContent({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
-    const { kols, campaign, campaigns, setActiveCampaignId } = useData();
+    const { kols, campaign, campaigns, setActiveCampaignId, loading } = useData();
+    const router = useRouter();
 
     // Sync URL param with Context
     useEffect(() => {
@@ -42,16 +44,25 @@ function CampaignDetailContent({ params }: { params: Promise<{ id: string }> }) 
         }
     }, [id, setActiveCampaignId]);
 
-    // Safe fallback / Loading
-    if (!campaign || campaign.id !== id) {
-        const found = campaigns.find(c => c.id === id);
-        if (!found && campaigns.length > 0) {
-            return (
-                <div className="flex flex-col items-center justify-center p-12">
-                    <p className="text-muted-foreground">Loading Campaign...</p>
-                </div>
-            )
+    // Handle Loading & Redirection
+    useEffect(() => {
+        if (!loading && (!campaign || campaign.id !== id)) {
+            const found = campaigns.find(c => c.id === id);
+            if (!found) {
+                // Current ID invalid, redirect to list
+                router.push('/campaigns');
+            }
         }
+    }, [loading, campaign, id, campaigns, router]);
+
+    // Show loading state while data is fetching or if switching campaigns
+    if (loading || (!campaign || campaign.id !== id)) {
+        return (
+            <div className="flex flex-col items-center justify-center p-12 space-y-4">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                <p className="text-muted-foreground font-medium">Loading Campaign Data...</p>
+            </div>
+        )
     }
 
     // Aggregate Calculations

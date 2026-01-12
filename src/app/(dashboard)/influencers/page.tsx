@@ -21,6 +21,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown, Filter, ArrowUpDown } from "lucide-react";
+import { Select } from "@/components/retroui/Select";
 import { useState } from "react";
 
 function InfluencersContent() {
@@ -109,76 +110,54 @@ function InfluencersContent() {
 
                         <div className="flex flex-wrap items-center gap-2">
                             {/* Tier Filter */}
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant={filterTier ? "default" : "outline"} size="sm" className="h-8 gap-1">
-                                        <Filter className="h-3 w-3 mr-1" />
-                                        {filterTier || "All Tiers"}
-                                        <ChevronDown className="h-3 w-3 ml-1 opacity-50" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => setFilterTier(null)}>
-                                        All Tiers
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
+                            <Select
+                                value={filterTier || "all"}
+                                onValueChange={(val) => setFilterTier(val === "all" ? null : val)}
+                            >
+                                <Select.Trigger className="w-[140px] h-8 bg-background">
+                                    <Select.Value placeholder="All Tiers" />
+                                </Select.Trigger>
+                                <Select.Content>
+                                    <Select.Item value="all">All Tiers</Select.Item>
                                     {['Nano', 'Micro', 'Macro', 'Mega'].map((tier) => (
-                                        <DropdownMenuItem key={tier} onClick={() => setFilterTier(tier)}>
+                                        <Select.Item key={tier} value={tier}>
                                             {tier}
-                                        </DropdownMenuItem>
+                                        </Select.Item>
                                     ))}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                                </Select.Content>
+                            </Select>
 
                             {/* Platform Filter */}
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant={filterPlatform ? "default" : "outline"} size="sm" className="h-8 gap-1">
-                                        {filterPlatform || "Any Platform"}
-                                        <ChevronDown className="h-3 w-3 ml-1 opacity-50" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => setFilterPlatform(null)}>
-                                        Any Platform
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => setFilterPlatform('TikTok')}>
-                                        TikTok
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setFilterPlatform('Instagram')}>
-                                        Instagram
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                            <Select
+                                value={filterPlatform || "all"}
+                                onValueChange={(val) => setFilterPlatform(val === "all" ? null : val)}
+                            >
+                                <Select.Trigger className="w-[150px] h-8 bg-background">
+                                    <Select.Value placeholder="Any Platform" />
+                                </Select.Trigger>
+                                <Select.Content>
+                                    <Select.Item value="all">Any Platform</Select.Item>
+                                    <Select.Item value="TikTok">TikTok</Select.Item>
+                                    <Select.Item value="Instagram">Instagram</Select.Item>
+                                </Select.Content>
+                            </Select>
 
                             {/* Followers Filter */}
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant={filterFollowers ? "default" : "outline"} size="sm" className="h-8 gap-1">
-                                        {filterFollowers || "Any Followers"}
-                                        <ChevronDown className="h-3 w-3 ml-1 opacity-50" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => setFilterFollowers(null)}>
-                                        Any Range
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => setFilterFollowers('< 10k')}>
-                                        &lt; 10k
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setFilterFollowers('10k - 100k')}>
-                                        10k - 100k
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setFilterFollowers('100k - 1M')}>
-                                        100k - 1M
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setFilterFollowers('1M+')}>
-                                        1M+
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                            <Select
+                                value={filterFollowers || "all"}
+                                onValueChange={(val) => setFilterFollowers(val === "all" ? null : val)}
+                            >
+                                <Select.Trigger className="w-[160px] h-8 bg-background">
+                                    <Select.Value placeholder="Any Followers" />
+                                </Select.Trigger>
+                                <Select.Content>
+                                    <Select.Item value="all">Any Range</Select.Item>
+                                    <Select.Item value="< 10k">&lt; 10k</Select.Item>
+                                    <Select.Item value="10k - 100k">10k - 100k</Select.Item>
+                                    <Select.Item value="100k - 1M">100k - 1M</Select.Item>
+                                    <Select.Item value="1M+">1M+</Select.Item>
+                                </Select.Content>
+                            </Select>
 
                             {/* Reset Button */}
                             {(filterTier || filterPlatform || filterFollowers) && (
