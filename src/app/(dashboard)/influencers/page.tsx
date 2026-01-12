@@ -4,6 +4,7 @@ import { useData } from "@/context/data-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { formatIDR } from "@/lib/analytics";
 import { AddKOLDialog } from "@/components/add-kol-dialog";
 import { EditKOLDialog } from "@/components/edit-kol-dialog";
@@ -11,15 +12,48 @@ import { DeleteKOLDialog } from "@/components/delete-kol-dialog";
 
 import { useRouter } from "next/navigation";
 
-import { ArrowUpDown } from "lucide-react";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown, Filter, ArrowUpDown } from "lucide-react";
 import { useState } from "react";
 
 function InfluencersContent() {
     const { kols, campaigns } = useData();
     const router = useRouter();
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+    const [filterTier, setFilterTier] = useState<string | null>(null);
+    const [filterPlatform, setFilterPlatform] = useState<string | null>(null);
+    const [filterFollowers, setFilterFollowers] = useState<string | null>(null);
 
-    const sortedKols = [...kols].sort((a, b) => {
+    const filteredKols = kols.filter(kol => {
+        // 1. Tier Filter
+        if (filterTier && kol.type !== filterTier) return false;
+
+        // 2. Platform Filter
+        if (filterPlatform) {
+            if (filterPlatform === 'TikTok' && !kol.tiktokUsername) return false;
+            if (filterPlatform === 'Instagram' && !kol.instagramUsername) return false;
+        }
+
+        // 3. Followers Filter
+        if (filterFollowers) {
+            const count = kol.followers || 0;
+            if (filterFollowers === '< 10k' && count >= 10000) return false;
+            if (filterFollowers === '10k - 100k' && (count < 10000 || count >= 100000)) return false;
+            if (filterFollowers === '100k - 1M' && (count < 100000 || count >= 1000000)) return false;
+            if (filterFollowers === '1M+' && count < 1000000) return false;
+        }
+
+        return true;
+    });
+
+    const sortedKols = [...filteredKols].sort((a, b) => {
         if (!sortConfig) return 0;
         const { key, direction } = sortConfig;
 
@@ -70,7 +104,99 @@ function InfluencersContent() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>All Influencers</CardTitle>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <CardTitle>All Influencers</CardTitle>
+
+                        <div className="flex flex-wrap items-center gap-2">
+                            {/* Tier Filter */}
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant={filterTier ? "default" : "outline"} size="sm" className="h-8 gap-1">
+                                        <Filter className="h-3 w-3 mr-1" />
+                                        {filterTier || "All Tiers"}
+                                        <ChevronDown className="h-3 w-3 ml-1 opacity-50" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => setFilterTier(null)}>
+                                        All Tiers
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    {['Nano', 'Micro', 'Macro', 'Mega'].map((tier) => (
+                                        <DropdownMenuItem key={tier} onClick={() => setFilterTier(tier)}>
+                                            {tier}
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+
+                            {/* Platform Filter */}
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant={filterPlatform ? "default" : "outline"} size="sm" className="h-8 gap-1">
+                                        {filterPlatform || "Any Platform"}
+                                        <ChevronDown className="h-3 w-3 ml-1 opacity-50" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => setFilterPlatform(null)}>
+                                        Any Platform
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => setFilterPlatform('TikTok')}>
+                                        TikTok
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setFilterPlatform('Instagram')}>
+                                        Instagram
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+
+                            {/* Followers Filter */}
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant={filterFollowers ? "default" : "outline"} size="sm" className="h-8 gap-1">
+                                        {filterFollowers || "Any Followers"}
+                                        <ChevronDown className="h-3 w-3 ml-1 opacity-50" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => setFilterFollowers(null)}>
+                                        Any Range
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => setFilterFollowers('< 10k')}>
+                                        &lt; 10k
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setFilterFollowers('10k - 100k')}>
+                                        10k - 100k
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setFilterFollowers('100k - 1M')}>
+                                        100k - 1M
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setFilterFollowers('1M+')}>
+                                        1M+
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+
+                            {/* Reset Button */}
+                            {(filterTier || filterPlatform || filterFollowers) && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                        setFilterTier(null);
+                                        setFilterPlatform(null);
+                                        setFilterFollowers(null);
+                                    }}
+                                    className="h-8 px-2 text-xs text-muted-foreground hover:text-destructive"
+                                >
+                                    Reset
+                                </Button>
+                            )}
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <Table>

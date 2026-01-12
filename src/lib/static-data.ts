@@ -1,7 +1,7 @@
 export interface KOL {
     id: string;
     name: string;
-    type: "Macro" | "Micro" | "Nano";
+    type: "Macro" | "Micro" | "Nano" | "Mega";
     category: string;
     followers: number; // Total / Primary
     avgViews: number;
