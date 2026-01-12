@@ -1,0 +1,24 @@
+
+> hubz-porto-kol@0.1.0 build
+> next build
+
+Γû▓ Next.js 16.1.1 (Turbopack)
+- Environments: .env
+
+ΓÜá The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 14.7s
+  Running TypeScript ...
+Failed to compile.
+
+./src/components/dashboard-shell.tsx:53:118
+Type error: Cannot find name 'isCollapsed'.
+
+  51 |         <div className="flex min-h-screen bg-muted/40 font-sans">
+  52 |             {/* Desktop Sidebar */}
+> 53 |             <aside className={`relative hidden flex-col border-r bg-background md:flex transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
+     |                                                                                                                      ^
+  54 |                 {/* ... Header ... */}
+  55 |                 <div className={`flex h-16 items-center border-b ${isCollapsed ? 'justify-center px-0' : 'px-6'}`}>
+  56 |                     <Link href="/" className="flex items-center gap-2 font-semibold">
+Next.js build worker exited with code: 1 and signal: null
