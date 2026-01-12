@@ -24,11 +24,36 @@ import { ChevronRight, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { Campaign } from "@/lib/static-data";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 function CampaignsListContent() {
-  const { campaigns, kols, deleteCampaign } = useData();
+  const { campaigns, kols, deleteCampaigns } = useData();
 
   const router = useRouter();
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  // Batch Select Handlers
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(campaigns.map(c => c.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectRow = (id: string, checked: boolean) => {
+    if (checked) {
+      setSelectedIds(prev => [...prev, id]);
+    } else {
+      setSelectedIds(prev => prev.filter(i => i !== id));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!confirm(`Are you sure you want to delete ${selectedIds.length} campaigns? This action cannot be undone.`)) return;
+    await deleteCampaigns(selectedIds);
+    setSelectedIds([]);
+  }
 
   // Helper to calculate metrics for a single campaign row
   const getCampaignMetrics = (campaign: Campaign) => {
@@ -60,7 +85,16 @@ function CampaignsListContent() {
             Overview of all your marketing initiatives.
           </p>
         </div>
-        <div>
+        <div className="flex gap-2">
+          {selectedIds.length > 0 && (
+            <Button
+              variant="destructive"
+              onClick={handleBulkDelete}
+              className="animate-in zoom-in"
+            >
+              Delete Selected ({selectedIds.length})
+            </Button>
+          )}
           <CreateCampaignDialog />
         </div>
       </div>
@@ -75,6 +109,14 @@ function CampaignsListContent() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[40px]">
+                  <input
+                    type="checkbox"
+                    className="translate-y-[2px]"
+                    checked={selectedIds.length === campaigns.length && campaigns.length > 0}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                  />
+                </TableHead>
                 <TableHead>Campaign Name</TableHead>
                 <TableHead>Objective</TableHead>
                 <TableHead>Start Date</TableHead>
@@ -89,19 +131,28 @@ function CampaignsListContent() {
             <TableBody>
               {campaigns.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center h-24 text-muted-foreground">
+                  <TableCell colSpan={10} className="text-center h-24 text-muted-foreground">
                     No campaigns found. Create one to get started.
                   </TableCell>
                 </TableRow>
               ) : (
                 campaigns.map((campaign) => {
                   const metrics = getCampaignMetrics(campaign);
+                  const isSelected = selectedIds.includes(campaign.id);
                   return (
                     <TableRow
                       key={campaign.id}
-                      className="cursor-pointer hover:bg-muted/50 transition-colors group"
+                      className={`cursor-pointer hover:bg-muted/50 transition-colors group ${isSelected ? 'bg-muted' : ''}`}
                       onClick={() => router.push(`/campaigns/${campaign.id}`)}
                     >
+                      <TableCell className="w-[40px]" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          className="translate-y-[2px]"
+                          checked={isSelected}
+                          onChange={(e) => handleSelectRow(campaign.id, e.target.checked)}
+                        />
+                      </TableCell>
                       <TableCell className="font-medium">
                         {campaign.name}
                       </TableCell>

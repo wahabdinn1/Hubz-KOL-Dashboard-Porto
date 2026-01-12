@@ -32,6 +32,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Category } from "@/lib/static-data";
+import { SeedDataButton } from "@/components/seed-data-button";
 
 // --- Sortable Item Component ---
 interface SortableCategoryProps {
@@ -283,6 +284,14 @@ export function SettingsClient({ user }: { user: User | null }) {
                                         <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                                         <span className="text-xs font-medium text-green-600">Active</span>
                                     </div>
+                                </div>
+
+                                <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/20">
+                                    <div className="flex-1">
+                                        <h4 className="font-medium text-sm">Development Tools</h4>
+                                        <p className="text-xs text-muted-foreground">Utilities for managing test data.</p>
+                                    </div>
+                                    <SeedDataButton />
                                 </div>
                             </CardContent>
                         </Card>

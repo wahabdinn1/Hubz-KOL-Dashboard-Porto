@@ -8,7 +8,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { KOLTable } from "@/components/kol-table";
-import { formatIDR, calculateROI, calculateROAS, calculateCampaignSuccess } from "@/lib/analytics";
+import { formatIDR, calculateROI, calculateROAS, calculateCampaignSuccess, calculateER } from "@/lib/analytics";
 import {
     Wallet,
     TrendingUp,
@@ -73,6 +73,8 @@ function CampaignDetailContent({ params }: { params: Promise<{ id: string }> }) 
     let totalClicks = 0;
     let totalOrders = 0;
 
+    let totalEngagements = 0;
+
     // Track best performer dynamically
     let bestPerformer = {
         name: "N/A",
@@ -89,6 +91,7 @@ function CampaignDetailContent({ params }: { params: Promise<{ id: string }> }) 
         totalSpend += cost;
         totalRevenue += del.salesGenerated;
         totalViews += del.totalViews;
+        totalEngagements += del.totalEngagements;
 
         // Accumulate new metrics
         totalShares += del.detailedEngagements?.shares || 0;
@@ -117,7 +120,22 @@ function CampaignDetailContent({ params }: { params: Promise<{ id: string }> }) 
         totalOrders
     );
     const roi = calculateROI(totalRevenue, totalSpend);
-    const roas = calculateROAS(totalRevenue, totalSpend);
+    const aggER = calculateER(totalEngagements, totalViews);
+
+    // Dynamic Card 3 Logic
+    let card3Title = "Aggregate ROI";
+    let card3Value = `${roi.toFixed(1)}%`;
+    let card3Subtext = roi > 0 ? "Positive Return" : "Negative Return";
+    let card3Color = roi > 100 ? "text-green-600 dark:text-green-500" : "text-foreground";
+    let card3Icon = <Users className="h-4 w-4 text-blue-600 dark:text-blue-500" />;
+
+    if (campaign.objective === 'AWARENESS') {
+        card3Title = "Engagement Rate";
+        card3Value = `${aggER.toFixed(2)}%`;
+        card3Subtext = "Avg. Engagement";
+        card3Color = "text-foreground";
+        card3Icon = <TrendingUp className="h-4 w-4 text-pink-600" />;
+    }
 
     return (
         <div className="space-y-8">
@@ -221,11 +239,11 @@ function CampaignDetailContent({ params }: { params: Promise<{ id: string }> }) 
                     icon={<Wallet className="h-4 w-4 text-muted-foreground" />}
                 />
                 <SummaryCard
-                    title="Aggregate ROI"
-                    value={`${roi.toFixed(1)}%`}
-                    subtext={roi > 0 ? "Positive Return" : "Negative Return"}
-                    valueColor={roi > 100 ? "text-green-600 dark:text-green-500" : "text-foreground"}
-                    icon={<Users className="h-4 w-4 text-blue-600 dark:text-blue-500" />}
+                    title={card3Title}
+                    value={card3Value}
+                    subtext={card3Subtext}
+                    valueColor={card3Color}
+                    icon={card3Icon}
                 />
                 <SummaryCard
                     title="Best Performer"

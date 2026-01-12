@@ -25,12 +25,15 @@ import { Select } from "@/components/retroui/Select";
 import { useState } from "react";
 
 function InfluencersContent() {
-    const { kols, campaigns } = useData();
+    const { kols, campaigns, deleteKOLs } = useData();
     const router = useRouter();
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
     const [filterTier, setFilterTier] = useState<string | null>(null);
     const [filterPlatform, setFilterPlatform] = useState<string | null>(null);
     const [filterFollowers, setFilterFollowers] = useState<string | null>(null);
+
+    // Bulk Actions State
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
     const filteredKols = kols.filter(kol => {
         // 1. Tier Filter
@@ -93,6 +96,30 @@ function InfluencersContent() {
         setSortConfig({ key, direction });
     };
 
+    // Bulk Delete Handlers
+    const handleSelectAll = (checked: boolean) => {
+        if (checked) {
+            setSelectedIds(filteredKols.map(k => k.id));
+        } else {
+            setSelectedIds([]);
+        }
+    };
+
+    const handleSelectRow = (id: string, checked: boolean) => {
+        if (checked) {
+            setSelectedIds(prev => [...prev, id]);
+        } else {
+            setSelectedIds(prev => prev.filter(i => i !== id));
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        if (!confirm(`Are you sure you want to delete ${selectedIds.length} influencers? This action cannot be undone.`)) return;
+
+        await deleteKOLs(selectedIds);
+        setSelectedIds([]);
+    }
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -109,6 +136,18 @@ function InfluencersContent() {
                         <CardTitle>All Influencers</CardTitle>
 
                         <div className="flex flex-wrap items-center gap-2">
+                            {/* Bulk Delete Button */}
+                            {selectedIds.length > 0 && (
+                                <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={handleBulkDelete}
+                                    className="h-8 text-xs animate-in zoom-in"
+                                >
+                                    Delete ({selectedIds.length})
+                                </Button>
+                            )}
+
                             {/* Tier Filter */}
                             <Select
                                 value={filterTier || "all"}
@@ -181,6 +220,14 @@ function InfluencersContent() {
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                <TableHead className="w-[40px]">
+                                    <input
+                                        type="checkbox"
+                                        className="translate-y-[2px]"
+                                        checked={selectedIds.length === filteredKols.length && filteredKols.length > 0}
+                                        onChange={(e) => handleSelectAll(e.target.checked)}
+                                    />
+                                </TableHead>
                                 <TableHead className="cursor-pointer hover:text-black dark:hover:text-white" onClick={() => requestSort('tiktokUsername')}>
                                     TikTok Username <ArrowUpDown className="inline ml-1 h-3 w-3" />
                                 </TableHead>
@@ -212,13 +259,22 @@ function InfluencersContent() {
                                 const memberCampaigns = campaigns.filter(c =>
                                     c.deliverables.some(d => d.kolId === kol.id)
                                 );
+                                const isSelected = selectedIds.includes(kol.id);
 
                                 return (
                                     <TableRow
                                         key={kol.id}
-                                        className="cursor-pointer hover:bg-muted/50"
+                                        className={`cursor-pointer hover:bg-muted/50 ${isSelected ? 'bg-muted' : ''}`}
                                         onClick={() => router.push(`/influencers/${kol.id}`)}
                                     >
+                                        <TableCell className="w-[40px]" onClick={(e) => e.stopPropagation()}>
+                                            <input
+                                                type="checkbox"
+                                                className="translate-y-[2px]"
+                                                checked={isSelected}
+                                                onChange={(e) => handleSelectRow(kol.id, e.target.checked)}
+                                            />
+                                        </TableCell>
                                         <TableCell className="font-medium">
                                             <div className="flex flex-col">
                                                 <span className="font-semibold">{kol.tiktokUsername || kol.name}</span>

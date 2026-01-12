@@ -26,6 +26,7 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
     const { kols, addKOL, activeCampaign, addKOLToCampaign, categories } = useData();
     const [open, setOpen] = useState(false);
     const [mode, setMode] = useState<"existing" | "new">("existing");
+    const [filterTier, setFilterTier] = useState<string>("All");
 
     // For Existing Mode
     const [selectedKOLId, setSelectedKOLId] = useState("");
@@ -54,13 +55,19 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
     });
     const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
 
-    // Filter KOLs not in current campaign
+    // Filter KOLs not in current campaign AND by Tier
     const availableKOLs = useMemo(() => {
         if (!activeCampaign || !enableAutoLink) return kols;
 
         const existingIds = activeCampaign.deliverables.map(d => d.kolId);
-        return kols.filter(k => !existingIds.includes(k.id));
-    }, [kols, activeCampaign, enableAutoLink]);
+        let validKols = kols.filter(k => !existingIds.includes(k.id));
+
+        if (filterTier !== "All") {
+            validKols = validKols.filter(k => k.type === filterTier);
+        }
+
+        return validKols;
+    }, [kols, activeCampaign, enableAutoLink, filterTier]);
 
     const handleNameBlur = () => {
         const exists = kols.some(k => k.name.toLowerCase() === formData.name.trim().toLowerCase());
@@ -184,17 +191,37 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
 
                 {enableAutoLink && mode === "existing" ? (
                     <form onSubmit={handleSubmitExisting} className="py-4 space-y-4">
+
+                        {/* Tier Filter */}
+                        <div className="space-y-2">
+                            <Label>Filter by Tier</Label>
+                            <select
+                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                value={filterTier}
+                                onChange={(e) => {
+                                    setFilterTier(e.target.value);
+                                    setSelectedKOLId(""); // Reset selection on filter change
+                                }}
+                            >
+                                <option value="All">All Tiers</option>
+                                <option value="Nano">Nano (1k - 10k)</option>
+                                <option value="Micro">Micro (10k - 100k)</option>
+                                <option value="Macro">Macro (100k - 1M)</option>
+                                <option value="Mega">Mega (1M+)</option>
+                            </select>
+                        </div>
+
                         <div className="space-y-2">
                             <Label>Select Influencer</Label>
                             {availableKOLs.length === 0 ? (
                                 <p className="text-sm text-yellow-600 bg-yellow-50 p-3 rounded-md border border-yellow-200">
-                                    All your influencers are already in this campaign.
+                                    {filterTier !== 'All' ? `No ${filterTier} influencers available.` : "All your influencers are already in this campaign."}
                                 </p>
                             ) : (
                                 <select className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={selectedKOLId} onChange={(e) => setSelectedKOLId(e.target.value)} required>
                                     <option value="" disabled>Select an influencer...</option>
                                     {availableKOLs.map(k => (
-                                        <option key={k.id} value={k.id}>{k.name} ({k.category})</option>
+                                        <option key={k.id} value={k.id}>{k.name} ({k.category} - {k.type})</option>
                                     ))}
                                 </select>
                             )}

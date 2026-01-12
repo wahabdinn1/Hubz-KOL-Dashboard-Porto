@@ -36,6 +36,12 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 
 // ... existing imports
@@ -70,23 +76,39 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
                 </div>
 
                 <nav className="flex-1 space-y-1 p-4">
-                    {NAV_ITEMS.map((item) => {
-                        const isActive = pathname === item.href;
-                        return (
-                            <Link
-                                key={item.name}
-                                href={item.href}
-                                className={`flex items-center gap-3 py-2 text-sm font-bold transition-all hover:bg-black hover:text-white rounded-md border-2 border-transparent hover:border-black ${isActive
-                                    ? "bg-primary text-primary-foreground border-black shadow-hard-sm"
-                                    : "text-muted-foreground"
-                                    } ${isCollapsed ? 'justify-center px-2' : 'px-3'}`}
-                                title={isCollapsed ? item.name : undefined}
-                            >
-                                <item.icon className="h-4 w-4 shrink-0" />
-                                {!isCollapsed && item.name}
-                            </Link>
-                        );
-                    })}
+                    <TooltipProvider delayDuration={0}>
+                        {NAV_ITEMS.map((item) => {
+                            const isActive = pathname === item.href;
+                            const LinkComponent = (
+                                <Link
+                                    key={item.name}
+                                    href={item.href}
+                                    className={`flex items-center gap-3 py-2 text-sm font-bold transition-all hover:bg-black hover:text-white rounded-md border-2 border-transparent hover:border-black ${isActive
+                                        ? "bg-primary text-primary-foreground border-black shadow-hard-sm"
+                                        : "text-muted-foreground"
+                                        } ${isCollapsed ? 'justify-center px-2' : 'px-3'}`}
+                                >
+                                    <item.icon className="h-4 w-4 shrink-0" />
+                                    {!isCollapsed && item.name}
+                                </Link>
+                            );
+
+                            if (isCollapsed) {
+                                return (
+                                    <Tooltip key={item.name}>
+                                        <TooltipTrigger asChild>
+                                            {LinkComponent}
+                                        </TooltipTrigger>
+                                        <TooltipContent side="right" className="font-bold border-2 border-black shadow-hard-sm">
+                                            {item.name}
+                                        </TooltipContent>
+                                    </Tooltip>
+                                );
+                            }
+
+                            return LinkComponent;
+                        })}
+                    </TooltipProvider>
                 </nav>
 
                 <div className="p-4 border-t-2 border-black mt-auto">

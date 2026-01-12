@@ -22,6 +22,8 @@ interface DataContextType {
     deleteCategory: (id: string) => Promise<void>;
     updateCategoryOrder: (categories: Category[]) => Promise<void>;
     deleteCampaign: (id: string) => Promise<void>;
+    deleteKOLs: (ids: string[]) => Promise<void>;
+    deleteCampaigns: (ids: string[]) => Promise<void>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     updateCampaignDeliverableDB: (campaignId: string, kolId: string, metrics: any) => Promise<void>;
     removeKOLFromCampaignDB: (campaignId: string, kolId: string) => Promise<void>;
@@ -467,6 +469,28 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const deleteKOLs = async (ids: string[]) => {
+        try {
+            const { error } = await supabase.from('kols').delete().in('id', ids);
+            if (error) throw error;
+            setKols((prev) => prev.filter((k) => !ids.includes(k.id)));
+            // Update campaigns to remove deliverables for these KOLs
+            setCampaigns(prev => prev.map(c => ({
+                ...c,
+                deliverables: c.deliverables.filter(d => !ids.includes(d.kolId))
+            })));
+        } catch (err) { console.error("Error deleting KOLs:", err); }
+    };
+
+    const deleteCampaigns = async (ids: string[]) => {
+        try {
+            const { error } = await supabase.from('campaigns').delete().in('id', ids);
+            if (error) throw error;
+            setCampaigns(prev => prev.filter(c => !ids.includes(c.id)));
+            if (activeCampaignId && ids.includes(activeCampaignId)) setActiveCampaignId(null);
+        } catch (e) { console.error("Error deleting campaigns:", e); }
+    };
+
     const safeCampaign = activeCampaign || CAMPAIGN_RAMADAN;
 
     return (
@@ -479,7 +503,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 addCategory, deleteCategory, updateCategoryOrder,
                 deleteCampaign, updateCampaignDeliverableDB,
                 removeKOLFromCampaignDB, updateCampaign,
-                loading
+                loading, deleteKOLs, deleteCampaigns
             }}
         >
             {children}
