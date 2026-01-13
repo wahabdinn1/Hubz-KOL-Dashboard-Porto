@@ -3,6 +3,8 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { KOL, Campaign, Category, CAMPAIGN_RAMADAN } from "@/lib/static-data";
 import { supabase } from "@/lib/supabase";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface DataContextType {
     kols: KOL[];
@@ -26,6 +28,7 @@ interface DataContextType {
     deleteCampaigns: (ids: string[]) => Promise<void>;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     updateCampaignDeliverableDB: (campaignId: string, kolId: string, metrics: any) => Promise<void>;
+    addCampaignDeliverableDB: (kolId: string, campaignId: string) => Promise<void>;
     removeKOLFromCampaignDB: (campaignId: string, kolId: string) => Promise<void>;
     updateCampaign: (id: string, updates: Partial<Campaign>) => Promise<void>;
     campaign: Campaign;
@@ -35,248 +38,226 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export function DataProvider({ children }: { children: React.ReactNode }) {
-    const [kols, setKols] = useState<KOL[]>([]);
-    const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
+    const queryClient = useQueryClient();
     const [activeCampaignId, setActiveCampaignId] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
-
-    const activeCampaign = campaigns.find(c => c.id === activeCampaignId) || null;
     const activeIdRef = useRef(activeCampaignId);
+
+    // Initial Active Campaign Set logic could be moved or kept as effect depending on pref.
+    // We'll reset it if campaigns change and nothing is selected.
 
     useEffect(() => {
         activeIdRef.current = activeCampaignId;
     }, [activeCampaignId]);
 
-    // Fetch Initial Data
-    useEffect(() => {
-        let isMounted = true;
-        setLoading(true);
+    // 1. Fetch KOLs
+    const { data: kols = [], isLoading: kolsLoading } = useQuery({
+        queryKey: ['kols'],
+        queryFn: async () => {
+            const { data, error } = await supabase.from('kols').select('*');
+            if (error) throw error;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return data.map((k: any) => ({
+                id: k.id,
+                name: k.name,
+                type: k.type,
+                category: k.category,
+                followers: k.followers,
+                avgViews: k.avg_views,
+                tiktokUsername: k.tiktok_username,
+                tiktokProfileLink: k.tiktok_profile_link,
+                tiktokFollowers: k.tiktok_followers,
+                instagramUsername: k.instagram_username,
+                instagramProfileLink: k.instagram_profile_link,
+                instagramFollowers: k.instagram_followers,
+                rateCardTiktok: k.rate_card_tiktok,
+                rateCardReels: k.rate_card_reels,
+                rateCardPdfLink: k.rate_card_pdf_link
+            })) as KOL[];
+        }
+    });
 
-        const fetchData = async () => {
-            try {
-                // 1. Fetch KOLs
-                const { data: kolsData, error: kolsError } = await supabase
-                    .from('kols')
-                    .select('*');
-
-                if (kolsError && kolsError.code !== '42703') console.error("Supabase KOL Fetch Error:", JSON.stringify(kolsError, null, 2));
-
-                if (isMounted && kolsData) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const mappedKols: KOL[] = kolsData.map((k: any) => ({
-                        id: k.id,
-                        name: k.name,
-                        type: k.type,
-                        category: k.category,
-                        followers: k.followers,
-                        avgViews: k.avg_views,
-                        tiktokUsername: k.tiktok_username,
-                        tiktokProfileLink: k.tiktok_profile_link,
-                        tiktokFollowers: k.tiktok_followers,
-                        instagramUsername: k.instagram_username,
-                        instagramProfileLink: k.instagram_profile_link,
-                        instagramFollowers: k.instagram_followers,
-                        rateCardTiktok: k.rate_card_tiktok,
-                        rateCardReels: k.rate_card_reels,
-                        rateCardPdfLink: k.rate_card_pdf_link
-                    }));
-                    setKols(mappedKols);
-                }
-
-                // 2. Fetch Categories
-                let { data: catData, error: catError } = await supabase
-                    .from('categories')
-                    .select('*')
-                    .order('sort_order', { ascending: true });
-
-                if (catError && catError.code === '42703') {
+    // 2. Fetch Categories
+    const { data: categories = [] } = useQuery({
+        queryKey: ['categories'],
+        queryFn: async () => {
+            const { data, error } = await supabase.from('categories').select('*').order('sort_order', { ascending: true });
+            if (error) {
+                if (error.code === '42703') {
                     const retry = await supabase.from('categories').select('*');
-                    catData = retry.data;
-                    catError = retry.error;
+                    return retry.data?.map(c => ({ id: c.id, name: c.name, sort_order: c.sort_order })) || [];
                 }
-
-                if (catError) console.error("Supabase Category Error:", JSON.stringify(catError, null, 2));
-                if (isMounted && catData) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    setCategories(catData.map((c: any) => ({ id: c.id, name: c.name, sort_order: c.sort_order })));
-                }
-
-                // 3. Fetch Campaigns
-                const { data: campaignData, error: campaignError } = await supabase
-                    .from('campaigns')
-                    .select('*');
-
-                if (campaignError) console.error("Supabase Campaign Error:", JSON.stringify(campaignError, null, 2));
-
-                // 4. Fetch All Deliverables
-                const { data: delData, error: delError } = await supabase
-                    .from('campaign_deliverables')
-                    .select('*');
-
-                if (delError) console.error("Supabase Deliverable Error:", JSON.stringify(delError, null, 2));
-
-                if (isMounted && campaignData) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const mappedCampaigns: Campaign[] = campaignData.map((c: any) => {
-                        const relatedDeliverables = (delData || [])
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            .filter((d: any) => d.campaign_id === c.id)
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            .map((d: any) => ({
-                                kolId: d.kol_id,
-                                videosCount: d.videos_count,
-                                totalViews: d.total_views,
-                                totalEngagements: d.total_engagements,
-                                salesGenerated: d.sales_generated
-                            }));
-
-                        return {
-                            id: c.id,
-                            name: c.name,
-                            budget: c.budget,
-                            startDate: c.start_date,
-                            endDate: c.end_date,
-                            platform: c.platform || 'TikTok',
-                            objective: c.objective || 'AWARENESS',
-                            status: c.status || 'Active',
-                            deliverables: relatedDeliverables
-                        };
-                    });
-
-                    setCampaigns(mappedCampaigns);
-                    // Set default active
-                    if (mappedCampaigns.length > 0 && !activeIdRef.current) {
-                        const ramadan = mappedCampaigns.find(c => c.name.includes("Ramadan"));
-                        setActiveCampaignId(ramadan ? ramadan.id : mappedCampaigns[0].id);
-                    }
-                }
-
-            } catch (error) {
-                console.error("Error fetching data:", error);
-            } finally {
-                if (isMounted) setLoading(false);
+                throw error;
             }
-        };
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return data.map((c: any) => ({ id: c.id, name: c.name, sort_order: c.sort_order })) as Category[];
+        }
+    });
 
-        fetchData();
+    // 3. Fetch Campaigns & Deliverables
+    const { data: rawCampaigns = [], isLoading: campaignsLoading } = useQuery({
+        queryKey: ['campaigns'],
+        queryFn: async () => {
+            const { data, error } = await supabase.from('campaigns').select('*');
+            if (error) throw error;
+            return data;
+        }
+    });
 
-        return () => {
-            isMounted = false;
-        };
-    }, []);
+    const { data: rawDeliverables = [] } = useQuery({
+        queryKey: ['deliverables'],
+        queryFn: async () => {
+            const { data, error } = await supabase.from('campaign_deliverables').select('*');
+            if (error) throw error;
+            return data;
+        }
+    });
 
-    // ... (Category methods same as before) ...
+    // Derive Mapped Campaigns
+    const campaigns: Campaign[] = React.useMemo(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return rawCampaigns.map((c: any) => {
+            const relatedDeliverables = rawDeliverables
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .filter((d: any) => d.campaign_id === c.id)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .map((d: any) => ({
+                    kolId: d.kol_id,
+                    videosCount: d.videos_count,
+                    totalViews: d.total_views,
+                    totalEngagements: d.total_engagements,
+                    salesGenerated: d.sales_generated,
+                    status: d.status || 'to_contact'
+                }));
+
+            return {
+                id: c.id,
+                name: c.name,
+                budget: c.budget,
+                startDate: c.start_date,
+                endDate: c.end_date,
+                platform: c.platform || 'TikTok',
+                objective: c.objective || 'AWARENESS',
+                status: c.status || 'Active',
+                deliverables: relatedDeliverables
+            } as Campaign;
+        });
+    }, [rawCampaigns, rawDeliverables]);
+
+    // Set Default Active Campaign
+    useEffect(() => {
+        if (campaigns.length > 0 && !activeCampaignId) {
+            const ramadan = campaigns.find(c => c.name.includes("Ramadan"));
+            setActiveCampaignId(ramadan ? ramadan.id : campaigns[0].id);
+        }
+    }, [campaigns, activeCampaignId]);
+
+    const activeCampaign = campaigns.find(c => c.id === activeCampaignId) || null;
+
+    // --- MUTATIONS ---
+
     const addCategory = async (name: string) => {
         try {
             const maxOrder = categories.length > 0 ? Math.max(...categories.map(c => c.sort_order || 0)) : 0;
-            const { data, error } = await supabase.from('categories').insert([{ name, sort_order: maxOrder + 1 }]).select().single();
+            const { error } = await supabase.from('categories').insert([{ name, sort_order: maxOrder + 1 }]);
             if (error) throw error;
-            setCategories(prev => [...prev, { id: data.id, name: data.name, sort_order: data.sort_order }]);
-        } catch (e) { console.error("Error adding category:", e); }
+            queryClient.invalidateQueries({ queryKey: ['categories'] });
+            toast.success("Category added");
+        } catch (e) {
+            console.error("Error adding category:", e);
+            toast.error("Failed to add category");
+        }
     };
 
     const deleteCategory = async (id: string) => {
         try {
             const { error } = await supabase.from('categories').delete().eq('id', id);
             if (error) throw error;
-            setCategories(prev => prev.filter(c => c.id !== id));
-        } catch (e) { console.error("Error deleting category:", e); }
-    };
-
-    const deleteCampaign = async (id: string) => {
-        try {
-            const { error } = await supabase.from('campaigns').delete().eq('id', id);
-            if (error) throw error;
-            setCampaigns(prev => prev.filter(c => c.id !== id));
-            if (activeCampaignId === id) setActiveCampaignId(null);
-        } catch (e) { console.error("Error deleting campaign:", e); }
-    };
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const updateCampaignDeliverableDB = async (campaignId: string, kolId: string, metrics: any) => {
-        try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const payload: any = {
-                videos_count: metrics.videosCount,
-                total_views: metrics.totalViews,
-                total_engagements: metrics.totalEngagements,
-                sales_generated: metrics.salesGenerated,
-            };
-
-            const { error } = await supabase
-                .from('campaign_deliverables')
-                .update(payload)
-                .eq('campaign_id', campaignId)
-                .eq('kol_id', kolId);
-
-            if (error) throw error;
-
-            // Update local state
-            setCampaigns(prev => prev.map(c => {
-                if (c.id === campaignId) {
-                    return {
-                        ...c,
-                        deliverables: c.deliverables.map(d => {
-                            if (d.kolId === kolId) {
-                                return { ...d, ...metrics };
-                            }
-                            return d;
-                        })
-                    };
-                }
-                return c;
-            }));
-
-        } catch (e) { console.error("Error updating deliverable:", e); }
+            queryClient.invalidateQueries({ queryKey: ['categories'] });
+            toast.success("Category deleted");
+        } catch (e) {
+            console.error("Error deleting category:", e);
+            toast.error("Failed to delete category");
+        }
     };
 
     const updateCategoryOrder = async (newCategories: Category[]) => {
         try {
-            setCategories(newCategories);
             const updates = newCategories.map((c, index) => ({ id: c.id, name: c.name, sort_order: index + 1 }));
-            await supabase.from('categories').upsert(updates);
+            const { error } = await supabase.from('categories').upsert(updates);
+            if (error) throw error;
+            queryClient.invalidateQueries({ queryKey: ['categories'] });
         } catch (e) { console.error("Error reordering categories:", e); }
     };
 
-    // Updated addCampaign
     const addCampaign = async (name: string, budget: number, platform: 'TikTok' | 'Instagram', objective: 'AWARENESS' | 'CONVERSION', startDate?: string, endDate?: string) => {
         try {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const payload: any = { name, budget, platform, objective };
             if (startDate) payload.start_date = startDate;
             if (endDate) payload.end_date = endDate;
-
-            const { data, error } = await supabase
-                .from('campaigns')
-                .insert([payload])
-                .select()
-                .single();
-
+            const { data, error } = await supabase.from('campaigns').insert([payload]).select().single();
             if (error) throw error;
 
-            const newCampaign: Campaign = {
-                id: data.id,
-                name: data.name,
-                budget: data.budget,
-                startDate: data.start_date,
-                endDate: data.end_date,
-                platform: data.platform || 'TikTok',
-                objective: data.objective || 'AWARENESS',
-                status: 'Active',
-                deliverables: []
-            };
-
-            setCampaigns(prev => [...prev, newCampaign]);
-            setActiveCampaignId(newCampaign.id);
+            await queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+            setActiveCampaignId(data.id);
+            toast.success("Campaign created");
         } catch (err) {
             console.error("Error adding campaign:", err);
+            toast.error("Failed to create campaign");
         }
     };
 
-    // Updated addKOL
+    const deleteCampaign = async (id: string) => {
+        try {
+            const { error } = await supabase.from('campaigns').delete().eq('id', id);
+            if (error) throw error;
+
+            await queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+            if (activeCampaignId === id) setActiveCampaignId(null);
+            toast.success("Campaign deleted");
+        } catch (e) {
+            console.error("Error deleting campaign:", e);
+            toast.error("Failed to delete campaign");
+        }
+    };
+
+    const deleteCampaigns = async (ids: string[]) => {
+        try {
+            const { error } = await supabase.from('campaigns').delete().in('id', ids);
+            if (error) throw error;
+
+            await queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+            if (activeCampaignId && ids.includes(activeCampaignId)) setActiveCampaignId(null);
+            toast.success("Campaigns deleted");
+        } catch (e) { console.error("Error deleting campaigns:", e); }
+    };
+
+    const updateCampaign = async (id: string, updates: Partial<Campaign>) => {
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const dbUpdates: any = {};
+            if (updates.name) dbUpdates.name = updates.name;
+            if (updates.budget) dbUpdates.budget = updates.budget;
+            if (updates.startDate) dbUpdates.start_date = updates.startDate;
+            if (updates.endDate) dbUpdates.end_date = updates.endDate;
+            if (updates.platform) dbUpdates.platform = updates.platform;
+            if (updates.objective) dbUpdates.objective = updates.objective;
+
+            const { error } = await supabase.from('campaigns').update(dbUpdates).eq('id', id);
+            if (error) throw error;
+
+            queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+            toast.success("Campaign updated");
+        } catch (e) {
+            console.error("Error updating campaign:", e);
+            toast.error("Failed to update campaign");
+        }
+    };
+
+    // KOL Mutations
     const addKOL = async (newKOL: KOL, addToCurrentCampaign = true) => {
         try {
+            // Map frontend to DB columns
             const payload = {
                 name: newKOL.name,
                 type: newKOL.type,
@@ -294,40 +275,18 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 rate_card_pdf_link: newKOL.rateCardPdfLink
             };
 
-            const { data, error } = await supabase
-                .from('kols')
-                .insert([payload])
-                .select()
-                .single();
-
+            const { data, error } = await supabase.from('kols').insert([payload]).select().single();
             if (error) throw error;
 
-            // Map response back to frontend model
-            const insertedKOL: KOL = {
-                id: data.id,
-                name: data.name,
-                type: data.type,
-                category: data.category,
-                followers: data.followers,
-                avgViews: data.avg_views,
-                tiktokUsername: data.tiktok_username,
-                tiktokProfileLink: data.tiktok_profile_link,
-                tiktokFollowers: data.tiktok_followers,
-                instagramUsername: data.instagram_username,
-                instagramProfileLink: data.instagram_profile_link,
-                instagramFollowers: data.instagram_followers,
-                rateCardTiktok: data.rate_card_tiktok,
-                rateCardReels: data.rate_card_reels,
-                rateCardPdfLink: data.rate_card_pdf_link
-            };
-
-            setKols((prev) => [...prev, insertedKOL]);
+            await queryClient.invalidateQueries({ queryKey: ['kols'] });
 
             if (addToCurrentCampaign && activeCampaignId) {
-                await addCampaignDeliverableDB(insertedKOL.id, activeCampaignId);
+                await addCampaignDeliverableDB(data.id, activeCampaignId);
             }
+            toast.success("Influencer added");
         } catch (err) {
             console.error("Error adding KOL:", err);
+            toast.error("Failed to add influencer");
         }
     };
 
@@ -335,15 +294,22 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         try {
             const { error } = await supabase.from('kols').delete().eq('id', id);
             if (error) throw error;
-            setKols((prev) => prev.filter((k) => k.id !== id));
-            setCampaigns(prev => prev.map(c => ({
-                ...c,
-                deliverables: c.deliverables.filter(d => d.kolId !== id)
-            })));
+            queryClient.invalidateQueries({ queryKey: ['kols'] });
+            queryClient.invalidateQueries({ queryKey: ['deliverables'] });
+            toast.success("Influencer deleted");
         } catch (err) { console.error("Error deleting KOL:", err); }
     };
 
-    // Updated updateKOL
+    const deleteKOLs = async (ids: string[]) => {
+        try {
+            const { error } = await supabase.from('kols').delete().in('id', ids);
+            if (error) throw error;
+            queryClient.invalidateQueries({ queryKey: ['kols'] });
+            queryClient.invalidateQueries({ queryKey: ['deliverables'] });
+            toast.success("Influencers deleted");
+        } catch (err) { console.error("Error deleting KOLs:", err); }
+    };
+
     const updateKOL = async (id: string, updates: Partial<KOL>) => {
         try {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -353,8 +319,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             if (updates.category) dbUpdates.category = updates.category;
             if (updates.followers) dbUpdates.followers = updates.followers;
             if (updates.avgViews) dbUpdates.avg_views = updates.avgViews;
-
-            // New Fields
             if (updates.tiktokUsername) dbUpdates.tiktok_username = updates.tiktokUsername;
             if (updates.tiktokProfileLink) dbUpdates.tiktok_profile_link = updates.tiktokProfileLink;
             if (updates.tiktokFollowers) dbUpdates.tiktok_followers = updates.tiktokFollowers;
@@ -365,54 +329,40 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             if (updates.rateCardReels) dbUpdates.rate_card_reels = updates.rateCardReels;
             if (updates.rateCardPdfLink) dbUpdates.rate_card_pdf_link = updates.rateCardPdfLink;
 
-            const { error } = await supabase
-                .from('kols')
-                .update(dbUpdates)
-                .eq('id', id);
-
+            const { error } = await supabase.from('kols').update(dbUpdates).eq('id', id);
             if (error) throw error;
 
-            setKols((prev) =>
-                prev.map((k) => (k.id === id ? { ...k, ...updates } : k))
-            );
+            queryClient.invalidateQueries({ queryKey: ['kols'] });
+            toast.success("Influencer updated");
         } catch (err) {
             console.error("Error updating KOL:", err);
+            toast.error("Failed to update influencer");
         }
     };
 
+    // Deliverable Mutations
     const addCampaignDeliverableDB = async (kolId: string, campaignId: string) => {
         try {
-            const { error } = await supabase.from('campaign_deliverables').insert([{ kol_id: kolId, campaign_id: campaignId }]);
-            if (!error) addCampaignDeliverable(kolId);
+            const { error } = await supabase.from('campaign_deliverables').insert([{
+                kol_id: kolId,
+                campaign_id: campaignId,
+                videos_count: 1 // Default to 1 so Spend/ROI updates immediately
+            }]);
+            if (!error) {
+                queryClient.invalidateQueries({ queryKey: ['deliverables'] });
+                toast.success("Added to campaign");
+            }
         } catch (e) { console.error("Deliverable DB Error", e); }
-    }
+    };
+
+    const addCampaignDeliverable = (kolId: string) => {
+        if (activeCampaignId) addCampaignDeliverableDB(kolId, activeCampaignId);
+    };
 
     const addKOLToCampaign = async (kolId: string) => {
         if (!activeCampaignId) return;
         await addCampaignDeliverableDB(kolId, activeCampaignId);
     }
-
-    // ... (rest of deliverable logic same)
-    const addCampaignDeliverable = (kolId: string) => {
-        if (!activeCampaignId) return;
-        setCampaigns(prev => prev.map(c => {
-            if (c.id === activeCampaignId) {
-                if (c.deliverables.some(d => d.kolId === kolId)) return c;
-                return { ...c, deliverables: [...c.deliverables, { kolId, videosCount: 0, totalViews: 0, totalEngagements: 0, salesGenerated: 0 }] };
-            }
-            return c;
-        }));
-    };
-
-    const removeCampaignDeliverable = (kolId: string) => {
-        if (!activeCampaignId) return;
-        setCampaigns(prev => prev.map(c => {
-            if (c.id === activeCampaignId) {
-                return { ...c, deliverables: c.deliverables.filter(d => d.kolId !== kolId) };
-            }
-            return c;
-        }));
-    };
 
     const removeKOLFromCampaignDB = async (campaignId: string, kolId: string) => {
         try {
@@ -423,75 +373,62 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 .eq('kol_id', kolId);
 
             if (error) throw error;
-
-            // Update local state
-            setCampaigns(prev => prev.map(c => {
-                if (c.id === campaignId) {
-                    return {
-                        ...c,
-                        deliverables: c.deliverables.filter(d => d.kolId !== kolId)
-                    };
-                }
-                return c;
-            }));
+            queryClient.invalidateQueries({ queryKey: ['deliverables'] });
+            toast.success("Removed from campaign");
         } catch (e) { console.error("Error removing KOL from campaign:", e); }
     };
 
-    const updateCampaign = async (id: string, updates: Partial<Campaign>) => {
-        try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const dbUpdates: any = {};
-            if (updates.name) dbUpdates.name = updates.name;
-            if (updates.budget) dbUpdates.budget = updates.budget;
-            if (updates.startDate) dbUpdates.start_date = updates.startDate;
-            if (updates.endDate) dbUpdates.end_date = updates.endDate;
-            if (updates.platform) dbUpdates.platform = updates.platform;
-            if (updates.objective) dbUpdates.objective = updates.objective;
+    const removeCampaignDeliverable = (kolId: string) => {
+        if (activeCampaignId) removeKOLFromCampaignDB(activeCampaignId, kolId);
+    };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updateCampaignDeliverableDB = async (campaignId: string, kolId: string, metrics: any) => {
+        // Construct payload first
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const payload: any = {};
+        if (metrics.videosCount !== undefined) payload.videos_count = metrics.videosCount;
+        if (metrics.totalViews !== undefined) payload.total_views = metrics.totalViews;
+        if (metrics.totalEngagements !== undefined) payload.total_engagements = metrics.totalEngagements;
+        if (metrics.salesGenerated !== undefined) payload.sales_generated = metrics.salesGenerated;
+        if (metrics.status !== undefined) payload.status = metrics.status;
+
+        // Optimistic Update
+        await queryClient.cancelQueries({ queryKey: ['deliverables'] });
+        const previousDeliverables = queryClient.getQueryData(['deliverables']);
+
+        queryClient.setQueryData(['deliverables'], (old: any[] | undefined) => {
+            if (!old) return [];
+            return old.map(d =>
+                d.campaign_id === campaignId && d.kol_id === kolId
+                    ? { ...d, ...payload }
+                    : d
+            );
+        });
+
+        try {
             const { error } = await supabase
-                .from('campaigns')
-                .update(dbUpdates)
-                .eq('id', id);
+                .from('campaign_deliverables')
+                .update(payload)
+                .eq('campaign_id', campaignId)
+                .eq('kol_id', kolId);
 
             if (error) throw error;
-
-            setCampaigns(prev => prev.map(c => {
-                if (c.id === id) {
-                    return { ...c, ...updates };
-                }
-                return c;
-            }));
+            // We can choose to NOT invalidate if we are confident, but invalidating ensures consistency
+            // queryClient.invalidateQueries({ queryKey: ['deliverables'] }); 
         } catch (e) {
-            console.error("Error updating campaign:", e);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            if ((e as any)?.message) console.error("Error message:", (e as any).message);
-            console.error("Full Error:", JSON.stringify(e, null, 2));
+            console.error("Error updating deliverable:", e);
+            // Rollback
+            queryClient.setQueryData(['deliverables'], previousDeliverables);
+        } finally {
+            // Always refetch eventually to be safe
+            queryClient.invalidateQueries({ queryKey: ['deliverables'] });
         }
     };
 
-    const deleteKOLs = async (ids: string[]) => {
-        try {
-            const { error } = await supabase.from('kols').delete().in('id', ids);
-            if (error) throw error;
-            setKols((prev) => prev.filter((k) => !ids.includes(k.id)));
-            // Update campaigns to remove deliverables for these KOLs
-            setCampaigns(prev => prev.map(c => ({
-                ...c,
-                deliverables: c.deliverables.filter(d => !ids.includes(d.kolId))
-            })));
-        } catch (err) { console.error("Error deleting KOLs:", err); }
-    };
-
-    const deleteCampaigns = async (ids: string[]) => {
-        try {
-            const { error } = await supabase.from('campaigns').delete().in('id', ids);
-            if (error) throw error;
-            setCampaigns(prev => prev.filter(c => !ids.includes(c.id)));
-            if (activeCampaignId && ids.includes(activeCampaignId)) setActiveCampaignId(null);
-        } catch (e) { console.error("Error deleting campaigns:", e); }
-    };
-
     const safeCampaign = activeCampaign || CAMPAIGN_RAMADAN;
+    const loading = kolsLoading || campaignsLoading;
 
     return (
         <DataContext.Provider
@@ -501,7 +438,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 addKOL, updateKOL, deleteKOL, addCampaignDeliverable,
                 removeCampaignDeliverable, addKOLToCampaign,
                 addCategory, deleteCategory, updateCategoryOrder,
-                deleteCampaign, updateCampaignDeliverableDB,
+                deleteCampaign, updateCampaignDeliverableDB, addCampaignDeliverableDB,
                 removeKOLFromCampaignDB, updateCampaign,
                 loading, deleteKOLs, deleteCampaigns
             }}

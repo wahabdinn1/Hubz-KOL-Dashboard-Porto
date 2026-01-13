@@ -7,6 +7,13 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import {
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger,
+} from "@/components/ui/tabs";
+import { KanbanBoard } from "@/components/kanban/kanban-board";
 import { KOLTable } from "@/components/kol-table";
 import { formatIDR, calculateROI, calculateROAS, calculateCampaignSuccess, calculateER } from "@/lib/analytics";
 import {
@@ -15,13 +22,17 @@ import {
     Users,
     Award,
     ChevronLeft,
+    List,
+    LayoutDashboard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useData } from "@/context/data-context";
 import { AddKOLDialog } from "@/components/add-kol-dialog";
+import { SmartMatchDialog } from "@/components/ai/smart-match-dialog";
 import Link from "next/link";
 import { EditCampaignDialog } from "@/components/edit-campaign-dialog";
 import { DeleteCampaignDialog } from "@/components/delete-campaign-dialog";
+import { CampaignDownloadButton } from "@/components/pdf/download-button";
 import {
     Tooltip,
     TooltipContent,
@@ -88,6 +99,7 @@ function CampaignDetailContent({ params }: { params: Promise<{ id: string }> }) 
 
         const rate = campaign.platform === 'Instagram' ? (kol.rateCardReels || 0) : (kol.rateCardTiktok || 0);
         const cost = rate * del.videosCount;
+        // console.log(`Calc Debug: ${kol.name} | Rate: ${rate} | Count: ${del.videosCount} | Cost: ${cost} | Plat: ${campaign.platform}`);
         totalSpend += cost;
         totalRevenue += del.salesGenerated;
         totalViews += del.totalViews;
@@ -170,6 +182,7 @@ function CampaignDetailContent({ params }: { params: Promise<{ id: string }> }) 
                         )}
                         {campaign.platform}
                     </div>
+                    <CampaignDownloadButton campaign={campaign} kols={kols} />
                     <EditCampaignDialog campaign={campaign} />
                     <DeleteCampaignDialog campaign={campaign} />
                 </div>
@@ -224,7 +237,7 @@ function CampaignDetailContent({ params }: { params: Promise<{ id: string }> }) 
             </div>
 
             {/* Summary Cards */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
                 <SummaryCard
                     title={`Primary: ${successMetrics.primaryMetricLabel}`}
                     value={successMetrics.primaryMetricValue}
@@ -233,9 +246,15 @@ function CampaignDetailContent({ params }: { params: Promise<{ id: string }> }) 
                     icon={<Award className="h-4 w-4 text-purple-500" />}
                 />
                 <SummaryCard
+                    title="Campaign Budget"
+                    value={formatIDR(campaign.budget)}
+                    subtext={`Remaining: ${formatIDR(Math.max(0, campaign.budget - totalSpend))}`}
+                    icon={<Wallet className="h-4 w-4 text-muted-foreground" />}
+                />
+                <SummaryCard
                     title="Total Spend"
                     value={formatIDR(totalSpend)}
-                    subtext={`Budget: ${formatIDR(campaign.budget)}`}
+                    subtext="Realized Cost"
                     icon={<Wallet className="h-4 w-4 text-muted-foreground" />}
                 />
                 <SummaryCard
@@ -256,18 +275,39 @@ function CampaignDetailContent({ params }: { params: Promise<{ id: string }> }) 
                 />
             </div>
 
-            {/* KOL Table Section */}
-            <div className="space-y-4">
+            {/* Tabs for Different Views */}
+            <Tabs defaultValue="list" className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-xl font-semibold text-foreground">KOL Performance Details</h3>
-                    <AddKOLDialog />
+                    <TabsList className="bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg">
+                        <TabsTrigger value="list" className="data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-950">
+                            <List className="h-4 w-4 mr-2" />
+                            List View
+                        </TabsTrigger>
+                        <TabsTrigger value="board" className="data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-950">
+                            <LayoutDashboard className="h-4 w-4 mr-2" />
+                            Kanban Board
+                        </TabsTrigger>
+                    </TabsList>
+                    <div className="flex items-center gap-2">
+                        <SmartMatchDialog campaign={campaign} />
+                        <AddKOLDialog />
+                    </div>
                 </div>
-                <Card className="shadow-sm border-border">
-                    <CardContent className="p-0">
-                        <KOLTable />
-                    </CardContent>
-                </Card>
-            </div>
+
+                <TabsContent value="list" className="space-y-4">
+                    <Card className="shadow-sm border-border">
+                        <CardContent className="p-0">
+                            <KOLTable />
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="board" className="h-[calc(100vh-220px)] w-full">
+                    <div className="h-full overflow-hidden p-1">
+                        <KanbanBoard />
+                    </div>
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }

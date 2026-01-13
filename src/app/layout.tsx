@@ -4,6 +4,8 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { DataProvider } from "@/context/data-context";
 import { AuthProvider } from "@/context/auth-context";
+import QueryProvider from "@/components/providers/query-provider";
+import { Toaster } from "@/components/ui/sonner";
 
 import { Archivo_Black, Space_Grotesk } from "next/font/google";
 
@@ -37,18 +39,23 @@ export default function RootLayout({
         className={`${archivoBlack.variable} ${space.variable} antialiased font-sans`}
         suppressHydrationWarning
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AuthProvider>
-            <DataProvider>
-              {children}
-            </DataProvider>
-          </AuthProvider>
-        </ThemeProvider>
+        <div suppressHydrationWarning>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <QueryProvider>
+              <AuthProvider>
+                <DataProvider>
+                  {children}
+                  <Toaster />
+                </DataProvider>
+              </AuthProvider>
+            </QueryProvider>
+          </ThemeProvider>
+        </div>
       </body>
     </html>
   );

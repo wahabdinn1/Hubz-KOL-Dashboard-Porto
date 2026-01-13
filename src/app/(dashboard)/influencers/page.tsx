@@ -4,6 +4,7 @@ import { useData } from "@/context/data-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { TierBadge } from "@/components/ui/tier-badge";
 import { Button } from "@/components/ui/button";
 import { formatIDR } from "@/lib/analytics";
 import { AddKOLDialog } from "@/components/add-kol-dialog";
@@ -37,7 +38,14 @@ function InfluencersContent() {
 
     const filteredKols = kols.filter(kol => {
         // 1. Tier Filter
-        if (filterTier && kol.type !== filterTier) return false;
+        if (filterTier) {
+            let calculatedTier = "Nano-Tier";
+            if ((kol.followers || 0) >= 1000000) calculatedTier = "Mega-Tier";
+            else if ((kol.followers || 0) >= 100000) calculatedTier = "Macro-Tier";
+            else if ((kol.followers || 0) >= 10000) calculatedTier = "Micro-Tier";
+
+            if (calculatedTier !== filterTier) return false;
+        }
 
         // 2. Platform Filter
         if (filterPlatform) {
@@ -158,7 +166,7 @@ function InfluencersContent() {
                                 </Select.Trigger>
                                 <Select.Content>
                                     <Select.Item value="all">All Tiers</Select.Item>
-                                    {['Nano', 'Micro', 'Macro', 'Mega'].map((tier) => (
+                                    {['Nano-Tier', 'Micro-Tier', 'Macro-Tier', 'Mega-Tier'].map((tier) => (
                                         <Select.Item key={tier} value={tier}>
                                             {tier}
                                         </Select.Item>
@@ -278,7 +286,11 @@ function InfluencersContent() {
                                         <TableCell className="font-medium">
                                             <div className="flex flex-col">
                                                 <span className="font-semibold">{kol.tiktokUsername || kol.name}</span>
-                                                <span className="text-xs text-muted-foreground">{kol.type}</span>
+                                                <span className="text-xs text-muted-foreground">
+                                                    {(kol.followers || 0) >= 1000000 ? "Mega-Tier" :
+                                                        (kol.followers || 0) >= 100000 ? "Macro-Tier" :
+                                                            (kol.followers || 0) >= 10000 ? "Micro-Tier" : "Nano-Tier"}
+                                                </span>
                                             </div>
                                         </TableCell>
                                         <TableCell onClick={(e) => e.stopPropagation()}>

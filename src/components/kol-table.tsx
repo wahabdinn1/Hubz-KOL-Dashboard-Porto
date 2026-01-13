@@ -9,6 +9,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { TierBadge } from "@/components/ui/tier-badge";
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import {
@@ -19,6 +20,7 @@ import {
 } from "@/lib/analytics";
 import { useData } from "@/context/data-context";
 import { EditDeliverableDialog } from "@/components/edit-deliverable-dialog";
+import { KOLProfileDialog } from "@/components/kol-profile-dialog";
 
 export function KOLTable() {
     const { kols, campaign, removeKOLFromCampaignDB } = useData();
@@ -42,9 +44,10 @@ export function KOLTable() {
         const cpm = calculateCPM(realCost, del.totalViews);
         const efficiency = calculateEfficiencyScore(del.totalViews, realCost);
 
-        let tier = "Mid-Tier";
-        if (kol.followers > 1000000) tier = "Macro";
-        else if (kol.followers < 100000) tier = "Micro";
+        let tier = "Nano-Tier";
+        if (kol.followers >= 1000000) tier = "Mega-Tier";
+        else if (kol.followers >= 100000) tier = "Macro-Tier";
+        else if (kol.followers >= 10000) tier = "Micro-Tier";
 
         return {
             kol,
@@ -63,12 +66,18 @@ export function KOLTable() {
                 <TableHeader>
                     <TableRow>
                         <TableHead>Name & Tier</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead className="text-center">Videos</TableHead>
                         <TableHead>Total Views</TableHead>
-                        <TableHead>Rate TikTok</TableHead>
-                        <TableHead>Rate Reels</TableHead>
+                        {campaign.platform === 'Instagram' ? (
+                            <TableHead>Rate Reels</TableHead>
+                        ) : (
+                            <TableHead>Rate TikTok</TableHead>
+                        )}
                         <TableHead>ER</TableHead>
                         <TableHead>CPM</TableHead>
                         <TableHead>Efficiency</TableHead>
+                        <TableHead>Status</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -77,18 +86,42 @@ export function KOLTable() {
                         <TableRow key={item?.kol.id}>
                             <TableCell className="font-medium">
                                 <div className="flex flex-col gap-1">
-                                    <span>{item?.kol.name}</span>
-                                    <Badge variant={item?.tier === "Macro" ? "default" : "secondary"} className="w-fit">
-                                        {item?.tier}
-                                    </Badge>
+                                    <KOLProfileDialog kol={item!.kol}>
+                                        <span className="font-bold">{item?.kol.name}</span>
+                                    </KOLProfileDialog>
+                                    <TierBadge tier={item?.tier || "Nano-Tier"} className="w-fit" />
                                 </div>
                             </TableCell>
+                            <TableCell>
+                                <Badge variant="outline" className="border-black">
+                                    {item?.kol.category}
+                                </Badge>
+                            </TableCell>
+                            <TableCell className="text-center font-medium">{item?.del.videosCount}</TableCell>
                             <TableCell>{item?.del.totalViews.toLocaleString()}</TableCell>
-                            <TableCell>{formatIDR(item?.kol.rateCardTiktok || 0)}</TableCell>
-                            <TableCell>{formatIDR(item?.kol.rateCardReels || 0)}</TableCell>
+                            {campaign.platform === 'Instagram' ? (
+                                <TableCell>{formatIDR(item?.kol.rateCardReels || 0)}</TableCell>
+                            ) : (
+                                <TableCell>{formatIDR(item?.kol.rateCardTiktok || 0)}</TableCell>
+                            )}
                             <TableCell>{item?.er.toFixed(1)}%</TableCell>
                             <TableCell>{formatIDR(item?.cpm || 0)}</TableCell>
                             <TableCell>{item?.efficiency.toFixed(2)}</TableCell>
+                            <TableCell>
+                                <Badge
+                                    variant="outline"
+                                    className={`
+                                        border-2 border-black font-bold capitalize
+                                        ${item?.del.status === 'completed' ? 'bg-green-300 text-black' :
+                                            item?.del.status === 'posted' ? 'bg-blue-300 text-black' :
+                                                item?.del.status === 'content_creation' ? 'bg-purple-300 text-black' :
+                                                    item?.del.status === 'negotiating' ? 'bg-yellow-300 text-black' :
+                                                        'bg-white text-black'}
+                                    `}
+                                >
+                                    {item?.del.status?.replace('_', ' ') || 'To Contact'}
+                                </Badge>
+                            </TableCell>
                             <TableCell className="text-right flex items-center justify-end gap-2">
                                 <EditDeliverableDialog
                                     campaignId={campaign.id}
@@ -114,7 +147,7 @@ export function KOLTable() {
                     ))}
                     {data.length === 0 && (
                         <TableRow>
-                            <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                            <TableCell colSpan={8} className="text-center py-8 text-slate-500">
                                 No KOLs in this campaign. Add one to get started.
                             </TableCell>
                         </TableRow>

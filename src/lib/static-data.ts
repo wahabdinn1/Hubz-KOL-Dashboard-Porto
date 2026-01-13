@@ -30,6 +30,7 @@ export interface CampaignDeliverable {
     clicks?: number;
     orders?: number;
     salesGenerated: number;
+    status: 'to_contact' | 'negotiating' | 'content_creation' | 'posted' | 'completed';
 }
 
 export interface Category {
@@ -254,6 +255,7 @@ export const MOCK_CAMPAIGNS: Campaign[] = [
                 clicks: 15000,
                 orders: 450,
                 salesGenerated: 35000000,
+                status: 'completed',
             },
             {
                 kolId: 'b7eebc99-9c0b-4ef8-bb6d-6bb9bd380a18', // kol-5
@@ -264,6 +266,7 @@ export const MOCK_CAMPAIGNS: Campaign[] = [
                 clicks: 22000,
                 orders: 890,
                 salesGenerated: 18500000,
+                status: 'completed',
             }
         ],
     },
@@ -282,14 +285,16 @@ export const MOCK_CAMPAIGNS: Campaign[] = [
                 videosCount: 2,
                 totalViews: 1200000,
                 totalEngagements: 80000,
-                salesGenerated: 0
+                salesGenerated: 0,
+                status: 'to_contact'
             },
             {
                 kolId: 'c2eebc99-9c0b-4ef8-bb6d-6bb9bd380a13', // kol-mega-1
                 videosCount: 1,
                 totalViews: 500000,
                 totalEngagements: 10000,
-                salesGenerated: 0
+                salesGenerated: 0,
+                status: 'negotiating'
             }
         ]
     },
@@ -308,7 +313,8 @@ export const MOCK_CAMPAIGNS: Campaign[] = [
                 videosCount: 3,
                 totalViews: 300000,
                 totalEngagements: 15000,
-                salesGenerated: 45000000
+                salesGenerated: 45000000,
+                status: 'completed'
             }
         ]
     }
