@@ -39,6 +39,17 @@ export default function RegisterPage() {
                     <form action={formAction} className="mt-8 space-y-6">
                         <div className="space-y-4">
                             <div className="space-y-2">
+                                <Label htmlFor="fullName" className="font-bold text-base">Full Name</Label>
+                                <Input
+                                    id="fullName"
+                                    name="fullName"
+                                    type="text"
+                                    placeholder="John Doe"
+                                    required
+                                    className="h-12"
+                                />
+                            </div>
+                            <div className="space-y-2">
                                 <Label htmlFor="email" className="font-bold text-base">Email</Label>
                                 <Input
                                     id="email"

@@ -87,9 +87,14 @@ function SortableCategoryItem({ category, onDelete }: SortableCategoryProps) {
 
 import { User } from "@supabase/supabase-js";
 
+import { UserManagementTable } from "@/components/user-management-table-fixed";
+import { useAuth } from "@/context/auth-context";
+import { Users as UsersIcon } from "lucide-react";
+
 // --- Main Content ---
 export function SettingsClient({ user }: { user: User | null }) {
     const { categories, addCategory, deleteCategory, updateCategoryOrder } = useData();
+    const { role, isSuperAdmin, isAdmin } = useAuth();
     const [newCategory, setNewCategory] = useState("");
 
     const userEmail = user?.email || "admin@hubz.com";
@@ -140,8 +145,18 @@ export function SettingsClient({ user }: { user: User | null }) {
                 <Tabs defaultValue="general" className="space-y-4">
                     <TabsList>
                         <TabsTrigger value="general" className="gap-2"><UserIcon className="h-4 w-4" /> General</TabsTrigger>
-                        <TabsTrigger value="categories" className="gap-2"><List className="h-4 w-4" /> Categories</TabsTrigger>
-                        <TabsTrigger value="system" className="gap-2"><Settings className="h-4 w-4" /> System</TabsTrigger>
+
+                        {isAdmin && (
+                            <TabsTrigger value="members" className="gap-2"><UsersIcon className="h-4 w-4" /> Team Members</TabsTrigger>
+                        )}
+
+                        {isAdmin && (
+                            <TabsTrigger value="categories" className="gap-2"><List className="h-4 w-4" /> Categories</TabsTrigger>
+                        )}
+
+                        {isSuperAdmin && (
+                            <TabsTrigger value="system" className="gap-2"><Settings className="h-4 w-4" /> System</TabsTrigger>
+                        )}
                     </TabsList>
 
                     <TabsContent value="general" className="space-y-4">
@@ -167,7 +182,7 @@ export function SettingsClient({ user }: { user: User | null }) {
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="role">Role</Label>
-                                        <Input id="role" defaultValue="Super Admin" disabled className="bg-muted" />
+                                        <Input id="role" value={role?.toUpperCase() || "LOADING..."} disabled className="bg-muted" />
                                     </div>
                                 </div>
                             </CardContent>
@@ -206,96 +221,112 @@ export function SettingsClient({ user }: { user: User | null }) {
                         </Card>
                     </TabsContent>
 
-                    <TabsContent value="categories" className="space-y-4">
-                        <Card className="min-h-[500px] flex flex-col">
-                            <CardHeader>
-                                <div className="flex items-center justify-between">
-                                    <div className="space-y-1">
-                                        <CardTitle>Influencer Categories</CardTitle>
-                                        <CardDescription>
-                                            Define the categories used to classify influencers. Drag to reorder.
-                                        </CardDescription>
-                                    </div>
-                                    <div className="bg-primary/10 text-primary text-xs font-semibold px-2 py-1 rounded-full">
-                                        {categories.length} Categories
-                                    </div>
+                    {isAdmin && (
+                        <TabsContent value="members" className="space-y-4">
+                            <div className="flex flex-col gap-4">
+                                <div>
+                                    <h3 className="text-lg font-medium">Team Management</h3>
+                                    <p className="text-sm text-muted-foreground">Manage user access and roles.</p>
                                 </div>
-                            </CardHeader>
-                            <CardContent className="flex-1 space-y-4">
-                                <DndContext
-                                    sensors={sensors}
-                                    collisionDetection={closestCenter}
-                                    onDragEnd={handleDragEnd}
-                                >
-                                    <SortableContext
-                                        items={categories}
-                                        strategy={verticalListSortingStrategy}
-                                    >
-                                        <div className="flex flex-col gap-2">
-                                            {categories.length === 0 ? (
-                                                <div className="text-center py-12 border-2 border-dashed rounded-lg">
-                                                    <p className="text-sm text-muted-foreground">No categories defined yet.</p>
-                                                </div>
-                                            ) : (
-                                                categories.map((category) => (
-                                                    <SortableCategoryItem
-                                                        key={category.id}
-                                                        category={category}
-                                                        onDelete={deleteCategory}
-                                                    />
-                                                ))
-                                            )}
+                                <UserManagementTable />
+                            </div>
+                        </TabsContent>
+                    )}
+
+                    {isAdmin && (
+                        <TabsContent value="categories" className="space-y-4">
+                            <Card className="min-h-[500px] flex flex-col">
+                                <CardHeader>
+                                    <div className="flex items-center justify-between">
+                                        <div className="space-y-1">
+                                            <CardTitle>Influencer Categories</CardTitle>
+                                            <CardDescription>
+                                                Define the categories used to classify influencers. Drag to reorder.
+                                            </CardDescription>
                                         </div>
-                                    </SortableContext>
-                                </DndContext>
-                            </CardContent>
-                            <CardFooter className="border-t p-4 bg-muted/20">
-                                <form onSubmit={handleAddCategory} className="flex gap-2 w-full max-w-md">
-                                    <Input
-                                        placeholder="Add new category..."
-                                        value={newCategory}
-                                        onChange={(e) => setNewCategory(e.target.value)}
-                                        className="bg-background"
-                                    />
-                                    <Button type="submit">
-                                        <Plus className="h-4 w-4 mr-2" /> Add
-                                    </Button>
-                                </form>
-                            </CardFooter>
-                        </Card>
-                    </TabsContent>
+                                        <div className="bg-primary/10 text-primary text-xs font-semibold px-2 py-1 rounded-full">
+                                            {categories.length} Categories
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="flex-1 space-y-4">
+                                    <DndContext
+                                        sensors={sensors}
+                                        collisionDetection={closestCenter}
+                                        onDragEnd={handleDragEnd}
+                                    >
+                                        <SortableContext
+                                            items={categories}
+                                            strategy={verticalListSortingStrategy}
+                                        >
+                                            <div className="flex flex-col gap-2">
+                                                {categories.length === 0 ? (
+                                                    <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                                                        <p className="text-sm text-muted-foreground">No categories defined yet.</p>
+                                                    </div>
+                                                ) : (
+                                                    categories.map((category) => (
+                                                        <SortableCategoryItem
+                                                            key={category.id}
+                                                            category={category}
+                                                            onDelete={deleteCategory}
+                                                        />
+                                                    ))
+                                                )}
+                                            </div>
+                                        </SortableContext>
+                                    </DndContext>
+                                </CardContent>
+                                <CardFooter className="border-t p-4 bg-muted/20">
+                                    <form onSubmit={handleAddCategory} className="flex gap-2 w-full max-w-md">
+                                        <Input
+                                            placeholder="Add new category..."
+                                            value={newCategory}
+                                            onChange={(e) => setNewCategory(e.target.value)}
+                                            className="bg-background"
+                                        />
+                                        <Button type="submit">
+                                            <Plus className="h-4 w-4 mr-2" /> Add
+                                        </Button>
+                                    </form>
+                                </CardFooter>
+                            </Card>
+                        </TabsContent>
+                    )}
 
-                    <TabsContent value="system" className="space-y-4">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>System Configuration</CardTitle>
-                                <CardDescription>Technical details and connection status.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="flex items-center gap-4 p-4 border rounded-lg">
-                                    <div className="p-2 bg-green-500/10 rounded-full">
-                                        <Database className="h-5 w-5 text-green-600" />
+                    {isSuperAdmin && (
+                        <TabsContent value="system" className="space-y-4">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>System Configuration</CardTitle>
+                                    <CardDescription>Technical details and connection status.</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="flex items-center gap-4 p-4 border rounded-lg">
+                                        <div className="p-2 bg-green-500/10 rounded-full">
+                                            <Database className="h-5 w-5 text-green-600" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h4 className="font-medium text-sm">Database Connection</h4>
+                                            <p className="text-xs text-muted-foreground">Connected to Supabase (Production)</p>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                                            <span className="text-xs font-medium text-green-600">Active</span>
+                                        </div>
                                     </div>
-                                    <div className="flex-1">
-                                        <h4 className="font-medium text-sm">Database Connection</h4>
-                                        <p className="text-xs text-muted-foreground">Connected to Supabase (Production)</p>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                                        <span className="text-xs font-medium text-green-600">Active</span>
-                                    </div>
-                                </div>
 
-                                <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/20">
-                                    <div className="flex-1">
-                                        <h4 className="font-medium text-sm">Development Tools</h4>
-                                        <p className="text-xs text-muted-foreground">Utilities for managing test data.</p>
+                                    <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/20">
+                                        <div className="flex-1">
+                                            <h4 className="font-medium text-sm">Development Tools</h4>
+                                            <p className="text-xs text-muted-foreground">Utilities for managing test data.</p>
+                                        </div>
+                                        <SeedDataButton />
                                     </div>
-                                    <SeedDataButton />
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                    )}
                 </Tabs>
             </div>
         </ThemeProvider>

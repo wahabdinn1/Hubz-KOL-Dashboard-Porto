@@ -50,6 +50,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
     // Fetch Initial Data
     useEffect(() => {
+        let isMounted = true;
+        setLoading(true);
+
         const fetchData = async () => {
             try {
                 // 1. Fetch KOLs
@@ -59,7 +62,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
                 if (kolsError && kolsError.code !== '42703') console.error("Supabase KOL Fetch Error:", JSON.stringify(kolsError, null, 2));
 
-                if (kolsData) {
+                if (isMounted && kolsData) {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const mappedKols: KOL[] = kolsData.map((k: any) => ({
                         id: k.id,
@@ -68,7 +71,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                         category: k.category,
                         followers: k.followers,
                         avgViews: k.avg_views,
-                        // New Fields
                         tiktokUsername: k.tiktok_username,
                         tiktokProfileLink: k.tiktok_profile_link,
                         tiktokFollowers: k.tiktok_followers,
@@ -83,14 +85,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 }
 
                 // 2. Fetch Categories
-                const query = supabase
+                let { data: catData, error: catError } = await supabase
                     .from('categories')
                     .select('*')
                     .order('sort_order', { ascending: true });
 
-                let { data: catData, error: catError } = await query;
-
-                // Fallback for missing column
                 if (catError && catError.code === '42703') {
                     const retry = await supabase.from('categories').select('*');
                     catData = retry.data;
@@ -98,7 +97,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 }
 
                 if (catError) console.error("Supabase Category Error:", JSON.stringify(catError, null, 2));
-                if (catData) {
+                if (isMounted && catData) {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     setCategories(catData.map((c: any) => ({ id: c.id, name: c.name, sort_order: c.sort_order })));
                 }
@@ -117,8 +116,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
                 if (delError) console.error("Supabase Deliverable Error:", JSON.stringify(delError, null, 2));
 
-                // 5. Map Campaigns
-                if (campaignData) {
+                if (isMounted && campaignData) {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const mappedCampaigns: Campaign[] = campaignData.map((c: any) => {
                         const relatedDeliverables = (delData || [])
@@ -133,15 +131,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                                 salesGenerated: d.sales_generated
                             }));
 
-                        const platform = c.platform || 'TikTok';
-
                         return {
                             id: c.id,
                             name: c.name,
                             budget: c.budget,
                             startDate: c.start_date,
                             endDate: c.end_date,
-                            platform: platform,
+                            platform: c.platform || 'TikTok',
                             objective: c.objective || 'AWARENESS',
                             status: c.status || 'Active',
                             deliverables: relatedDeliverables
@@ -159,11 +155,15 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             } catch (error) {
                 console.error("Error fetching data:", error);
             } finally {
-                setLoading(false);
+                if (isMounted) setLoading(false);
             }
         };
 
         fetchData();
+
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     // ... (Category methods same as before) ...

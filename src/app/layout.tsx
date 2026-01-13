@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { DataProvider } from "@/context/data-context";
+import { AuthProvider } from "@/context/auth-context";
 
 import { Archivo_Black, Space_Grotesk } from "next/font/google";
 
@@ -42,9 +43,11 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <DataProvider>
-            {children}
-          </DataProvider>
+          <AuthProvider>
+            <DataProvider>
+              {children}
+            </DataProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
