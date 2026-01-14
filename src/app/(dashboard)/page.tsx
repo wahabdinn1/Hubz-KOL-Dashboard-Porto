@@ -9,7 +9,10 @@ import { useData } from "@/context/data-context";
 import { useMemo, useState, useEffect } from "react";
 import { CreateCampaignDialog } from "@/components/create-campaign-dialog";
 import { AddKOLDialog } from "@/components/add-kol-dialog";
-import { AreaChart } from "@/components/ui/area-chart";
+import { BarChart } from "@/components/retroui/charts/BarChart";
+import { Progress } from "@/components/retroui/Progress";
+import { TierBadge } from "@/components/ui/tier-badge";
+import { formatCompactNumber } from "@/lib/utils";
 
 function DashboardContent() {
   const { kols, campaigns } = useData();
@@ -25,8 +28,16 @@ function DashboardContent() {
     let totalRevenue = 0;
     let totalSpend = 0;
     let totalViews = 0;
+    let totalBudget = 0;
+
+    const statusCounts: Record<string, number> = {
+      'TO_CONTACT': 0, 'NEGOTIATING': 0, 'IN_PROGRESS': 0,
+      'SUBMITTED': 0, 'POSTED': 0, 'COMPLETED': 0
+    };
 
     campaigns.forEach(c => {
+      totalBudget += c.budget || 0;
+
       // Calculate spend based on platform rates
       const campaignSpend = c.deliverables.reduce((acc, del) => {
         const kol = kols.find(k => k.id === del.kolId);
@@ -40,13 +51,29 @@ function DashboardContent() {
       c.deliverables.forEach(d => {
         totalRevenue += d.salesGenerated || 0;
         totalViews += d.totalViews || 0;
+        if (d.status && statusCounts[d.status] !== undefined) {
+          statusCounts[d.status]++;
+        } else {
+          // Fallback for undefined status or legacy data
+          statusCounts['TO_CONTACT']++;
+        }
       });
     });
 
     const activeKOLs = kols.length;
     const activeCampaigns = campaigns.length;
 
-    return { totalRevenue, totalViews, activeKOLs, activeCampaigns, totalSpend };
+    // Tier Counts
+    const tierCounts = { 'Nano-Tier': 0, 'Micro-Tier': 0, 'Macro-Tier': 0, 'Mega-Tier': 0 };
+    kols.forEach(kol => {
+      const followers = kol.followers || 0;
+      if (followers >= 1000000) tierCounts['Mega-Tier']++;
+      else if (followers >= 100000) tierCounts['Macro-Tier']++;
+      else if (followers >= 10000) tierCounts['Micro-Tier']++;
+      else tierCounts['Nano-Tier']++;
+    });
+
+    return { totalRevenue, totalViews, activeKOLs, activeCampaigns, totalSpend, totalBudget, statusCounts, tierCounts };
   }, [kols, campaigns]);
 
   // --- Prepare Chart Data ---
@@ -147,19 +174,28 @@ function DashboardContent() {
 
       {/* --- KPI Cards --- */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {/* REVENUE & BUDGET */}
         <Card className={activeChart === 'revenue' ? "border-primary/50 shadow-md" : ""}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">Financials</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatIDR(metrics.totalRevenue)}</div>
-            <p className="text-xs text-muted-foreground mt-1 text-green-500 flex items-center gap-1">
+            <div className="mt-2 space-y-1">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>Spend: {formatCompactNumber(metrics.totalSpend)}</span>
+                <span>Budget: {formatCompactNumber(metrics.totalBudget)}</span>
+              </div>
+              <Progress value={(metrics.totalSpend / (metrics.totalBudget || 1)) * 100} className="h-2" />
+            </div>
+            <p className="text-xs text-muted-foreground mt-2 text-green-500 flex items-center gap-1">
               <TrendingUp className="h-3 w-3" /> ROAS: {(metrics.totalRevenue / (metrics.totalSpend || 1)).toFixed(2)}x
             </p>
           </CardContent>
         </Card>
 
+        {/* ACTIVE KOLS */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active KOLs</CardTitle>
@@ -168,9 +204,17 @@ function DashboardContent() {
           <CardContent>
             <div className="text-2xl font-bold">{metrics.activeKOLs}</div>
             <p className="text-xs text-muted-foreground mt-1">Influencers in network</p>
+            {/* Mini Tier Distribution */}
+            <div className="flex gap-1 mt-3 h-1.5 w-full rounded-full overflow-hidden">
+              <div className="bg-slate-300 dark:bg-slate-700" style={{ width: `${(metrics.tierCounts['Nano-Tier'] / metrics.activeKOLs) * 100}%` }} title="Nano" />
+              <div className="bg-blue-400" style={{ width: `${(metrics.tierCounts['Micro-Tier'] / metrics.activeKOLs) * 100}%` }} title="Micro" />
+              <div className="bg-purple-500" style={{ width: `${(metrics.tierCounts['Macro-Tier'] / metrics.activeKOLs) * 100}%` }} title="Macro" />
+              <div className="bg-amber-400" style={{ width: `${(metrics.tierCounts['Mega-Tier'] / metrics.activeKOLs) * 100}%` }} title="Mega" />
+            </div>
           </CardContent>
         </Card>
 
+        {/* TOTAL VIEWS */}
         <Card className={activeChart === 'views' ? "border-purple-500/50 shadow-md" : ""}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Views</CardTitle>
@@ -182,6 +226,7 @@ function DashboardContent() {
           </CardContent>
         </Card>
 
+        {/* AVG PERFORMANCE */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Avg. {activeChart === 'revenue' ? 'Rev' : 'Views'} / Campaign</CardTitle>
@@ -202,9 +247,22 @@ function DashboardContent() {
         </Card>
       </div>
 
+      {/* --- PIPELINE SNAPSHOT --- */}
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
+        {Object.entries(metrics.statusCounts).map(([status, count]) => (
+          <Card key={status} className="bg-muted/30 border-dashed">
+            <CardContent className="p-3 flex flex-col items-center justify-center text-center">
+              <span className="text-2xl font-bold">{count}</span>
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                {status.replace(/_/g, ' ')}
+              </span>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
       {/* --- Charts Section --- */}
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
-
         {/* Interactive Chart */}
         <Card className="col-span-1 lg:col-span-4">
           <CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row">
@@ -244,15 +302,14 @@ function DashboardContent() {
           <CardContent className="px-2 sm:p-6">
             <div className="w-full min-h-[300px]">
               {isMounted && chartData.length > 0 ? (
-                <AreaChart
+                <BarChart
                   className="h-[300px] w-full"
                   data={chartData}
                   index="name"
                   categories={[activeChart]}
                   valueFormatter={(value) => activeChart === 'revenue' ? formatIDR(value) : formatCompactNumber(value)}
-                  strokeColors={activeChart === 'revenue' ? ["var(--primary)"] : ["#8b5cf6"]}
                   fillColors={activeChart === 'revenue' ? ["var(--primary)"] : ["#8b5cf6"]}
-                  fill="solid"
+                  strokeColors={["#000"]}
                 />
               ) : (
                 <div className="h-full flex items-center justify-center text-muted-foreground text-sm">

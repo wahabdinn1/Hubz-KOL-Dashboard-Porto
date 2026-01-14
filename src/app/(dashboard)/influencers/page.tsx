@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { TierBadge } from "@/components/ui/tier-badge";
 import { Button } from "@/components/ui/button";
 import { formatIDR } from "@/lib/analytics";
+import { formatCompactNumber } from "@/lib/utils";
 import { AddKOLDialog } from "@/components/add-kol-dialog";
 import { EditKOLDialog } from "@/components/edit-kol-dialog";
 import { DeleteKOLDialog } from "@/components/delete-kol-dialog";
@@ -310,12 +311,12 @@ function InfluencersContent() {
                                         <TableCell><Badge variant="outline">{kol.category}</Badge></TableCell>
                                         <TableCell>
                                             <div className="flex flex-col text-xs">
-                                                <span>{kol.tiktokFollowers ? (kol.tiktokFollowers >= 1000 ? `${(kol.tiktokFollowers / 1000).toFixed(1)}k` : kol.tiktokFollowers) : '-'}</span>
+                                                <span>{formatCompactNumber(kol.tiktokFollowers || 0)}</span>
                                             </div>
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex flex-col text-xs">
-                                                <span>{kol.instagramFollowers ? (kol.instagramFollowers >= 1000 ? `${(kol.instagramFollowers / 1000).toFixed(1)}k` : kol.instagramFollowers) : '-'}</span>
+                                                <span>{formatCompactNumber(kol.instagramFollowers || 0)}</span>
                                             </div>
                                         </TableCell>
                                         <TableCell>

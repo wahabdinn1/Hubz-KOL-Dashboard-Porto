@@ -83,7 +83,6 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
 
         // Determine type based on total followers (using primary or max)
         const totalFollowers = Math.max(
-            Number(formData.followers) || 0,
             Number(formData.tiktokFollowers) || 0,
             Number(formData.instagramFollowers) || 0
         );
@@ -92,8 +91,8 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
             id: `kol-${Date.now()}`,
             name: formData.name,
             category: formData.category,
-            followers: Number(formData.followers) || 0, // Primary generic
-            avgViews: Number(formData.avgViews) || 0,
+            followers: totalFollowers, // Auto-calculated
+            avgViews: 0, // Deprecated/Hidden
             type: totalFollowers > 1000000 ? 'Macro' : totalFollowers < 100000 ? 'Micro' : 'Macro', // Fallback logic
 
             tiktokUsername: formData.tiktokUsername,
@@ -258,14 +257,6 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
                                         <Input id="category" name="category" value={formData.category} onChange={handleChange} required />
                                     )}
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="avgViews">Avg. Views (General)</Label>
-                                    <Input id="avgViews" name="avgViews" type="number" value={formData.avgViews} onChange={handleChange} required placeholder="0" />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="followers">Total Reach (Main)</Label>
-                                    <Input id="followers" name="followers" type="number" value={formData.followers} onChange={handleChange} required placeholder="0" />
-                                </div>
                             </div>
                         </div>
 
@@ -352,6 +343,6 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
                     </form>
                 )}
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 }

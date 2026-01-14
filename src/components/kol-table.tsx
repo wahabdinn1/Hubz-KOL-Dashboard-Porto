@@ -1,5 +1,8 @@
 "use client";
 
+"use client";
+
+import { formatCompactNumber } from "@/lib/utils";
 import {
     Table,
     TableBody,
@@ -98,7 +101,7 @@ export function KOLTable() {
                                 </Badge>
                             </TableCell>
                             <TableCell className="text-center font-medium">{item?.del.videosCount}</TableCell>
-                            <TableCell>{item?.del.totalViews.toLocaleString()}</TableCell>
+                            <TableCell>{formatCompactNumber(item?.del.totalViews || 0)}</TableCell>
                             {campaign.platform === 'Instagram' ? (
                                 <TableCell>{formatIDR(item?.kol.rateCardReels || 0)}</TableCell>
                             ) : (

@@ -3,16 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-    ChevronRight,
+    Calculator,
     Users,
     Settings,
     Menu,
     Briefcase,
     BarChart3,
     LogOut,
+    PanelLeft,
+    LayoutGrid,
     ChevronDown,
-    LayoutDashboard,
-    PanelLeft
+    Search,
+    Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/app/auth/actions";
@@ -20,7 +22,6 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ModeToggle } from "@/components/mode-toggle";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -36,140 +37,38 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { User as SupabaseUser } from "@supabase/supabase-js";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
-// --- Types & Data ---
-
+// --- Navigation Structure ---
 type NavItem = {
     name: string;
-    icon: any;
     href?: string;
-    items?: { name: string; href: string }[];
+    icon: any;
+    items?: NavItem[]; // Nested items
 };
 
 const NAV_ITEMS: NavItem[] = [
-    {
-        name: "Dashboard",
-        icon: LayoutDashboard,
-        items: [
-            { name: "Overview", href: "/" },
-            { name: "ER Calculator", href: "/er-calculator" },
-        ]
-    },
+    { name: "Overview", href: "/", icon: BarChart3 },
     { name: "Campaigns", href: "/campaigns", icon: Briefcase },
     { name: "Influencers", href: "/influencers", icon: Users },
     {
-        name: "System",
-        icon: Settings,
+        name: "Tools",
+        icon: Calculator,
         items: [
-            { name: "Global Settings", href: "/settings" }
+            { name: "ER Calculator", href: "/er-calculator", icon: Zap },
         ]
     },
+    { name: "Settings", href: "/settings", icon: Settings },
 ];
-
-// --- Sub-Components ---
-
-function SidebarItem({ item, isCollapsed, pathname }: { item: NavItem, isCollapsed: boolean, pathname: string }) {
-    const isActive = item.href === pathname || item.items?.some(sub => sub.href === pathname);
-    const [isOpen, setIsOpen] = useState(isActive);
-
-    // Auto-expand if child is active
-    useEffect(() => {
-        if (isActive) setIsOpen(true);
-    }, [pathname, isActive]);
-
-    const hasChildren = item.items && item.items.length > 0;
-
-    // Collapsed State (Icon Only)
-    if (isCollapsed) {
-        return (
-            <Tooltip delayDuration={0}>
-                <TooltipTrigger asChild>
-                    <Link
-                        href={item.href || (item.items ? item.items[0].href : "#")}
-                        className={`flex justify-center p-2 rounded-md transition-all duration-200 border-2 border-transparent hover:border-black hover:bg-black hover:text-white ${isActive ? "bg-primary text-primary-foreground border-black shadow-hard-sm" : "text-muted-foreground"}`}
-                    >
-                        <item.icon className="h-5 w-5" />
-                    </Link>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="font-bold border-2 border-black shadow-hard-sm z-50">
-                    {item.name}
-                </TooltipContent>
-            </Tooltip>
-        );
-    }
-
-    // Expanded State
-    return (
-        <div className="overflow-hidden">
-            {hasChildren ? (
-                <div className="mb-1">
-                    <button
-                        onClick={() => setIsOpen(!isOpen)}
-                        className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-sm font-bold transition-all rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 ${isActive ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                    >
-                        <div className="flex items-center gap-3">
-                            <item.icon className={`h-4 w-4 ${isActive ? "text-black dark:text-white" : ""}`} />
-                            <span className={isActive ? "text-black dark:text-white" : ""}>{item.name}</span>
-                        </div>
-                        <motion.div
-                            animate={{ rotate: isOpen ? 90 : 0 }}
-                            transition={{ duration: 0.2 }}
-                        >
-                            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                        </motion.div>
-                    </button>
-                    <AnimatePresence>
-                        {isOpen && (
-                            <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: "auto", opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.2, ease: "easeInOut" }}
-                            >
-                                <div className="mt-1 ml-4 border-l-2 border-zinc-200 dark:border-zinc-800 pl-2 space-y-1">
-                                    {item.items!.map((sub) => {
-                                        const isSubActive = pathname === sub.href;
-                                        return (
-                                            <Link
-                                                key={sub.name}
-                                                href={sub.href}
-                                                className={`block px-3 py-1.5 text-sm font-medium rounded-md transition-all ${isSubActive
-                                                    ? "bg-primary/20 text-black dark:text-white border-l-4 border-primary -ml-[11px]" // Visual indicator
-                                                    : "text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                                                    }`}
-                                            >
-                                                {sub.name}
-                                            </Link>
-                                        );
-                                    })}
-                                </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
-            ) : (
-                <Link
-                    href={item.href!}
-                    className={`flex items-center gap-3 px-3 py-2 text-sm font-bold transition-all rounded-md mb-1 border-2 border-transparent hover:border-black hover:bg-black hover:text-white ${isActive
-                        ? "bg-primary text-primary-foreground border-black shadow-hard-sm"
-                        : "text-muted-foreground"
-                        }`}
-                >
-                    <item.icon className="h-4 w-4 shrink-0" />
-                    {item.name}
-                </Link>
-            )}
-        </div>
-    );
-}
-
-// --- Main Shell ---
 
 export function DashboardShell({ children, user }: { children: React.ReactNode; user: SupabaseUser | null }) {
     const pathname = usePathname();
     const [isCollapsed, setIsCollapsed] = useState(false);
 
-    const toggleSidebar = () => setIsCollapsed(!isCollapsed);
+    const toggleSidebar = () => {
+        setIsCollapsed(!isCollapsed);
+    };
 
     const userEmail = user?.email || "guest@hubz.com";
     const userInitials = userEmail.substring(0, 2).toUpperCase();
@@ -178,51 +77,33 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
     return (
         <div className="flex min-h-screen bg-muted/40 font-sans">
             {/* Desktop Sidebar */}
-            <motion.aside
-                initial={false}
-                animate={{ width: isCollapsed ? 80 : 256 }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                className="relative hidden flex-col border-r-2 border-black bg-background md:flex overflow-hidden"
-            >
-                {/* Header */}
-                <div className={`flex h-16 items-center border-b-2 border-black ${isCollapsed ? 'justify-center' : 'px-6'}`}>
-                    <Link href="/" className="flex items-center gap-2 font-semibold">
-                        <div className="bg-primary p-1.5 rounded-none text-primary-foreground border-2 border-black shadow-hard-sm shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                                <path fillRule="evenodd" d="M3 6a3 3 0 013-3h1.5a.75.75 0 010 1.5H6a1.5 1.5 0 00-1.5 1.5v12a1.5 1.5 0 001.5 1.5h12a1.5 1.5 0 001.5-1.5V16.5a.75.75 0 011.5 0v3a3 3 0 01-3 3H6a3 3 0 01-3-3V6zm9.75 0a.75.75 0 01.75-.75h4.5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0V7.56l-5.47 5.47a.75.75 0 11-1.06-1.06l5.47-5.47h-2.94a.75.75 0 01-.75-.75z" clipRule="evenodd" />
-                            </svg>
+            <aside className={`sticky top-0 h-screen hidden flex-col border-r-2 border-black bg-background md:flex transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
+                {/* Header (BrutAdmin Style) */}
+                <div className={`flex h-16 items-center border-b-2 border-black ${isCollapsed ? 'justify-center px-0' : 'px-6'}`}>
+                    <Link href="/" className="flex items-center gap-3 font-semibold overflow-hidden">
+                        <div className="bg-[#FFDA5C] text-black h-8 w-8 rounded-full border-2 border-black flex items-center justify-center shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                            <span className="font-bold text-lg">*</span>
                         </div>
-                        {!isCollapsed && (
-                            <motion.span
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: 0.1 }}
-                                className="tracking-tight text-lg font-bold whitespace-nowrap"
-                            >
-                                Hubz KOL
-                            </motion.span>
-                        )}
+                        {!isCollapsed && <span className="tracking-tight text-xl font-bold whitespace-nowrap">Hubz KOL</span>}
                     </Link>
                 </div>
 
                 {/* Nav */}
-                <div className="flex-1 overflow-y-auto overflow-x-hidden p-4">
-                    <TooltipProvider>
-                        <nav className="space-y-1">
-                            {NAV_ITEMS.map((item) => (
-                                <SidebarItem
-                                    key={item.name}
-                                    item={item}
-                                    isCollapsed={isCollapsed}
-                                    pathname={pathname}
-                                />
-                            ))}
-                        </nav>
+                <nav className="flex-1 space-y-2 p-4 overflow-y-auto no-scrollbar">
+                    <TooltipProvider delayDuration={0}>
+                        {NAV_ITEMS.map((item, idx) => (
+                            <SidebarItem
+                                key={idx}
+                                item={item}
+                                isCollapsed={isCollapsed}
+                                pathname={pathname}
+                            />
+                        ))}
                     </TooltipProvider>
-                </div>
+                </nav>
 
                 {/* Footer User */}
-                <div className="p-4 border-t-2 border-black mt-auto bg-background z-10">
+                <div className="p-4 border-t-2 border-black mt-auto bg-background">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className={`w-full justify-start p-0 hover:bg-transparent ${isCollapsed ? 'justify-center' : ''}`}>
@@ -263,39 +144,45 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="absolute -right-3 top-6 z-40 h-6 w-6 rounded-full border bg-background shadow-md hover:bg-slate-100 dark:hover:bg-slate-800 hidden md:flex items-center justify-center p-0"
+                    className="absolute -right-3 top-7 z-40 h-6 w-6 rounded-full border-2 border-black bg-background shadow-hard-sm hover:bg-slate-100 dark:hover:bg-slate-800 hidden md:flex items-center justify-center p-0"
                     onClick={toggleSidebar}
                 >
                     <PanelLeft className="h-3 w-3" />
                 </Button>
-            </motion.aside>
+            </aside>
 
-            {/* Mobile Sidebar & Main Content */}
-            <div className="flex flex-1 flex-col overflow-hidden">
-                <header className="flex h-16 items-center gap-4 border-b-2 border-black bg-background px-6 md:hidden">
+            {/* Main Content Area */}
+            <div className="flex flex-1 flex-col transition-all duration-300">
+                {/* Mobile Header + Top Bar tools */}
+                <header className="flex h-16 items-center gap-4 border-b-2 border-black bg-background px-6">
                     <Sheet>
                         <SheetTrigger asChild>
-                            <Button variant="outline" size="icon" className="shrink-0">
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="shrink-0 md:hidden"
+                            >
                                 <Menu className="h-5 w-5" />
                                 <span className="sr-only">Toggle navigation menu</span>
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="left" className="w-[80vw] sm:w-[300px]">
-                            {/* Simplified Mobile Nav Replicating Structure */}
-                            <nav className="grid gap-2 text-lg font-medium mt-4">
+                            <nav className="grid gap-2 text-lg font-medium">
+                                {/* Simplified Mobile Nav for now, can recursively impl later if needed */}
                                 {NAV_ITEMS.map((item) => (
-                                    <div key={item.name} className="space-y-2">
+                                    <div key={item.name}>
                                         {item.items ? (
                                             <>
-                                                <div className="font-bold text-muted-foreground px-2">{item.name}</div>
-                                                {item.items.map(sub => (
-                                                    <Link key={sub.name} href={sub.href} className="block pl-6 py-2 hover:bg-muted rounded-md text-base">
-                                                        {sub.name}
+                                                <div className="font-bold text-muted-foreground mb-1 px-2 text-sm uppercase tracking-wider">{item.name}</div>
+                                                {item.items.map(subItem => (
+                                                    <Link key={subItem.name} href={subItem.href || '#'} className="flex items-center gap-4 py-2 hover:text-primary px-4">
+                                                        <subItem.icon className="h-5 w-5" />
+                                                        {subItem.name}
                                                     </Link>
                                                 ))}
                                             </>
                                         ) : (
-                                            <Link href={item.href!} className="flex items-center gap-4 py-2 hover:bg-muted rounded-md px-2">
+                                            <Link href={item.href || '#'} className="flex items-center gap-4 py-2 hover:text-primary px-2 font-bold">
                                                 <item.icon className="h-5 w-5" />
                                                 {item.name}
                                             </Link>
@@ -305,15 +192,11 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
                             </nav>
                         </SheetContent>
                     </Sheet>
-                    <div className="flex-1 font-bold">Hubz KOL</div>
-                    <ModeToggle />
-                </header>
 
-                {/* DESKTOP HEADER (Only visible on MD+) */}
-                <header className="hidden md:flex h-16 items-center gap-4 border-b-2 border-black bg-background px-6">
                     <div className="w-full flex-1">
-                        {/* Empty spacer or Search */}
+                        {/* Can add search bar here if needed */}
                     </div>
+
                     <div className="flex items-center gap-2">
                         <ModeToggle />
                     </div>
@@ -321,16 +204,116 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
 
                 <main className="flex-1 p-6 md:p-8 overflow-y-auto">
                     <Breadcrumbs />
-
-                    <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.4, ease: "easeOut" }}
-                    >
-                        {children}
-                    </motion.div>
+                    {children}
                 </main>
             </div>
         </div>
+    );
+}
+
+// --- Recursive Sidebar Item Component ---
+function SidebarItem({ item, isCollapsed, pathname }: { item: NavItem, isCollapsed: boolean, pathname: string }) {
+    const isActive = item.href === pathname;
+    const hasChildren = item.items && item.items.length > 0;
+    const [isOpen, setIsOpen] = useState(false);
+
+    // Auto-open if child is active
+    useEffect(() => {
+        if (hasChildren && item.items?.some(sub => sub.href === pathname)) {
+            setIsOpen(true);
+        }
+    }, [pathname, hasChildren, item.items]);
+
+    // Handle collapsed state display
+    if (isCollapsed) {
+        const targetHref = item.href || (hasChildren ? item.items![0].href : "#");
+        return (
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Link
+                        href={targetHref || "#"}
+                        className={cn(
+                            "flex items-center justify-center py-2 rounded-md transition-colors duration-200",
+                            isActive || (hasChildren && item.items?.some(sub => sub.href === pathname))
+                                ? "bg-black text-white"
+                                : "text-muted-foreground hover:bg-black hover:text-white"
+                        )}
+                    >
+                        <item.icon className="h-5 w-5" />
+                    </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="font-bold border-2 border-black shadow-hard-sm">
+                    {item.name}
+                </TooltipContent>
+            </Tooltip>
+        );
+    }
+
+    // Expanded State - Group (Parent)
+    if (hasChildren) {
+        return (
+            <div className="mb-2">
+                <button
+                    onClick={() => setIsOpen(!isOpen)}
+                    className={cn(
+                        "flex w-full items-center justify-between px-2 py-2 text-sm font-medium transition-colors duration-200 rounded-md group",
+                        // isOpen ? "text-foreground" : "text-muted-foreground"
+                    )}
+                >
+                    <div className="flex items-center gap-3">
+                        <item.icon className="h-5 w-5 shrink-0 text-gray-500 group-hover:text-black" />
+                        <span>{item.name}</span>
+                    </div>
+                    <ChevronDown className={cn("h-4 w-4 text-gray-400 transition-transform", isOpen && "rotate-180 text-black")} />
+                </button>
+                <AnimatePresence>
+                    {isOpen && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden ml-4 pl-4 border-l border-gray-200"
+                        >
+                            <div className="py-1 flex flex-col gap-1">
+                                {item.items!.map((subItem) => {
+                                    const isSubActive = pathname === subItem.href;
+                                    return (
+                                        <Link
+                                            key={subItem.name}
+                                            href={subItem.href || "#"}
+                                            className={cn(
+                                                "block px-2 py-1.5 text-sm transition-colors duration-200 rounded-md",
+                                                isSubActive
+                                                    ? "font-bold bg-black text-white"
+                                                    : "text-gray-500 hover:bg-black hover:text-white"
+                                            )}
+                                        >
+                                            {/* Removed vertical indicator for cleaner block style */}
+                                            {subItem.name}
+                                        </Link>
+                                    );
+                                })}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+        );
+    }
+
+    // Flat Item (No Children)
+    return (
+        <Link
+            href={item.href || "#"}
+            className={cn(
+                "flex items-center gap-3 px-2 py-2 text-sm font-medium transition-colors duration-200 rounded-md mb-1 group",
+                isActive
+                    ? "font-bold bg-black text-white"
+                    : "text-gray-500 hover:bg-black hover:text-white"
+            )}
+        >
+            <item.icon className={cn("h-5 w-5 shrink-0 transition-colors", isActive ? "text-white" : "text-gray-500 group-hover:text-white")} />
+            <span>{item.name}</span>
+        </Link>
     );
 }

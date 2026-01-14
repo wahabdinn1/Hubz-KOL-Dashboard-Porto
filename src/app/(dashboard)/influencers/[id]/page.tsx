@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { formatIDR } from "@/lib/analytics";
+import { formatCompactNumber } from "@/lib/utils";
 import { ArrowLeft, Instagram, Facebook, Youtube, Twitter } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -101,7 +102,7 @@ function InfluencerDetailContent() {
                                     TikTok Followers
                                 </div>
                                 <div className="font-bold text-lg">
-                                    {kol.tiktokFollowers ? (kol.tiktokFollowers >= 10000 ? `${(kol.tiktokFollowers / 1000).toFixed(1)}k` : kol.tiktokFollowers.toLocaleString()) : '-'}
+                                    {formatCompactNumber(kol.tiktokFollowers || 0)}
                                 </div>
                             </div>
                             <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-lg flex flex-col justify-center">
@@ -115,7 +116,7 @@ function InfluencerDetailContent() {
                                     Instagram Followers
                                 </div>
                                 <div className="font-bold text-lg">
-                                    {kol.instagramFollowers ? (kol.instagramFollowers >= 10000 ? `${(kol.instagramFollowers / 1000).toFixed(1)}k` : kol.instagramFollowers.toLocaleString()) : '-'}
+                                    {formatCompactNumber(kol.instagramFollowers || 0)}
                                 </div>
                             </div>
                             <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-lg flex flex-col justify-center">
@@ -159,7 +160,7 @@ function InfluencerDetailContent() {
                         <Card>
                             <CardContent className="p-6">
                                 <div className="text-sm font-medium text-muted-foreground">Lifetime Views</div>
-                                <div className="text-2xl font-bold">{totalViews.toLocaleString()}</div>
+                                <div className="text-2xl font-bold">{formatCompactNumber(totalViews)}</div>
                             </CardContent>
                         </Card>
                         <Card>
@@ -194,7 +195,7 @@ function InfluencerDetailContent() {
                                                     </div>
                                                 </div>
                                                 <div className="text-right text-sm">
-                                                    <div>{del?.totalViews.toLocaleString()} Views</div>
+                                                    <div>{formatCompactNumber(del?.totalViews || 0)} Views</div>
                                                     <div className="text-muted-foreground">{formatIDR(del?.salesGenerated || 0)} Sales</div>
                                                 </div>
                                             </div>

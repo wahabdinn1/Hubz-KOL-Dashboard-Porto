@@ -7,18 +7,11 @@ import { AuthProvider } from "@/context/auth-context";
 import QueryProvider from "@/components/providers/query-provider";
 import { Toaster } from "@/components/ui/sonner";
 
-import { Archivo_Black, Space_Grotesk } from "next/font/google";
+import { Epilogue } from "next/font/google";
 
-const archivoBlack = Archivo_Black({
+const epilogue = Epilogue({
   subsets: ["latin"],
-  weight: "400",
-  variable: "--font-head",
-  display: "swap",
-});
-
-const space = Space_Grotesk({
-  subsets: ["latin"],
-  weight: "400",
+  weight: ["400", "500", "600", "700", "800", "900"],
   variable: "--font-sans",
   display: "swap",
 });
@@ -36,7 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${archivoBlack.variable} ${space.variable} antialiased font-sans`}
+        className={`${epilogue.variable} antialiased`}
         suppressHydrationWarning
       >
         <div suppressHydrationWarning>

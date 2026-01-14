@@ -73,7 +73,6 @@ export function EditKOLDialog({ kol }: EditKOLDialogProps) {
 
         // Recalculate type
         const totalFollowers = Math.max(
-            Number(formData.followers) || 0,
             Number(formData.tiktokFollowers) || 0,
             Number(formData.instagramFollowers) || 0
         );
@@ -81,8 +80,8 @@ export function EditKOLDialog({ kol }: EditKOLDialogProps) {
         await updateKOL(kol.id, {
             name: formData.name,
             category: formData.category,
-            followers: Number(formData.followers) || 0,
-            avgViews: Number(formData.avgViews) || 0,
+            followers: totalFollowers,
+            avgViews: 0,
             type: totalFollowers > 1000000 ? 'Macro' : totalFollowers < 100000 ? 'Micro' : 'Macro',
 
             tiktokUsername: formData.tiktokUsername,
@@ -165,14 +164,6 @@ export function EditKOLDialog({ kol }: EditKOLDialogProps) {
                                     <Input id="category" name="category" value={formData.category} onChange={handleChange} required />
                                 )}
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="avgViews">Avg. Views (General)</Label>
-                                <Input id="avgViews" name="avgViews" type="number" value={formData.avgViews} onChange={handleChange} required />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="followers">Total Reach (Main)</Label>
-                                <Input id="followers" name="followers" type="number" value={formData.followers} onChange={handleChange} required />
-                            </div>
                         </div>
                     </div>
 
@@ -242,6 +233,6 @@ export function EditKOLDialog({ kol }: EditKOLDialogProps) {
                     </DialogFooter>
                 </form>
             </DialogContent>
-        </Dialog>
+        </Dialog >
     );
 }
