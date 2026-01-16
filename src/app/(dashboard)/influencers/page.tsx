@@ -4,27 +4,28 @@ import { useData } from "@/context/data-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { TierBadge } from "@/components/ui/tier-badge";
+
 import { Button } from "@/components/ui/button";
 import { formatIDR } from "@/lib/analytics";
 import { formatCompactNumber } from "@/lib/utils";
 import { AddKOLDialog } from "@/components/add-kol-dialog";
 import { EditKOLDialog } from "@/components/edit-kol-dialog";
 import { DeleteKOLDialog } from "@/components/delete-kol-dialog";
+import { exportToCSV, KOL_EXPORT_COLUMNS } from "@/lib/export-utils";
+import { CompareToolDialog } from "@/components/compare-tool-dialog";
+import { BulkImportDialog } from "@/components/bulk-import-dialog";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import { useRouter } from "next/navigation";
 
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ChevronDown, Filter, ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, Download } from "lucide-react";
 import { Select } from "@/components/retroui/Select";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 function InfluencersContent() {
     const { kols, campaigns, deleteKOLs } = useData();
@@ -36,6 +37,26 @@ function InfluencersContent() {
 
     // Bulk Actions State
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+    // Calculate Status Metrics
+    const statusMetrics = useMemo(() => {
+        const counts: Record<string, number> = {
+            'TO_CONTACT': 0, 'NEGOTIATING': 0, 'IN_PROGRESS': 0,
+            'SUBMITTED': 0, 'POSTED': 0, 'COMPLETED': 0
+        };
+
+        campaigns.forEach(c => {
+            c.deliverables.forEach(d => {
+                if (d.status && counts[d.status] !== undefined) {
+                    counts[d.status]++;
+                } else {
+                    counts['TO_CONTACT']++;
+                }
+            });
+        });
+        return counts;
+    }, [campaigns]);
+
 
     const filteredKols = kols.filter(kol => {
         // 1. Tier Filter
@@ -70,11 +91,8 @@ function InfluencersContent() {
         if (!sortConfig) return 0;
         const { key, direction } = sortConfig;
 
-        // Helper to get total reach
-        const getReach = (k: typeof a) => (k.tiktokFollowers || 0) + (k.instagramFollowers || 0) || k.followers;
-
-        let aValue: any = a[key as keyof typeof a];
-        let bValue: any = b[key as keyof typeof b];
+        let aValue: string | number = (a as unknown as Record<string, string | number>)[key] ?? 0;
+        let bValue: string | number = (b as unknown as Record<string, string | number>)[key] ?? 0;
 
         if (key === 'tiktokFollowers') {
             aValue = a.tiktokFollowers || 0;
@@ -139,6 +157,37 @@ function InfluencersContent() {
                 <AddKOLDialog enableAutoLink={false} />
             </div>
 
+            {/* Pipeline Snapshot */}
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-2 mb-6">
+                {Object.entries(statusMetrics).map(([status, count]) => {
+                    const statusDescriptions: Record<string, string> = {
+                        'TO_CONTACT': 'KOLs not yet reached out to',
+                        'NEGOTIATING': 'In discussion about rates/terms',
+                        'IN_PROGRESS': 'Content creation underway',
+                        'SUBMITTED': 'Content submitted for review',
+                        'POSTED': 'Content published live',
+                        'COMPLETED': 'Campaign deliverables finished'
+                    };
+                    return (
+                        <TooltipProvider key={status} delayDuration={200}>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div className="bg-muted/30 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-lg p-3 flex flex-col items-center justify-center text-center hover:bg-muted/50 transition-colors cursor-help">
+                                        <span className="text-2xl font-bold">{count}</span>
+                                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                                            {status.replace(/_/g, ' ')}
+                                        </span>
+                                    </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p className="text-xs">{statusDescriptions[status] || status}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    );
+                })}
+            </div>
+
             <Card>
                 <CardHeader>
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -156,6 +205,32 @@ function InfluencersContent() {
                                     Delete ({selectedIds.length})
                                 </Button>
                             )}
+
+                            {/* Export Button */}
+                            <TooltipProvider delayDuration={200}>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => exportToCSV(sortedKols, `influencers-${new Date().toISOString().slice(0, 10)}`, KOL_EXPORT_COLUMNS)}
+                                            className="h-8 text-xs"
+                                        >
+                                            <Download className="h-3 w-3 mr-1" />
+                                            Export CSV
+                                        </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p className="text-xs">Download all influencer data as spreadsheet</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+
+                            {/* Compare Tool */}
+                            <CompareToolDialog />
+
+                            {/* Bulk Import */}
+                            <BulkImportDialog />
 
                             {/* Tier Filter */}
                             <Select
@@ -225,9 +300,9 @@ function InfluencersContent() {
                         </div>
                     </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="overflow-auto max-h-[600px]">
                     <Table>
-                        <TableHeader>
+                        <TableHeader className="sticky top-0 z-10 bg-background">
                             <TableRow>
                                 <TableHead className="w-[40px]">
                                     <input
@@ -251,13 +326,28 @@ function InfluencersContent() {
                                     Instagram <ArrowUpDown className="inline ml-1 h-3 w-3" />
                                 </TableHead>
                                 <TableHead className="cursor-pointer hover:text-black dark:hover:text-white" onClick={() => requestSort('campaigns')}>
-                                    Campaigns <ArrowUpDown className="inline ml-1 h-3 w-3" />
+                                    <TooltipProvider delayDuration={200}>
+                                        <Tooltip>
+                                            <TooltipTrigger className="cursor-pointer">Campaigns <ArrowUpDown className="inline ml-1 h-3 w-3" /></TooltipTrigger>
+                                            <TooltipContent><p className="text-xs">Number of campaigns this KOL is part of</p></TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
                                 </TableHead>
                                 <TableHead className="cursor-pointer hover:text-black dark:hover:text-white" onClick={() => requestSort('rateCardTiktok')}>
-                                    Rate TikTok <ArrowUpDown className="inline ml-1 h-3 w-3" />
+                                    <TooltipProvider delayDuration={200}>
+                                        <Tooltip>
+                                            <TooltipTrigger className="cursor-pointer">Rate TikTok <ArrowUpDown className="inline ml-1 h-3 w-3" /></TooltipTrigger>
+                                            <TooltipContent><p className="text-xs">Cost per TikTok video (IDR)</p></TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
                                 </TableHead>
                                 <TableHead className="cursor-pointer hover:text-black dark:hover:text-white" onClick={() => requestSort('rateCardReels')}>
-                                    Rate Reels <ArrowUpDown className="inline ml-1 h-3 w-3" />
+                                    <TooltipProvider delayDuration={200}>
+                                        <Tooltip>
+                                            <TooltipTrigger className="cursor-pointer">Rate Reels <ArrowUpDown className="inline ml-1 h-3 w-3" /></TooltipTrigger>
+                                            <TooltipContent><p className="text-xs">Cost per Instagram Reels (IDR)</p></TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
                                 </TableHead>
                                 <TableHead className="w-[50px]"></TableHead>
                             </TableRow>

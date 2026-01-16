@@ -17,6 +17,12 @@ import { useData } from "@/context/data-context";
 import { Plus, Users, UserPlus, AlertTriangle } from "lucide-react";
 import { KOL } from "@/lib/static-data";
 import { CurrencyInput } from "@/components/ui/currency-input";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface AddKOLDialogProps {
     enableAutoLink?: boolean;
@@ -88,6 +94,7 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
         );
 
         const newKOL: KOL = {
+            // eslint-disable-next-line react-hooks/purity
             id: `kol-${Date.now()}`,
             name: formData.name,
             category: formData.category,
@@ -163,11 +170,20 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button>
-                    <Plus className="mr-2 h-4 w-4" /> {enableAutoLink ? "Add Influencer" : "New Profile"}
-                </Button>
-            </DialogTrigger>
+            <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <DialogTrigger asChild>
+                            <Button>
+                                <Plus className="mr-2 h-4 w-4" /> {enableAutoLink ? "Add Influencer" : "New Profile"}
+                            </Button>
+                        </DialogTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p className="text-xs">Add an influencer to this campaign or create a new profile</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
             <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{enableAutoLink ? "Add to Campaign" : "Create Influencer Profile"}</DialogTitle>

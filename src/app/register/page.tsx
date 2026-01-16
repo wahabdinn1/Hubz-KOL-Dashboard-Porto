@@ -13,7 +13,7 @@ const initialState = {
 };
 
 export default function RegisterPage() {
-    const [state, formAction, isPending] = useActionState(async (prevState: any, formData: FormData) => {
+    const [state, formAction, isPending] = useActionState(async (prevState: { error: string }, formData: FormData) => {
         const result = await signup(formData);
         if (result?.error) {
             return { error: result.error };

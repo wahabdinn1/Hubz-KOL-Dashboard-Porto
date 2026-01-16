@@ -13,7 +13,7 @@ import {
 } from "recharts";
 
 interface BarChartProps extends React.HTMLAttributes<HTMLDivElement> {
-    data: Record<string, any>[];
+    data: Record<string, string | number>[];
     index: string;
     categories: string[];
     strokeColors?: string[];
@@ -22,11 +22,15 @@ interface BarChartProps extends React.HTMLAttributes<HTMLDivElement> {
     tooltipBorderColor?: string;
     gridColor?: string;
     valueFormatter?: (value: number) => string;
+    xAxisFormatter?: (value: string) => string;
+    yAxisFormatter?: (value: number) => string;
     showGrid?: boolean;
     showTooltip?: boolean;
     stacked?: boolean;
     alignment?: "vertical" | "horizontal";
     className?: string; // Explicitly included in interface
+    yAxisWidth?: number;
+    rotateLabel?: boolean;
 }
 
 const BarChart = React.forwardRef<HTMLDivElement, BarChartProps>(
@@ -37,15 +41,18 @@ const BarChart = React.forwardRef<HTMLDivElement, BarChartProps>(
             categories = [],
             strokeColors = ["var(--foreground)"],
             fillColors = ["var(--primary)", "var(--secondary)"],
-            tooltipBgColor = "var(--background)",
-            tooltipBorderColor = "var(--border)",
+            // tooltipBgColor = "var(--background)", // Unused
+            // tooltipBorderColor = "var(--border)", // Unused
             gridColor = "var(--muted)",
             valueFormatter = (value: number) => value.toString(),
+            xAxisFormatter,
+            yAxisFormatter,
             showGrid = true,
             showTooltip = true,
             stacked = false,
             alignment = "vertical",
             className,
+            yAxisWidth = 60,
             ...props
         },
         ref
@@ -56,7 +63,7 @@ const BarChart = React.forwardRef<HTMLDivElement, BarChartProps>(
                     <RechartsBarChart
                         data={data}
                         layout={alignment === "horizontal" ? "vertical" : undefined}
-                        margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+                        margin={{ top: 10, right: 30, left: 0, bottom: props.rotateLabel ? 60 : 0 }}
                     >
                         {showGrid && (
                             <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
@@ -82,17 +89,29 @@ const BarChart = React.forwardRef<HTMLDivElement, BarChartProps>(
                             </>
                         ) : (
                             <>
+                                <YAxis
+                                    axisLine={false}
+                                    tickLine={false}
+                                    className="text-xs fill-muted-foreground"
+                                    tickFormatter={yAxisFormatter || valueFormatter}
+                                    width={yAxisWidth}
+                                    allowDecimals={false}
+                                    tickCount={5}
+                                />
                                 <XAxis
                                     dataKey={index}
                                     axisLine={false}
                                     tickLine={false}
                                     className="text-xs fill-muted-foreground"
-                                />
-                                <YAxis
-                                    axisLine={false}
-                                    tickLine={false}
-                                    className="text-xs fill-muted-foreground"
-                                    tickFormatter={valueFormatter}
+                                    interval={props.rotateLabel ? 0 : "preserveStartEnd"}
+                                    height={props.rotateLabel ? 70 : 30}
+                                    tickFormatter={xAxisFormatter}
+                                    tick={
+                                        props.rotateLabel
+                                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                            ? ({ angle: -45, textAnchor: "end", fontSize: 10 } as any)
+                                            : undefined
+                                    }
                                 />
                             </>
                         )}
@@ -102,29 +121,23 @@ const BarChart = React.forwardRef<HTMLDivElement, BarChartProps>(
                                 content={({ active, payload, label }) => {
                                     if (!active || !payload?.length) return null;
                                     return (
-                                        <div
-                                            className="border p-2 shadow"
-                                            style={{
-                                                backgroundColor: tooltipBgColor,
-                                                borderColor: tooltipBorderColor,
-                                            }}
-                                        >
-                                            <div className="grid grid-cols-2 gap-2">
+                                        <div className="rounded-lg border-2 border-border p-3 shadow-lg bg-slate-900 dark:bg-slate-50 text-slate-50 dark:text-slate-900">
+                                            <div className="grid grid-cols-2 gap-3">
                                                 <div className="flex flex-col">
-                                                    <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                                    <span className="text-[0.70rem] uppercase text-slate-400 dark:text-slate-500">
                                                         {index}
                                                     </span>
-                                                    <span className="font-bold text-muted-foreground">
+                                                    <span className="font-bold">
                                                         {label}
                                                     </span>
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    {payload.map((entry, index) => (
-                                                        <div key={index} className="flex flex-col">
-                                                            <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                                    {payload.map((entry, idx) => (
+                                                        <div key={idx} className="flex flex-col">
+                                                            <span className="text-[0.70rem] uppercase text-slate-400 dark:text-slate-500">
                                                                 {entry.dataKey}
                                                             </span>
-                                                            <span className="font-bold" style={{ color: strokeColors[0] }}>
+                                                            <span className="font-bold text-emerald-400 dark:text-emerald-600">
                                                                 {valueFormatter(entry.value as number)}
                                                             </span>
                                                         </div>

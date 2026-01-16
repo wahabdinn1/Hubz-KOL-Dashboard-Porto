@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/tabs";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
 import { KOLTable } from "@/components/kol-table";
-import { formatIDR, calculateROI, calculateROAS, calculateCampaignSuccess, calculateER } from "@/lib/analytics";
+import { formatIDR, calculateROI, calculateCampaignSuccess, calculateER, calculateCPV, calculateCPM } from "@/lib/analytics";
 import {
     Wallet,
     TrendingUp,
@@ -24,6 +24,7 @@ import {
     ChevronLeft,
     List,
     LayoutDashboard,
+    AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useData } from "@/context/data-context";
@@ -164,9 +165,16 @@ function CampaignDetailContent({ params }: { params: Promise<{ id: string }> }) 
                         <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
                             {campaign.name}
                         </h1>
-                        <p className="text-slate-500 dark:text-slate-400 mt-1">
-                            Campaign Performance Dashboard
-                        </p>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-1">
+                            <p className="text-slate-500 dark:text-slate-400">
+                                Campaign Performance Dashboard
+                            </p>
+                            {(campaign.startDate || campaign.endDate) && (
+                                <div className="text-sm font-medium px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-md text-slate-600 dark:text-slate-300 w-fit">
+                                    {campaign.startDate ? new Date(campaign.startDate).toLocaleDateString('en-GB') : 'TBD'} - {campaign.endDate ? new Date(campaign.endDate).toLocaleDateString('en-GB') : 'TBD'}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -252,10 +260,30 @@ function CampaignDetailContent({ params }: { params: Promise<{ id: string }> }) 
                     icon={<Wallet className="h-4 w-4 text-muted-foreground" />}
                 />
                 <SummaryCard
-                    title="Total Spend"
+                    title={(() => {
+                        const spendPercent = (totalSpend / campaign.budget) * 100;
+                        if (spendPercent > 100) return "Total Spend ⚠️ OVER";
+                        if (spendPercent > 80) return "Total Spend ⚠️";
+                        return "Total Spend";
+                    })()}
                     value={formatIDR(totalSpend)}
-                    subtext="Realized Cost"
-                    icon={<Wallet className="h-4 w-4 text-muted-foreground" />}
+                    subtext={(() => {
+                        const spendPercent = (totalSpend / campaign.budget) * 100;
+                        if (spendPercent > 100) return `${spendPercent.toFixed(0)}% of budget - CRITICAL`;
+                        if (spendPercent > 80) return `${spendPercent.toFixed(0)}% of budget - Warning`;
+                        return `${spendPercent.toFixed(0)}% of budget`;
+                    })()}
+                    valueColor={(() => {
+                        const spendPercent = (totalSpend / campaign.budget) * 100;
+                        if (spendPercent > 100) return "text-red-600 dark:text-red-500";
+                        if (spendPercent > 80) return "text-amber-600 dark:text-amber-500";
+                        return undefined;
+                    })()}
+                    icon={(() => {
+                        const spendPercent = (totalSpend / campaign.budget) * 100;
+                        if (spendPercent > 80) return <AlertTriangle className="h-4 w-4 text-amber-500" />;
+                        return <Wallet className="h-4 w-4 text-muted-foreground" />;
+                    })()}
                 />
                 <SummaryCard
                     title={card3Title}
@@ -263,6 +291,12 @@ function CampaignDetailContent({ params }: { params: Promise<{ id: string }> }) 
                     subtext={card3Subtext}
                     valueColor={card3Color}
                     icon={card3Icon}
+                />
+                <SummaryCard
+                    title="Cost Efficiency"
+                    value={formatIDR(calculateCPV(totalSpend, totalViews))}
+                    subtext={`CPM: ${formatIDR(calculateCPM(totalSpend, totalViews))}`}
+                    icon={<TrendingUp className="h-4 w-4 text-emerald-500" />}
                 />
                 <SummaryCard
                     title="Best Performer"
@@ -302,8 +336,8 @@ function CampaignDetailContent({ params }: { params: Promise<{ id: string }> }) 
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="board" className="h-[calc(100vh-220px)] w-full">
-                    <div className="h-full overflow-hidden p-1">
+                <TabsContent value="board" className="h-[calc(100vh-280px)] w-full overflow-hidden">
+                    <div className="h-full w-full">
                         <KanbanBoard />
                     </div>
                 </TabsContent>

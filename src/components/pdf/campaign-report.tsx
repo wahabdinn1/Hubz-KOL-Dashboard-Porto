@@ -3,7 +3,7 @@
 import React from 'react';
 import { Page, Text, View, Document, StyleSheet, Font } from '@react-pdf/renderer';
 import { Campaign, KOL } from '@/lib/static-data';
-import { calculateROI, calculateER, formatIDR } from '@/lib/analytics';
+import { calculateROI, formatIDR } from '@/lib/analytics';
 
 // Register standard fonts
 Font.register({
@@ -136,22 +136,12 @@ interface CampaignReportProps {
 }
 
 export const CampaignReport = ({ campaign, kols }: CampaignReportProps) => {
-    // Recalculate metrics for PDF
-    let totalSpend = 0;
-    let totalRevenue = 0;
-    let totalViews = 0;
-    let totalEngagements = 0;
-
     const deliverables = campaign.deliverables.map(del => {
         const kol = kols.find(k => k.id === del.kolId);
         if (!kol) return null;
 
         const rate = campaign.platform === 'Instagram' ? (kol.rateCardReels || 0) : (kol.rateCardTiktok || 0);
         const cost = rate * del.videosCount;
-        totalSpend += cost;
-        totalRevenue += del.salesGenerated;
-        totalViews += del.totalViews;
-        totalEngagements += del.totalEngagements;
 
         return {
             name: kol.name,
@@ -160,7 +150,12 @@ export const CampaignReport = ({ campaign, kols }: CampaignReportProps) => {
             sales: del.salesGenerated,
             cost: cost
         };
-    }).filter(item => item !== null);
+    }).filter((item): item is NonNullable<typeof item> => item !== null);
+
+    const totalSpend = deliverables.reduce((acc, item) => acc + item.cost, 0);
+    const totalRevenue = deliverables.reduce((acc, item) => acc + item.sales, 0);
+    const totalViews = deliverables.reduce((acc, item) => acc + item.views, 0);
+    const totalEngagements = deliverables.reduce((acc, item) => acc + item.engagements, 0);
 
     const roi = calculateROI(totalRevenue, totalSpend);
     const costPerView = totalViews > 0 ? totalSpend / totalViews : 0;

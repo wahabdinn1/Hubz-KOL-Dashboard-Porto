@@ -1,5 +1,6 @@
 import { DashboardShell } from "@/components/dashboard-shell";
 import { createClient } from "@/utils/supabase/server";
+import { ErrorBoundary } from "@/components/error-boundary";
 
 export default async function DashboardLayout({
     children,
@@ -11,7 +12,9 @@ export default async function DashboardLayout({
 
     return (
         <DashboardShell user={user}>
-            {children}
+            <ErrorBoundary>
+                {children}
+            </ErrorBoundary>
         </DashboardShell>
     );
 }

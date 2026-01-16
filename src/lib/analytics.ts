@@ -20,13 +20,18 @@ export function calculateER(engagements: number, views: number): number {
     return (engagements / views) * 100;
 }
 
-/**
- * Calculates Cost Per Mille (CPM).
- * Formula: (Cost / Total Views) * 1000
- */
 export function calculateCPM(cost: number, views: number): number {
     if (views === 0) return 0;
     return (cost / views) * 1000;
+}
+
+/**
+ * Calculates Cost Per View (CPV).
+ * Formula: Cost / Total Views
+ */
+export function calculateCPV(cost: number, views: number): number {
+    if (views === 0) return 0;
+    return cost / views;
 }
 
 /**
@@ -124,7 +129,7 @@ export function calculateCampaignSuccess(
     } else {
         // AWARENESS
         const cpm = calculateCPM(totalSpend, totalViews);
-        const cpv = totalViews > 0 ? totalSpend / totalViews : 0;
+        // Removed unused cpv calculation
 
         // Calculate Virality Rate using helper
         const viralityRate = calculateViralityRate(shares, totalViews);

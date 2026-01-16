@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
     DndContext,
     DragOverlay,
@@ -20,6 +20,8 @@ import { KanbanCard } from "./kanban-card";
 import { KanbanColumn } from "./kanban-column";
 import { useData } from "@/context/data-context";
 import { KOL } from "@/lib/static-data";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 
 const COLUMNS = [
     { id: "to_contact", title: "To Contact" },
@@ -32,6 +34,7 @@ const COLUMNS = [
 export function KanbanBoard() {
     const { activeCampaign, kols, updateCampaignDeliverableDB } = useData();
     const [activeId, setActiveId] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState("");
     const [items, setItems] = useState<Record<string, KOL[]>>({
         to_contact: [],
         negotiating: [],
@@ -60,9 +63,26 @@ export function KanbanBoard() {
                 newItems[status].push(kol);
             }
         });
-        setItems(newItems);
+        const timer = setTimeout(() => setItems(newItems), 0);
+        return () => clearTimeout(timer);
     }, [activeCampaign, kols, activeId]);
 
+    // 2. Filter items based on search query
+    const filteredItems = useMemo(() => {
+        if (!searchQuery.trim()) return items;
+
+        const query = searchQuery.toLowerCase();
+        const filtered: Record<string, KOL[]> = {};
+
+        Object.keys(items).forEach(key => {
+            filtered[key] = items[key].filter(kol =>
+                kol.name.toLowerCase().includes(query) ||
+                kol.category.toLowerCase().includes(query)
+            );
+        });
+
+        return filtered;
+    }, [items, searchQuery]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -139,7 +159,7 @@ export function KanbanBoard() {
     };
 
     const handleDragEnd = async (event: DragEndEvent) => {
-        const { active, over } = event;
+        const { active } = event;
         const activeId = active.id as string;
 
         // Finalize location derived from whatever the DragOver logic left us with
@@ -160,35 +180,65 @@ export function KanbanBoard() {
     if (!activeCampaign) return <div>Select a campaign to view board.</div>;
 
     return (
-        <DndContext
-            sensors={sensors}
-            collisionDetection={closestCorners}
-            onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
-            onDragEnd={handleDragEnd}
-        >
-            <div className="flex h-full gap-4 overflow-x-auto pb-4">
-                {COLUMNS.map((col) => (
-                    <KanbanColumn
-                        key={col.id}
-                        id={col.id}
-                        title={col.title}
-                        items={items[col.id] || []}
+        <div className="flex flex-col h-full">
+            {/* Search Bar */}
+            <div className="flex items-center gap-4 mb-4 px-1">
+                <div className="relative flex-1 max-w-sm">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Search KOL..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9 border-2 border-black dark:border-zinc-700 rounded-xl shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
-                ))}
+                </div>
+                <span className="text-sm text-muted-foreground">
+                    {Object.values(filteredItems).flat().length} KOLs
+                </span>
             </div>
 
-            <DragOverlay>
-                {activeId ? (
-                    <div className="opacity-80 rotate-3">
-                        {(() => {
-                            const kol = kols.find(k => k.id === activeId);
-                            if (kol) return <KanbanCard id={activeId} kol={kol} status="overlay" />;
-                            return null;
-                        })()}
-                    </div>
-                ) : null}
-            </DragOverlay>
-        </DndContext>
+            {/* Kanban Columns */}
+            <DndContext
+                sensors={sensors}
+                collisionDetection={closestCorners}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDragEnd={handleDragEnd}
+            >
+                <div className="flex flex-1 gap-3 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-zinc-300 dark:scrollbar-thumb-zinc-600">
+                    {COLUMNS.map((col) => (
+                        <KanbanColumn
+                            key={col.id}
+                            id={col.id}
+                            title={col.title}
+                            items={filteredItems[col.id] || []}
+                            activeCampaign={activeCampaign}
+                        />
+                    ))}
+                </div>
+
+                <DragOverlay>
+                    {activeId ? (
+                        <div className="opacity-80 rotate-3">
+                            {(() => {
+                                const kol = kols.find(k => k.id === activeId);
+                                const deliverable = activeCampaign?.deliverables.find(d => d.kolId === activeId);
+                                if (kol) return (
+                                    <KanbanCard
+                                        id={activeId}
+                                        kol={kol}
+                                        status="overlay"
+                                        contentLink={deliverable?.contentLink}
+                                        dueDate={deliverable?.dueDate}
+                                        notes={deliverable?.notes}
+                                    />
+                                );
+                                return null;
+                            })()}
+                        </div>
+                    ) : null}
+                </DragOverlay>
+            </DndContext>
+        </div>
     );
 }

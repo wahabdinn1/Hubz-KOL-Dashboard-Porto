@@ -18,13 +18,7 @@ import { useAuth } from "@/context/auth-context";
 import { Trash2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 
-// Dummy data for now, would typically fetch from API
-const DUMMY_USERS = [
-    { id: "1", email: "admin@hubz.com", role: "super_admin", full_name: "Super Admin", created_at: new Date().toISOString() },
-    { id: "2", email: "manager@hubz.com", role: "admin", full_name: "Manager One", created_at: new Date(Date.now() - 86400000 * 2).toISOString() },
-    { id: "3", email: "staff@hubz.com", role: "member", full_name: "Staff Member", created_at: new Date(Date.now() - 86400000 * 5).toISOString() },
-    { id: "4", email: "wahabdinn@gmail.com", role: "super_admin", full_name: "Wahab Dinn", created_at: new Date().toISOString() },
-];
+
 
 export function UserManagementTable() {
     const { role: currentUserRole } = useAuth();

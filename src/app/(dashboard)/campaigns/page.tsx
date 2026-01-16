@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { formatIDR, calculateROI } from "@/lib/analytics";
+import { Progress } from "@/components/retroui/Progress";
 import {
   Table,
   TableBody,
@@ -20,14 +21,27 @@ import { Button } from "@/components/ui/button";
 import { useData } from "@/context/data-context";
 import { CreateCampaignDialog } from "@/components/create-campaign-dialog";
 import { DeleteCampaignDialog } from "@/components/delete-campaign-dialog";
-import { ChevronRight, ArrowRight } from "lucide-react";
-import Link from "next/link";
+import { Copy, MoreHorizontal, Trash2 } from "lucide-react";
 import { Campaign } from "@/lib/static-data";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 function CampaignsListContent() {
-  const { campaigns, kols, deleteCampaigns } = useData();
+  const { campaigns, kols, deleteCampaigns, duplicateCampaign } = useData();
 
   const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -70,7 +84,13 @@ function CampaignsListContent() {
 
     const roi = calculateROI(totalRevenue, totalSpend);
 
-    return { totalSpend, totalRevenue, roi };
+    // Calculate completion % based on deliverable statuses
+    const completedCount = campaign.deliverables.filter(d => d.status === 'completed' || d.status === 'posted').length;
+    const completionPercent = campaign.deliverables.length > 0
+      ? Math.round((completedCount / campaign.deliverables.length) * 100)
+      : 0;
+
+    return { totalSpend, totalRevenue, roi, completionPercent };
   };
 
   return (
@@ -105,9 +125,9 @@ function CampaignsListContent() {
           <CardTitle>Active Campaigns</CardTitle>
           <CardDescription>Click on a campaign to view detailed performance metrics.</CardDescription>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-auto max-h-[600px]">
           <Table>
-            <TableHeader>
+            <TableHeader className="sticky top-0 z-10 bg-background">
               <TableRow>
                 <TableHead className="w-[40px]">
                   <input
@@ -122,10 +142,46 @@ function CampaignsListContent() {
                 <TableHead>Objective</TableHead>
                 <TableHead>Start Date</TableHead>
                 <TableHead>End Date</TableHead>
-                <TableHead>Budget</TableHead>
-                <TableHead>Total Spend</TableHead>
-                <TableHead>Revenue</TableHead>
-                <TableHead>ROI</TableHead>
+                <TableHead>
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger className="cursor-help">Budget</TooltipTrigger>
+                      <TooltipContent><p className="text-xs">Total allocated campaign budget</p></TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </TableHead>
+                <TableHead>
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger className="cursor-help">Total Spend</TooltipTrigger>
+                      <TooltipContent><p className="text-xs">Sum of all KOL rates × videos</p></TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </TableHead>
+                <TableHead>
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger className="cursor-help">Revenue</TooltipTrigger>
+                      <TooltipContent><p className="text-xs">Total sales generated from campaign</p></TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </TableHead>
+                <TableHead>
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger className="cursor-help">Progress</TooltipTrigger>
+                      <TooltipContent><p className="text-xs">Campaign completion based on deliverable statuses</p></TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </TableHead>
+                <TableHead>
+                  <TooltipProvider delayDuration={200}>
+                    <Tooltip>
+                      <TooltipTrigger className="cursor-help">ROI</TooltipTrigger>
+                      <TooltipContent><p className="text-xs">Return on Investment: (Revenue - Spend) / Spend</p></TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
@@ -191,17 +247,49 @@ function CampaignsListContent() {
                       </TableCell>
                       <TableCell>{formatIDR(metrics.totalRevenue)}</TableCell>
                       <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Progress value={metrics.completionPercent} className="h-2 w-[60px]" />
+                          <span className="text-xs text-muted-foreground">{metrics.completionPercent}%</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
                         <span className={metrics.roi > 0 ? "text-green-600 font-medium" : "text-slate-500"}>
                           {metrics.roi.toFixed(1)}%
                         </span>
                       </TableCell>
-                      <TableCell className="text-right flex items-center justify-end gap-2">
-                        <Link href={`/campaigns/${campaign.id}`} onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="sm">
-                            View <ArrowRight className="ml-2 h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <DeleteCampaignDialog campaign={campaign} />
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Open menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                duplicateCampaign(campaign.id);
+                              }}
+                            >
+                              <Copy className="mr-2 h-4 w-4" />
+                              Duplicate
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                              <DeleteCampaignDialog
+                                campaign={campaign}
+                                trigger={
+                                  <div className="flex items-center w-full text-red-600 cursor-pointer">
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    <span className="flex-1">Delete</span>
+                                  </div>
+                                }
+                              />
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   );

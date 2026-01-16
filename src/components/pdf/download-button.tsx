@@ -11,6 +11,7 @@ export const CampaignDownloadButton = ({ campaign, kols }: { campaign: Campaign,
     const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsClient(true);
     }, []);
 
@@ -28,8 +29,8 @@ export const CampaignDownloadButton = ({ campaign, kols }: { campaign: Campaign,
             document={<CampaignReport campaign={campaign} kols={kols} />}
             fileName={`report-${campaign.name.toLowerCase().replace(/\s+/g, '-')}.pdf`}
         >
-            {/* @ts-ignore */}
-            {({ blob, url, loading, error }) => (
+
+            {({ loading }) => (
                 <Button variant="outline" size="sm" disabled={loading}>
                     {loading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <FileDown className="h-4 w-4 mr-2" />}
                     {loading ? 'Generating...' : 'Export PDF'}

@@ -38,15 +38,12 @@ export function calculateMatchScore(kol: KOL, campaign: Campaign): MatchResult {
 
     // 2. Platform Match (20 pts)
     const campaignPlatform = campaign.platform || 'TikTok';
-    let platformMatch = false;
 
     if (campaignPlatform === 'TikTok' && kol.tiktokUsername) {
         score += 20;
-        platformMatch = true;
         reasons.push("Active on TikTok");
     } else if (campaignPlatform === 'Instagram' && kol.instagramUsername) {
         score += 20;
-        platformMatch = true;
         reasons.push("Active on Instagram");
     }
 

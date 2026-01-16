@@ -13,7 +13,7 @@ const initialState = {
 };
 
 export default function LoginPage() {
-    const [state, formAction, isPending] = useActionState(async (prevState: any, formData: FormData) => {
+    const [state, formAction, isPending] = useActionState(async (prevState: { error: string }, formData: FormData) => {
         const result = await login(formData);
         if (result?.error) {
             return { error: result.error };
@@ -84,7 +84,7 @@ export default function LoginPage() {
                         </Button>
 
                         <div className="text-center text-sm font-medium pt-4">
-                            Don't have an account?{" "}
+                            Don&apos;t have an account?{" "}
                             <Link
                                 href="/register"
                                 className="font-black underline decoration-2 underline-offset-4 hover:text-primary transition-colors"

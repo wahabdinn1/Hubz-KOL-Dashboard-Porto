@@ -47,24 +47,27 @@ export function EditKOLDialog({ kol }: EditKOLDialogProps) {
 
     useEffect(() => {
         if (open) {
-            setFormData({
-                name: kol.name,
-                category: kol.category,
-                followers: kol.followers.toString(),
-                avgViews: kol.avgViews.toString(),
+            const timer = setTimeout(() => {
+                setFormData({
+                    name: kol.name,
+                    category: kol.category,
+                    followers: kol.followers.toString(),
+                    avgViews: kol.avgViews.toString(),
 
-                tiktokUsername: kol.tiktokUsername || "",
-                tiktokProfileLink: kol.tiktokProfileLink || "",
-                tiktokFollowers: (kol.tiktokFollowers || 0).toString(),
-                rateCardTiktok: (kol.rateCardTiktok || 0).toString(),
+                    tiktokUsername: kol.tiktokUsername || "",
+                    tiktokProfileLink: kol.tiktokProfileLink || "",
+                    tiktokFollowers: (kol.tiktokFollowers || 0).toString(),
+                    rateCardTiktok: (kol.rateCardTiktok || 0).toString(),
 
-                instagramUsername: kol.instagramUsername || "",
-                instagramProfileLink: kol.instagramProfileLink || "",
-                instagramFollowers: (kol.instagramFollowers || 0).toString(),
-                rateCardReels: (kol.rateCardReels || 0).toString(),
+                    instagramUsername: kol.instagramUsername || "",
+                    instagramProfileLink: kol.instagramProfileLink || "",
+                    instagramFollowers: (kol.instagramFollowers || 0).toString(),
+                    rateCardReels: (kol.rateCardReels || 0).toString(),
 
-                rateCardPdfLink: kol.rateCardPdfLink || ""
-            });
+                    rateCardPdfLink: kol.rateCardPdfLink || ""
+                });
+            }, 0);
+            return () => clearTimeout(timer);
         }
     }, [open, kol]);
 

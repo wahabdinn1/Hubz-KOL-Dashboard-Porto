@@ -3,7 +3,8 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { KOL, Campaign, Category, CAMPAIGN_RAMADAN } from "@/lib/static-data";
 import { supabase } from "@/lib/supabase";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { CampaignTemplate } from "@/lib/campaign-templates";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 interface DataContextType {
@@ -31,8 +32,16 @@ interface DataContextType {
     addCampaignDeliverableDB: (kolId: string, campaignId: string) => Promise<void>;
     removeKOLFromCampaignDB: (campaignId: string, kolId: string) => Promise<void>;
     updateCampaign: (id: string, updates: Partial<Campaign>) => Promise<void>;
+    duplicateCampaign: (id: string) => Promise<void>;
     campaign: Campaign;
     loading: boolean;
+    // Campaign Templates
+    campaignTemplates: CampaignTemplate[];
+    addCampaignTemplate: (template: Omit<CampaignTemplate, "id">) => Promise<void>;
+    deleteCampaignTemplate: (id: string) => Promise<void>;
+    // Notes
+    addNote: (kolId: string, content: string) => Promise<void>;
+    deleteNote: (id: string) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -112,6 +121,32 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         }
     });
 
+    // 4. Fetch Campaign Templates
+    const { data: rawTemplates = [] } = useQuery({
+        queryKey: ['campaign_templates'],
+        queryFn: async () => {
+            const { data, error } = await supabase.from('campaign_templates').select('*');
+            if (error) {
+                console.warn('Campaign templates table may not exist yet:', error.message);
+                return [];
+            }
+            return data;
+        }
+    });
+
+    // Map templates to CampaignTemplate interface
+    const campaignTemplates: CampaignTemplate[] = React.useMemo(() => {
+        return rawTemplates.map((t: { id: string; name: string; description: string; platform: string; default_budget: number }) => ({
+            id: t.id,
+            name: t.name,
+            description: t.description || '',
+            defaultValues: {
+                platform: t.platform as 'TikTok' | 'Instagram',
+                budget: t.default_budget || 50000000,
+            },
+        }));
+    }, [rawTemplates]);
+
     // Derive Mapped Campaigns
     const campaigns: Campaign[] = React.useMemo(() => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -126,7 +161,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                     totalViews: d.total_views,
                     totalEngagements: d.total_engagements,
                     salesGenerated: d.sales_generated,
-                    status: d.status || 'to_contact'
+                    status: d.status || 'to_contact',
+                    contentLink: d.content_link,
+                    dueDate: d.due_date,
+                    notes: d.notes
                 }));
 
             return {
@@ -251,6 +289,31 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         } catch (e) {
             console.error("Error updating campaign:", e);
             toast.error("Failed to update campaign");
+        }
+    };
+
+    const duplicateCampaign = async (id: string) => {
+        try {
+            const originalCampaign = campaigns.find(c => c.id === id);
+            if (!originalCampaign) throw new Error("Campaign not found");
+
+            // Create new campaign with copied data
+            const payload = {
+                name: `${originalCampaign.name} (Copy)`,
+                budget: originalCampaign.budget,
+                platform: originalCampaign.platform,
+                objective: originalCampaign.objective,
+                // Leave dates empty for user to fill
+            };
+
+            const { error } = await supabase.from('campaigns').insert([payload]).select().single();
+            if (error) throw error;
+
+            await queryClient.invalidateQueries({ queryKey: ['campaigns'] });
+            toast.success("Campaign duplicated successfully");
+        } catch (e) {
+            console.error("Error duplicating campaign:", e);
+            toast.error("Failed to duplicate campaign");
         }
     };
 
@@ -383,7 +446,6 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateCampaignDeliverableDB = async (campaignId: string, kolId: string, metrics: any) => {
         // Construct payload first
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -393,11 +455,15 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         if (metrics.totalEngagements !== undefined) payload.total_engagements = metrics.totalEngagements;
         if (metrics.salesGenerated !== undefined) payload.sales_generated = metrics.salesGenerated;
         if (metrics.status !== undefined) payload.status = metrics.status;
+        if (metrics.contentLink !== undefined) payload.content_link = metrics.contentLink;
+        if (metrics.dueDate !== undefined) payload.due_date = metrics.dueDate;
+        if (metrics.notes !== undefined) payload.notes = metrics.notes;
 
         // Optimistic Update
         await queryClient.cancelQueries({ queryKey: ['deliverables'] });
         const previousDeliverables = queryClient.getQueryData(['deliverables']);
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         queryClient.setQueryData(['deliverables'], (old: any[] | undefined) => {
             if (!old) return [];
             return old.map(d =>
@@ -427,6 +493,74 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    // Add Campaign Template
+    const addCampaignTemplate = async (template: Omit<CampaignTemplate, "id">) => {
+        try {
+            const { error } = await supabase.from('campaign_templates').insert([{
+                name: template.name,
+                description: template.description,
+                platform: template.defaultValues.platform,
+                default_budget: template.defaultValues.budget,
+            }]);
+            if (error) throw error;
+            queryClient.invalidateQueries({ queryKey: ['campaign_templates'] });
+            toast.success("Template added");
+        } catch (e) {
+            console.error("Error adding template:", e);
+            toast.error("Failed to add template");
+        }
+    };
+
+    // Delete Campaign Template
+    const deleteCampaignTemplate = async (id: string) => {
+        try {
+            const { error } = await supabase.from('campaign_templates').delete().eq('id', id);
+            if (error) throw error;
+            queryClient.invalidateQueries({ queryKey: ['campaign_templates'] });
+            toast.success("Template deleted");
+        } catch (e) {
+            console.error("Error deleting template:", e);
+            toast.error("Failed to delete template");
+        }
+    };
+
+    // Notes Mutations
+    const addNote = async (kolId: string, content: string) => {
+        try {
+            const { error } = await supabase.from('kol_notes').insert([{
+                kol_id: kolId,
+                content: content
+            }]);
+            if (error) {
+                // Graceful fallback for demo if table missing
+                if (error.code === '42P01') { // undefined_table
+                    toast.error("Notes table missing in database");
+                    return;
+                }
+                throw error;
+            }
+            queryClient.invalidateQueries({ queryKey: ['notes', kolId] });
+            toast.success("Note added");
+        } catch (e) {
+            console.error("Error adding note:", e);
+            toast.error("Failed to add note");
+        }
+    };
+
+    const deleteNote = async (id: string) => {
+        try {
+            const { error } = await supabase.from('kol_notes').delete().eq('id', id);
+            if (error) throw error;
+            // We need kolId to invalidate query, but delete only takes ID. 
+            // Ideally we invalidate all notes or pass kolId. For now invalidate all 'notes' queries.
+            queryClient.invalidateQueries({ queryKey: ['notes'] });
+            toast.success("Note deleted");
+        } catch (e) {
+            console.error("Error deleting note:", e);
+            toast.error("Failed to delete note");
+        }
+    };
+
     const safeCampaign = activeCampaign || CAMPAIGN_RAMADAN;
     const loading = kolsLoading || campaignsLoading;
 
@@ -440,7 +574,9 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 addCategory, deleteCategory, updateCategoryOrder,
                 deleteCampaign, updateCampaignDeliverableDB, addCampaignDeliverableDB,
                 removeKOLFromCampaignDB, updateCampaign,
-                loading, deleteKOLs, deleteCampaigns
+                loading, deleteKOLs, deleteCampaigns, duplicateCampaign,
+                campaignTemplates, addCampaignTemplate, deleteCampaignTemplate,
+                addNote, deleteNote
             }}
         >
             {children}

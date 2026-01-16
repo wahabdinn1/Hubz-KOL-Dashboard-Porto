@@ -17,6 +17,13 @@ export interface KOL {
     rateCardPdfLink?: string;
 }
 
+export interface Note {
+    id: string;
+    kolId: string;
+    content: string;
+    createdAt: string;
+}
+
 export interface CampaignDeliverable {
     kolId: string;
     videosCount: number;
@@ -31,6 +38,9 @@ export interface CampaignDeliverable {
     orders?: number;
     salesGenerated: number;
     status: 'to_contact' | 'negotiating' | 'content_creation' | 'posted' | 'completed';
+    contentLink?: string;
+    dueDate?: string;
+    notes?: string;
 }
 
 export interface Category {

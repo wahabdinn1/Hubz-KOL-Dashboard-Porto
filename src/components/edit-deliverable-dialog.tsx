@@ -25,6 +25,7 @@ interface EditDeliverableDialogProps {
         totalViews: number;
         totalEngagements: number;
         salesGenerated: number;
+        contentLink?: string;
     };
     kolName: string;
 }
@@ -38,16 +39,21 @@ export function EditDeliverableDialog({ campaignId, kolId, initialMetrics, kolNa
         totalViews: "",
         totalEngagements: "",
         salesGenerated: "",
+        contentLink: "",
     });
 
     useEffect(() => {
         if (open) {
-            setFormData({
-                videosCount: initialMetrics.videosCount.toString(),
-                totalViews: initialMetrics.totalViews.toString(),
-                totalEngagements: initialMetrics.totalEngagements.toString(),
-                salesGenerated: initialMetrics.salesGenerated.toString(),
-            });
+            const timer = setTimeout(() => {
+                setFormData({
+                    videosCount: initialMetrics.videosCount.toString(),
+                    totalViews: initialMetrics.totalViews.toString(),
+                    totalEngagements: initialMetrics.totalEngagements.toString(),
+                    salesGenerated: initialMetrics.salesGenerated.toString(),
+                    contentLink: initialMetrics.contentLink || "",
+                });
+            }, 0);
+            return () => clearTimeout(timer);
         }
     }, [open, initialMetrics]);
 
@@ -59,6 +65,7 @@ export function EditDeliverableDialog({ campaignId, kolId, initialMetrics, kolNa
             totalViews: Number(formData.totalViews) || 0,
             totalEngagements: Number(formData.totalEngagements) || 0,
             salesGenerated: Number(formData.salesGenerated) || 0,
+            contentLink: formData.contentLink,
         });
 
         setOpen(false);
@@ -103,6 +110,18 @@ export function EditDeliverableDialog({ campaignId, kolId, initialMetrics, kolNa
                             id="salesGenerated"
                             value={formData.salesGenerated}
                             onValueChange={(val) => setFormData(prev => ({ ...prev, salesGenerated: val.toString() }))}
+                            className="col-span-3"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="contentLink" className="text-right">Link</Label>
+                        <Input
+                            id="contentLink"
+                            name="contentLink"
+                            placeholder="https://tiktok.com/..."
+                            value={formData.contentLink}
+                            onChange={handleChange}
                             className="col-span-3"
                         />
                     </div>

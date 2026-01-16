@@ -11,10 +11,10 @@ import {
     BarChart3,
     LogOut,
     PanelLeft,
-    LayoutGrid,
     ChevronDown,
-    Search,
-    Zap
+    Zap,
+    Calendar,
+    LucideIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/app/auth/actions";
@@ -39,18 +39,28 @@ import {
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { CommandPalette } from "@/components/command-palette";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { MobileBottomNav } from "@/components/mobile-bottom-nav";
 
 // --- Navigation Structure ---
 type NavItem = {
     name: string;
     href?: string;
-    icon: any;
+    icon: LucideIcon;
     items?: NavItem[]; // Nested items
 };
 
 const NAV_ITEMS: NavItem[] = [
     { name: "Overview", href: "/", icon: BarChart3 },
-    { name: "Campaigns", href: "/campaigns", icon: Briefcase },
+    {
+        name: "Campaigns",
+        icon: Briefcase,
+        items: [
+            { name: "List", href: "/campaigns", icon: Briefcase },
+            { name: "Calendar", href: "/campaigns/calendar", icon: Calendar },
+        ]
+    },
     { name: "Influencers", href: "/influencers", icon: Users },
     {
         name: "Tools",
@@ -74,8 +84,14 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
     const userInitials = userEmail.substring(0, 2).toUpperCase();
     const userName = userEmail.split("@")[0];
 
+    const { ShortcutsHelpDialog } = useKeyboardShortcuts();
+
     return (
         <div className="flex min-h-screen bg-muted/40 font-sans">
+            {/* Global Command Palette */}
+            <CommandPalette />
+            {/* Shortcuts Help Dialog */}
+            <ShortcutsHelpDialog />
             {/* Desktop Sidebar */}
             <aside className={`sticky top-0 h-screen hidden flex-col border-r-2 border-black bg-background md:flex transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
                 {/* Header (BrutAdmin Style) */}
@@ -202,11 +218,13 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
                     </div>
                 </header>
 
-                <main className="flex-1 p-6 md:p-8 overflow-y-auto">
+                <main className="flex-1 p-6 md:p-8 pb-20 md:pb-8 overflow-y-auto">
                     <Breadcrumbs />
                     {children}
                 </main>
             </div>
+            {/* Mobile Bottom Navigation */}
+            <MobileBottomNav />
         </div>
     );
 }
@@ -220,7 +238,9 @@ function SidebarItem({ item, isCollapsed, pathname }: { item: NavItem, isCollaps
     // Auto-open if child is active
     useEffect(() => {
         if (hasChildren && item.items?.some(sub => sub.href === pathname)) {
-            setIsOpen(true);
+            // Defer update to avoid sync state update warning
+            const timer = setTimeout(() => setIsOpen(true), 0);
+            return () => clearTimeout(timer);
         }
     }, [pathname, hasChildren, item.items]);
 

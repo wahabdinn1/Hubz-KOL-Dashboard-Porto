@@ -1,6 +1,6 @@
 "use client"
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 
 import * as React from "react"
 import * as RechartsPrimitive from "recharts"
@@ -69,7 +69,7 @@ ChartContainer.displayName = "ChartContainer"
 
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     const colorConfig = Object.entries(config).filter(
-        ([_, config]) => config.theme || config.color
+        ([, config]) => config.theme || config.color
     )
 
     if (!colorConfig.length) {
@@ -131,16 +131,10 @@ const ChartTooltipContent = React.forwardRef<
             label,
             labelFormatter,
             labelClassName,
-            formatter,
+
             color,
             nameKey,
             labelKey,
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            allowEscapeViewBox,
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            animationDuration,
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            animationEasing,
             ...props
         },
         ref
@@ -198,7 +192,7 @@ const ChartTooltipContent = React.forwardRef<
             >
                 {!nestLabel ? tooltipLabel : null}
                 <div className="grid gap-1.5">
-                    {payload.map((item, index) => {
+                    {payload.map((item) => {
                         const key = `${nameKey || item.name || item.dataKey || "value"}`
                         const itemConfig = getPayloadConfigFromPayload(config, item, key)
                         const indicatorColor = color || item.payload.fill || item.color

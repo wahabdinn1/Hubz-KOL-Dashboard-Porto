@@ -11,7 +11,13 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useData } from "@/context/data-context";
-import { Plus, Trash2, GripVertical, Settings, User as UserIcon, List, Database } from "lucide-react";
+import { Plus, Trash2, GripVertical, Settings, User as UserIcon, List, Database, FileText, HelpCircle, Info } from "lucide-react";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { updatePassword } from "@/app/auth/actions";
 import { useState } from "react";
 import {
@@ -33,6 +39,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Category } from "@/lib/static-data";
 import { SeedDataButton } from "@/components/seed-data-button";
+import { CampaignTemplate } from "@/lib/campaign-templates";
 
 // --- Sortable Item Component ---
 interface SortableCategoryProps {
@@ -93,9 +100,34 @@ import { Users as UsersIcon } from "lucide-react";
 
 // --- Main Content ---
 export function SettingsClient({ user }: { user: User | null }) {
-    const { categories, addCategory, deleteCategory, updateCategoryOrder } = useData();
+    const { categories, addCategory, deleteCategory, updateCategoryOrder, campaignTemplates, addCampaignTemplate, deleteCampaignTemplate } = useData();
     const { role, isSuperAdmin, isAdmin } = useAuth();
     const [newCategory, setNewCategory] = useState("");
+
+    // Templates form state
+    const [newTemplateName, setNewTemplateName] = useState("");
+    const [newTemplateDesc, setNewTemplateDesc] = useState("");
+    const [newTemplatePlatform, setNewTemplatePlatform] = useState<"TikTok" | "Instagram">("TikTok");
+    const [newTemplateBudget, setNewTemplateBudget] = useState("");
+
+    const handleAddTemplate = async () => {
+        if (!newTemplateName.trim()) return;
+        await addCampaignTemplate({
+            name: newTemplateName.trim(),
+            description: newTemplateDesc.trim(),
+            defaultValues: {
+                platform: newTemplatePlatform,
+                budget: parseFloat(newTemplateBudget) || 50000000,
+            },
+        });
+        setNewTemplateName("");
+        setNewTemplateDesc("");
+        setNewTemplateBudget("");
+    };
+
+    const handleDeleteTemplate = async (id: string) => {
+        await deleteCampaignTemplate(id);
+    };
 
     const userEmail = user?.email || "admin@hubz.com";
     const userName = userEmail.split("@")[0];
@@ -152,6 +184,10 @@ export function SettingsClient({ user }: { user: User | null }) {
 
                         {isAdmin && (
                             <TabsTrigger value="categories" className="gap-2"><List className="h-4 w-4" /> Categories</TabsTrigger>
+                        )}
+
+                        {isAdmin && (
+                            <TabsTrigger value="templates" className="gap-2"><FileText className="h-4 w-4" /> Templates</TabsTrigger>
                         )}
 
                         {isSuperAdmin && (
@@ -289,6 +325,131 @@ export function SettingsClient({ user }: { user: User | null }) {
                                             <Plus className="h-4 w-4 mr-2" /> Add
                                         </Button>
                                     </form>
+                                </CardFooter>
+                            </Card>
+                        </TabsContent>
+                    )}
+
+                    {isAdmin && (
+                        <TabsContent value="templates" className="space-y-4">
+                            <Card>
+                                <CardHeader>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <CardTitle>Campaign Templates</CardTitle>
+                                            <CardDescription>Pre-defined templates for quick campaign creation.</CardDescription>
+                                        </div>
+                                        <div className="bg-primary/10 text-primary text-xs font-semibold px-2 py-1 rounded-full">
+                                            {campaignTemplates.length} Templates
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    {/* Template List */}
+                                    {campaignTemplates.length === 0 ? (
+                                        <div className="text-center py-12 border-2 border-dashed rounded-lg bg-muted/20 dark:bg-muted/10">
+                                            <FileText className="h-8 w-8 mx-auto text-muted-foreground/50 mb-2" />
+                                            <p className="text-sm text-muted-foreground">No templates yet. Add your first template below.</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {campaignTemplates.map((template: CampaignTemplate) => (
+                                                <div
+                                                    key={template.id}
+                                                    className="flex items-center justify-between p-4 rounded-xl border-2 border-border/50 bg-card dark:bg-card/50 hover:border-border hover:shadow-sm transition-all group"
+                                                >
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="font-medium text-sm text-foreground">{template.name}</p>
+                                                            <TooltipProvider delayDuration={200}>
+                                                                <Tooltip>
+                                                                    <TooltipTrigger asChild>
+                                                                        <button className="text-muted-foreground/50 hover:text-muted-foreground transition-colors">
+                                                                            <Info className="h-3.5 w-3.5" />
+                                                                        </button>
+                                                                    </TooltipTrigger>
+                                                                    <TooltipContent side="top" className="max-w-xs">
+                                                                        <p className="text-xs">{template.description || 'No description'}</p>
+                                                                    </TooltipContent>
+                                                                </Tooltip>
+                                                            </TooltipProvider>
+                                                        </div>
+                                                        <p className="text-xs text-muted-foreground mt-0.5 truncate">{template.description}</p>
+                                                        <div className="flex gap-2 mt-2">
+                                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${template.defaultValues.platform === 'TikTok'
+                                                                ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                                                                : 'bg-gradient-to-r from-pink-500 to-purple-500 text-white'
+                                                                }`}>
+                                                                {template.defaultValues.platform}
+                                                            </span>
+                                                            <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                                                                Rp {((template.defaultValues.budget || 0) / 1000000).toFixed(0)}M
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <TooltipProvider delayDuration={200}>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    onClick={() => handleDeleteTemplate(template.id)}
+                                                                    className="opacity-0 group-hover:opacity-100 h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent side="left">
+                                                                <p className="text-xs">Delete template</p>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </CardContent>
+                                <CardFooter className="border-t p-4 bg-muted/10 dark:bg-muted/5">
+                                    <div className="grid gap-3 w-full">
+                                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                            <HelpCircle className="h-3 w-3" />
+                                            <span>Add new templates for quick campaign creation</span>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <Input
+                                                placeholder="Template name..."
+                                                value={newTemplateName}
+                                                onChange={(e) => setNewTemplateName(e.target.value)}
+                                                className="bg-background"
+                                            />
+                                            <Input
+                                                placeholder="Description..."
+                                                value={newTemplateDesc}
+                                                onChange={(e) => setNewTemplateDesc(e.target.value)}
+                                                className="bg-background"
+                                            />
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <select
+                                                value={newTemplatePlatform}
+                                                onChange={(e) => setNewTemplatePlatform(e.target.value as "TikTok" | "Instagram")}
+                                                className="flex h-10 w-[140px] rounded-md border-2 border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                            >
+                                                <option value="TikTok">TikTok</option>
+                                                <option value="Instagram">Instagram</option>
+                                            </select>
+                                            <Input
+                                                placeholder="Default budget (IDR)..."
+                                                type="number"
+                                                value={newTemplateBudget}
+                                                onChange={(e) => setNewTemplateBudget(e.target.value)}
+                                                className="flex-1 bg-background"
+                                            />
+                                            <Button onClick={handleAddTemplate} className="gap-2">
+                                                <Plus className="h-4 w-4" /> Add
+                                            </Button>
+                                        </div>
+                                    </div>
                                 </CardFooter>
                             </Card>
                         </TabsContent>

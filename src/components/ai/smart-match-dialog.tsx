@@ -3,8 +3,8 @@
 import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Check, UserPlus } from "lucide-react";
-import { Campaign, KOL } from "@/lib/static-data";
+import { Sparkles, UserPlus } from "lucide-react";
+import { Campaign } from "@/lib/static-data";
 import { getSmartRecommendations } from "@/lib/ai-matchmaker";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,6 +12,12 @@ import { Badge } from "@/components/ui/badge";
 import { TierBadge } from "@/components/ui/tier-badge";
 import { useData } from "@/context/data-context";
 import { formatIDR } from "@/lib/analytics";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface SmartMatchDialogProps {
     campaign: Campaign;
@@ -28,7 +34,7 @@ export function SmartMatchDialog({ campaign }: SmartMatchDialogProps) {
         const availableKols = kols.filter(k => !currentKolIds.has(k.id));
 
         return getSmartRecommendations(availableKols, campaign);
-    }, [campaign, kols, open]); // Re-calc when opening
+    }, [campaign, kols]); // Re-calc when data changes
 
     const handleAdd = async (kolId: string) => {
         await addCampaignDeliverableDB(kolId, campaign.id);
@@ -36,12 +42,21 @@ export function SmartMatchDialog({ campaign }: SmartMatchDialogProps) {
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button variant="outline" className="gap-2 border-indigo-500 text-indigo-600 hover:bg-indigo-50 dark:border-indigo-400 dark:text-indigo-400 dark:hover:bg-indigo-950/30">
-                    <Sparkles className="h-4 w-4" />
-                    AI Match
-                </Button>
-            </DialogTrigger>
+            <TooltipProvider delayDuration={200}>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" className="gap-2 border-indigo-500 text-indigo-600 hover:bg-indigo-50 dark:border-indigo-400 dark:text-indigo-400 dark:hover:bg-indigo-950/30">
+                                <Sparkles className="h-4 w-4" />
+                                AI Match
+                            </Button>
+                        </DialogTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p className="text-xs">AI recommends best KOLs based on campaign goals</p>
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
             <DialogContent className="sm:max-w-[600px] flex flex-col p-0 gap-0 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] dark:border-zinc-800 dark:shadow-none bg-background sm:rounded-3xl">
                 <div className="p-6 border-b-2 border-black dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 sm:rounded-t-3xl">
                     <DialogHeader>

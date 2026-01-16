@@ -16,6 +16,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useData } from "@/context/data-context";
 import { CurrencyInput } from "@/components/ui/currency-input";
+import { CAMPAIGN_TEMPLATES } from "@/lib/campaign-templates";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { HelpCircle } from "lucide-react";
 
 export function CreateCampaignDialog() {
     const { addCampaign } = useData();
@@ -59,6 +67,41 @@ export function CreateCampaignDialog() {
                 </DialogHeader>
                 <form onSubmit={handleSubmit}>
                     <div className="grid gap-4 py-4">
+                        {/* Template Selector */}
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="template" className="text-right flex items-center gap-1">
+                                Template
+                                <TooltipProvider delayDuration={200}>
+                                    <Tooltip>
+                                        <TooltipTrigger type="button" tabIndex={-1}>
+                                            <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top">
+                                            <p className="text-xs max-w-[200px]">Pre-fill form with common campaign configurations</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </Label>
+                            <select
+                                id="template"
+                                className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                                onChange={(e) => {
+                                    const template = CAMPAIGN_TEMPLATES.find(t => t.id === e.target.value);
+                                    if (template) {
+                                        setName(template.name);
+                                        if (template.defaultValues.platform) setPlatform(template.defaultValues.platform);
+                                        if (template.defaultValues.budget) setBudget(template.defaultValues.budget.toString());
+                                    }
+                                }}
+                            >
+                                <option value="">-- Select a template (optional) --</option>
+                                {CAMPAIGN_TEMPLATES.map(t => (
+                                    <option key={t.id} value={t.id} title={t.description}>
+                                        {t.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="name" className="text-right">
                                 Name

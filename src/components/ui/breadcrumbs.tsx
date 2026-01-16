@@ -8,7 +8,7 @@ import { useData } from "@/context/data-context";
 
 export function Breadcrumbs() {
     const pathname = usePathname();
-    const { campaigns, kols } = useData();
+    const { campaigns } = useData();
 
     if (pathname === "/") return null;
 

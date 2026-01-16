@@ -17,9 +17,10 @@ import { Campaign } from "@/lib/static-data";
 
 interface DeleteCampaignDialogProps {
     campaign: Campaign;
+    trigger?: React.ReactNode;
 }
 
-export function DeleteCampaignDialog({ campaign }: DeleteCampaignDialogProps) {
+export function DeleteCampaignDialog({ campaign, trigger }: DeleteCampaignDialogProps) {
     const { deleteCampaign } = useData();
     const [open, setOpen] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -40,14 +41,16 @@ export function DeleteCampaignDialog({ campaign }: DeleteCampaignDialogProps) {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <Trash2 className="h-4 w-4" />
-                </Button>
+                {trigger ? trigger : (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                )}
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>

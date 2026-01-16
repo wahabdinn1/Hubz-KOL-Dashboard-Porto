@@ -37,14 +37,17 @@ export function EditCampaignDialog({ campaign }: EditCampaignDialogProps) {
 
     useEffect(() => {
         if (open) {
-            setFormData({
-                name: campaign.name,
-                budget: campaign.budget.toString(),
-                platform: campaign.platform || "TikTok",
-                objective: campaign.objective || "AWARENESS",
-                startDate: campaign.startDate || "",
-                endDate: campaign.endDate || ""
-            });
+            const timer = setTimeout(() => {
+                setFormData({
+                    name: campaign.name,
+                    budget: campaign.budget.toString(),
+                    platform: campaign.platform || "TikTok",
+                    objective: campaign.objective || "AWARENESS",
+                    startDate: campaign.startDate || "",
+                    endDate: campaign.endDate || ""
+                });
+            }, 0);
+            return () => clearTimeout(timer);
         }
     }, [open, campaign]);
 

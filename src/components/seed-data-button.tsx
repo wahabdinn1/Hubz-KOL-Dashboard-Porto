@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Database, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Database, Loader2, CheckCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { MOCK_KOLS, MOCK_CAMPAIGNS, KOL, Campaign } from "@/lib/static-data";
+import { MOCK_KOLS, MOCK_CAMPAIGNS } from "@/lib/static-data";
 
 export function SeedDataButton() {
     const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -80,10 +80,10 @@ export function SeedDataButton() {
 
             setStatus("success");
             setMessage("Database seeded successfully! Please refresh.");
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error(error);
             setStatus("error");
-            setMessage(error.message || "Failed to seed data");
+            setMessage((error as Error).message || "Failed to seed data");
         }
     };
 

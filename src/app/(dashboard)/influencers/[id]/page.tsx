@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useState, useEffect } from "react";
+
 import { useData } from "@/context/data-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { formatIDR } from "@/lib/analytics";
 import { formatCompactNumber } from "@/lib/utils";
-import { ArrowLeft, Instagram, Facebook, Youtube, Twitter } from "lucide-react";
+import { ArrowLeft, Instagram } from "lucide-react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+
 import { EditKOLDialog } from "@/components/edit-kol-dialog";
+import { KOLPerformanceChart } from "@/components/kol-performance-chart";
 
 // Helper to resolve params in Next.js 15+ (if applicable, but safe for 14 too)
 // Actually params is a Promise in newer Next.js versions, but for client components usually it's passed as prop or use useParams.
@@ -170,6 +171,9 @@ function InfluencerDetailContent() {
                             </CardContent>
                         </Card>
                     </div>
+
+                    {/* Performance Chart */}
+                    <KOLPerformanceChart kolId={kol.id} campaigns={campaigns} />
 
                     {/* Campaign History List */}
                     <Card>
