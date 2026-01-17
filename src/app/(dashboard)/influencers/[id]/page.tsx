@@ -4,6 +4,7 @@
 import { useData } from "@/context/data-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { formatIDR } from "@/lib/analytics";
@@ -83,9 +84,7 @@ function InfluencerDetailContent() {
                 </Link>
                 <div className="flex items-center gap-4">
                     {/* Avatar */}
-                    <div className="h-16 w-16 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                        {kol.name.charAt(0)}
-                    </div>
+
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">{kol.name}</h1>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -107,9 +106,12 @@ function InfluencerDetailContent() {
                         <CardTitle>Profile</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="flex items-center justify-center p-6 bg-slate-100 dark:bg-slate-800 rounded-full w-24 h-24 mx-auto text-3xl font-bold text-slate-500">
-                            {kol.name.charAt(0)}
-                        </div>
+                        <Avatar key={kol.avatar} className="w-24 h-24 mx-auto border-2 border-black">
+                             <AvatarImage src={kol.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${kol.id}`} />
+                             <AvatarFallback className="bg-slate-100 dark:bg-slate-800 text-3xl font-bold text-slate-500">
+                                {kol.name.charAt(0)}
+                             </AvatarFallback>
+                        </Avatar>
 
                         <div className="grid grid-cols-2 gap-4 text-center">
                             {/* TikTok Stats */}

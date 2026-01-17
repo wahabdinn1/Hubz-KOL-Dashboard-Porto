@@ -7,6 +7,7 @@ export interface KOL {
     followers: number; // Total / Primary
     avgViews: number;
     // New Fields
+    avatar?: string;
     tiktokUsername?: string;
     tiktokProfileLink?: string;
     tiktokFollowers?: number;

@@ -48,6 +48,16 @@ A custom "Pop" design system featuring:
 - **Date Range Filtering**: Global date filtering for all analytics views.
 - **Quick Actions**: "New Invoice", "Add KOL", and "New Campaign" accessible from anywhere.
 
+### 6. TikTok API Integration
+
+Powered by `@tobyg74/tiktok-api-dl`:
+
+- **Stalk User**: Fetch any TikTok profile - followers, bio, videos, and engagement metrics.
+- **Video Info/Downloader**: Get video details and download without watermark.
+- **TikTok Trending**: Browse trending videos, creators, and campaigns.
+- **KOL Auto-Fetch**: "Fetch from TikTok" button in Add/Edit KOL dialogs to auto-populate follower data.
+- **Per-User Session**: Configure your TikTok session cookie in Settings → TikTok tab.
+
 ---
 
 ## 🛠 Tech Stack
@@ -56,6 +66,7 @@ A custom "Pop" design system featuring:
 - **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) + [Shadcn UI](https://ui.shadcn.com/) + RetroUI
 - **Database**: [Supabase](https://supabase.com/) (PostgreSQL & Auth)
 - **Data Fetching**: TanStack Query + Supabase SSR
+- **TikTok API**: [@tobyg74/tiktok-api-dl](https://www.npmjs.com/package/@tobyg74/tiktok-api-dl)
 - **Visualization**: Recharts, React Day Picker
 - **Validation**: Zod + React Hook Form
 - **Utilities**: Framer Motion, Sonner, React-PDF

@@ -2,7 +2,8 @@
 -- Hubz KOL Platform - Complete Database Schema
 -- ==========================================
 -- Run this entire file in Supabase SQL Editor
--- Last Updated: 2026-01-15
+-- This file consolidates all previous migrations into a single source of truth.
+-- Last Updated: 2026-01-18
 -- ==========================================
 
 -- ==========================================
@@ -23,8 +24,12 @@ create table if not exists public.profiles (
   role user_role default 'member',
   full_name text,
   email text,
+  tiktok_session_cookie text, -- Added for API access
   created_at timestamptz default now()
 );
+
+-- Documentation
+comment on column public.profiles.tiktok_session_cookie is 'User TikTok session cookie for trending API access';
 
 -- A3. Enable RLS on Profiles
 alter table public.profiles enable row level security;
@@ -89,6 +94,8 @@ create table if not exists public.kols (
     name text not null,
     type text check (type in ('Nano', 'Micro', 'Macro', 'Mega')),
     category text,
+    avatar text, -- Added 2026-01-18
+    rating integer default 0 check (rating >= 0 and rating <= 5), -- Added 2026-01-17
     followers bigint,
     avg_views bigint,
     tiktok_username text,
@@ -162,6 +169,91 @@ CREATE TABLE IF NOT EXISTS public.kol_notes (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- B7. Invoices (Added 2026-01-17)
+CREATE TABLE IF NOT EXISTS public.invoices (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  invoice_number TEXT NOT NULL UNIQUE,
+  recipient_name TEXT NOT NULL,
+  recipient_address TEXT,
+  issued_date TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  due_date TIMESTAMP WITH TIME ZONE,
+  status TEXT DEFAULT 'DRAFT', -- 'DRAFT', 'PENDING', 'PAID', 'OVERDUE'
+  total_amount NUMERIC DEFAULT 0,
+  
+  -- Relations
+  kol_id UUID REFERENCES public.kols(id) ON DELETE SET NULL,
+  campaign_id UUID REFERENCES public.campaigns(id) ON DELETE SET NULL,
+  
+  -- Bank Details Snapshot
+  bank_name TEXT,
+  bank_account_no TEXT,
+  bank_account_name TEXT,
+  
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_invoices_kol_id ON public.invoices(kol_id);
+CREATE INDEX IF NOT EXISTS idx_invoices_campaign_id ON public.invoices(campaign_id);
+
+-- B8. Invoice Items (Added 2026-01-17)
+CREATE TABLE IF NOT EXISTS public.invoice_items (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  invoice_id UUID REFERENCES public.invoices(id) ON DELETE CASCADE,
+  description TEXT NOT NULL,
+  quantity NUMERIC DEFAULT 1,
+  price NUMERIC DEFAULT 0,
+  total NUMERIC DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_invoice_items_invoice_id ON public.invoice_items(invoice_id);
+
+-- B9. Content Library (Added 2026-01-17)
+CREATE TABLE IF NOT EXISTS public.content_library (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    kol_id UUID REFERENCES public.kols(id) ON DELETE CASCADE,
+    campaign_id UUID REFERENCES public.campaigns(id) ON DELETE SET NULL,
+    url TEXT NOT NULL,
+    platform TEXT CHECK (platform IN ('TikTok', 'Instagram', 'YouTube', 'Other')),
+    title TEXT,
+    thumbnail_url TEXT,
+    posted_at TIMESTAMP WITH TIME ZONE,
+    views BIGINT DEFAULT 0,
+    engagements BIGINT DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_content_library_kol_id ON public.content_library(kol_id);
+CREATE INDEX IF NOT EXISTS idx_content_library_campaign_id ON public.content_library(campaign_id);
+
+-- B10. Payments (Added 2026-01-17)
+CREATE TABLE IF NOT EXISTS public.payments (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    invoice_id UUID REFERENCES public.invoices(id) ON DELETE CASCADE,
+    amount NUMERIC NOT NULL,
+    paid_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    method TEXT CHECK (method IN ('Bank Transfer', 'Cash', 'E-Wallet', 'Other')),
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_payments_invoice_id ON public.payments(invoice_id);
+
+-- B11. Deliverable Attachments (Added 2026-01-17)
+CREATE TABLE IF NOT EXISTS public.deliverable_attachments (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    campaign_id UUID REFERENCES public.campaigns(id) ON DELETE CASCADE,
+    kol_id UUID REFERENCES public.kols(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    url TEXT NOT NULL,
+    file_type TEXT, -- 'image', 'document', 'video'
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_deliverable_attachments_campaign ON public.deliverable_attachments(campaign_id);
+CREATE INDEX IF NOT EXISTS idx_deliverable_attachments_kol ON public.deliverable_attachments(kol_id);
+
 -- ==========================================
 -- SECTION C: ROW LEVEL SECURITY
 -- ==========================================
@@ -173,20 +265,31 @@ alter table public.campaigns enable row level security;
 alter table public.campaign_deliverables enable row level security;
 alter table public.campaign_templates enable row level security;
 alter table public.kol_notes enable row level security;
+alter table public.invoices enable row level security;
+alter table public.invoice_items enable row level security;
+alter table public.content_library enable row level security;
+alter table public.payments enable row level security;
+alter table public.deliverable_attachments enable row level security;
 
 -- C2. Drop old policies (cleanup)
 drop policy if exists "Enable read access for all users" on campaigns;
 drop policy if exists "Enable read access for all users" on kols;
 drop policy if exists "Enable read access for all users" on categories;
 drop policy if exists "Enable read access for all users" on campaign_deliverables;
+-- (and others if needed)
 
--- C3. Read Policies (Public)
+-- C3. Read Policies (Public - For prototype ease, usually stricter)
 create policy "Public Read Campaigns" on campaigns for select using (true);
 create policy "Public Read KOLs" on kols for select using (true);
 create policy "Public Read Categories" on categories for select using (true);
 create policy "Public Read Deliverables" on campaign_deliverables for select using (true);
 create policy "Public Read Templates" on campaign_templates for select using (true);
 create policy "Public Read Notes" on kol_notes for select using (true);
+create policy "Public Read Invoices" on invoices for select using (true);
+create policy "Public Read Invoice Items" on invoice_items for select using (true);
+create policy "Public Read Content Library" on content_library for select using (true);
+create policy "Public Read Payments" on payments for select using (true);
+create policy "Public Read Attachments" on deliverable_attachments for select using (true);
 
 -- C4. Write Policies (Authenticated)
 create policy "Auth Write Campaigns" on campaigns for all using (auth.role() = 'authenticated');
@@ -195,6 +298,11 @@ create policy "Auth Write Categories" on categories for all using (auth.role() =
 create policy "Auth Write Deliverables" on campaign_deliverables for all using (auth.role() = 'authenticated');
 create policy "Auth Write Templates" on campaign_templates for all using (auth.role() = 'authenticated');
 create policy "Auth Write Notes" on kol_notes for all using (auth.role() = 'authenticated');
+create policy "Auth Write Invoices" on invoices for all using (auth.role() = 'authenticated');
+create policy "Auth Write Invoice Items" on invoice_items for all using (auth.role() = 'authenticated');
+create policy "Auth Write Content Library" on content_library for all using (auth.role() = 'authenticated');
+create policy "Auth Write Payments" on payments for all using (auth.role() = 'authenticated');
+create policy "Auth Write Attachments" on deliverable_attachments for all using (auth.role() = 'authenticated');
 
 -- ==========================================
 -- SECTION D: DEFAULT DATA

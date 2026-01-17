@@ -1,6 +1,6 @@
 "use client";
 
-"use client";
+
 
 import { formatCompactNumber } from "@/lib/utils";
 import {
@@ -25,6 +25,7 @@ import {
 import { useData } from "@/context/data-context";
 import { EditDeliverableDialog } from "@/components/campaigns/edit-deliverable-dialog";
 import { KOLProfileDialog } from "@/components/kols/kol-profile-dialog";
+import { TablePagination, usePagination } from "@/components/shared/table-pagination";
 
 export function KOLTable() {
     const { kols, campaign, removeKOLFromCampaignDB } = useData();
@@ -136,6 +137,16 @@ export function KOLTable() {
         return sortableItems;
     }, [data, sortConfig, campaign.platform]);
 
+    const {
+        currentPage,
+        pageSize,
+        handlePageChange,
+        handlePageSizeChange
+    } = usePagination(sortedData.length);
+
+    // Paginated Data
+    const paginatedData = sortedData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
     return (
         <div>
             <Table>
@@ -198,7 +209,7 @@ export function KOLTable() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {sortedData.map((item) => (
+                    {paginatedData.map((item) => (
                         <TableRow key={item?.kol.id}>
                             <TableCell className="font-medium">
                                 <div className="flex flex-col gap-1">
@@ -282,6 +293,13 @@ export function KOLTable() {
                     )}
                 </TableBody>
             </Table>
+            <TablePagination
+                currentPage={currentPage}
+                totalItems={sortedData.length}
+                pageSize={pageSize}
+                onPageChange={handlePageChange}
+                onPageSizeChange={handlePageSizeChange}
+            />
         </div>
     );
 }

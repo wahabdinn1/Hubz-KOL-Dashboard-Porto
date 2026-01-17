@@ -45,8 +45,8 @@ export function KOLProfileDialog({ kol, children }: KOLProfileDialogProps) {
 
                     <TabsContent value="overview" className="flex-1 p-6 flex flex-col items-center gap-6 overflow-y-auto">
                         {/* Avatar */}
-                        <Avatar className="h-24 w-24 border-2 border-black shadow-none bg-zinc-100">
-                            <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${kol.id}`} />
+                        <Avatar key={kol.avatar} className="h-24 w-24 border-2 border-black shadow-none bg-zinc-100">
+                            <AvatarImage src={kol.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${kol.id}`} />
                             <AvatarFallback className="text-4xl font-bold text-slate-400 bg-slate-100">
                                 {kol.name.charAt(0).toUpperCase()}
                             </AvatarFallback>

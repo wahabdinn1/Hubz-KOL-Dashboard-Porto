@@ -9,7 +9,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Database } from "@/types/supabase";
 import { toast } from "sonner";
 
-type KOLRow = Database['public']['Tables']['kols']['Row'];
+// Note: KOLRow type reserved for future use with direct DB operations
+// type KOLRow = Database['public']['Tables']['kols']['Row'];
 type CampaignRow = Database['public']['Tables']['campaigns']['Row'];
 type DeliverableRow = Database['public']['Tables']['campaign_deliverables']['Row'];
 type CategoryRow = Database['public']['Tables']['categories']['Row'];
@@ -97,7 +98,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 instagramFollowers: k.instagram_followers || 0,
                 rateCardTiktok: k.rate_card_tiktok || 0,
                 rateCardReels: k.rate_card_reels || 0,
-                rateCardPdfLink: k.rate_card_pdf_link || ''
+                rateCardPdfLink: k.rate_card_pdf_link || '',
+                avatar: k.avatar || ''
             })) as KOL[];
         }
     });
@@ -399,7 +401,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 instagram_followers: newKOL.instagramFollowers,
                 rate_card_tiktok: newKOL.rateCardTiktok,
                 rate_card_reels: newKOL.rateCardReels,
-                rate_card_pdf_link: newKOL.rateCardPdfLink
+                rate_card_pdf_link: newKOL.rateCardPdfLink,
+                avatar: newKOL.avatar
             };
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -465,6 +468,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             if (updates.instagramFollowers) dbUpdates.instagram_followers = updates.instagramFollowers;
             if (updates.rateCardReels) dbUpdates.rate_card_reels = updates.rateCardReels;
             if (updates.rateCardPdfLink) dbUpdates.rate_card_pdf_link = updates.rateCardPdfLink;
+            if (updates.avatar) dbUpdates.avatar = updates.avatar;
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const { error } = await (supabase.from('kols') as any).update(dbUpdates).eq('id', id);

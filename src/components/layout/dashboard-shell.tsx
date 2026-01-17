@@ -16,7 +16,10 @@ import {
     Calendar,
     LucideIcon,
     FileText,
-    DollarSign
+    DollarSign,
+    Search,
+    TrendingUp,
+    Download
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/app/auth/actions";
@@ -78,6 +81,9 @@ const NAV_ITEMS: NavItem[] = [
         icon: Calculator,
         items: [
             { name: "ER Calculator", href: "/er-calculator", icon: Zap },
+            { name: "Stalk User", href: "/tools/stalk-user", icon: Search },
+            { name: "TikTok Trending", href: "/tools/trending", icon: TrendingUp },
+            { name: "Video Info", href: "/tools/downloader", icon: Download },
         ]
     },
     { name: "Settings", href: "/settings", icon: Settings },

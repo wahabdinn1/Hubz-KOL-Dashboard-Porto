@@ -4,6 +4,7 @@ import { useData } from "@/context/data-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import { Button } from "@/components/ui/button";
 import { formatIDR } from "@/lib/analytics";
@@ -26,9 +27,12 @@ import { useRouter } from "next/navigation";
 import { ArrowUpDown, Download } from "lucide-react";
 import { Select } from "@/components/retroui/Select";
 import { useState, useMemo } from "react";
+import { PageLoadingTable } from "@/components/shared/page-loading";
+import { EmptyState, EmptyStateIcons } from "@/components/retroui/EmptyState";
+import { TablePagination } from "@/components/shared/table-pagination";
 
 function InfluencersContent() {
-    const { kols, campaigns, deleteKOLs } = useData();
+    const { kols, campaigns, deleteKOLs, loading } = useData();
     const router = useRouter();
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
     const [filterTier, setFilterTier] = useState<string | null>(null);
@@ -37,6 +41,10 @@ function InfluencersContent() {
 
     // Bulk Actions State
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
 
     // Calculate Status Metrics
     const statusMetrics = useMemo(() => {
@@ -115,6 +123,22 @@ function InfluencersContent() {
         return 0;
     });
 
+    // Paginated data
+    const paginatedKols = useMemo(() => {
+        const startIndex = (currentPage - 1) * pageSize;
+        return sortedKols.slice(startIndex, startIndex + pageSize);
+    }, [sortedKols, currentPage, pageSize]);
+
+    // Reset page when filters change
+    const handlePageChange = (page: number) => {
+        setCurrentPage(page);
+    };
+
+    const handlePageSizeChange = (size: number) => {
+        setPageSize(size);
+        setCurrentPage(1);
+    };
+
     const requestSort = (key: string) => {
         let direction: 'asc' | 'desc' = 'asc';
         if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
@@ -157,8 +181,30 @@ function InfluencersContent() {
                 <AddKOLDialog enableAutoLink={false} />
             </div>
 
-            {/* Pipeline Snapshot */}
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-2 mb-6">
+            {/* Loading State */}
+            {loading && (
+                <PageLoadingTable rows={8} />
+            )}
+
+            {/* Empty State */}
+            {!loading && kols.length === 0 && (
+                <Card className="border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                    <CardContent className="py-12">
+                        <EmptyState
+                            title="No influencers yet"
+                            description="Start building your influencer roster by adding your first Key Opinion Leader."
+                            icon={EmptyStateIcons.users}
+                            action={<AddKOLDialog enableAutoLink={false} />}
+                        />
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* Main Content - only show when not loading and has data */}
+            {!loading && kols.length > 0 && (
+                <>
+                    {/* Pipeline Snapshot */}
+                    <div className="grid grid-cols-2 md:grid-cols-6 gap-2 mb-6">
                 {Object.entries(statusMetrics).map(([status, count]) => {
                     const statusDescriptions: Record<string, string> = {
                         'TO_CONTACT': 'KOLs not yet reached out to',
@@ -353,7 +399,7 @@ function InfluencersContent() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {sortedKols.map((kol) => {
+                            {paginatedKols.map((kol) => {
                                 // Find campaigns this KOL is part of
                                 const memberCampaigns = campaigns.filter(c =>
                                     c.deliverables.some(d => d.kolId === kol.id)
@@ -375,13 +421,22 @@ function InfluencersContent() {
                                             />
                                         </TableCell>
                                         <TableCell className="font-medium">
-                                            <div className="flex flex-col">
-                                                <span className="font-semibold">{kol.tiktokUsername || kol.name}</span>
-                                                <span className="text-xs text-muted-foreground">
-                                                    {(kol.followers || 0) >= 1000000 ? "Mega-Tier" :
-                                                        (kol.followers || 0) >= 100000 ? "Macro-Tier" :
-                                                            (kol.followers || 0) >= 10000 ? "Micro-Tier" : "Nano-Tier"}
-                                                </span>
+
+                                            <div className="flex items-center gap-3">
+                                                <Avatar key={kol.avatar} className="h-10 w-10 border border-black shadow-sm">
+                                                    <AvatarImage src={kol.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${kol.id}`} />
+                                                    <AvatarFallback className="bg-slate-100 text-slate-500 font-bold">
+                                                        {kol.name.charAt(0)}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex flex-col">
+                                                    <span className="font-semibold">{kol.tiktokUsername || kol.name}</span>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        {(kol.followers || 0) >= 1000000 ? "Mega-Tier" :
+                                                            (kol.followers || 0) >= 100000 ? "Macro-Tier" :
+                                                                (kol.followers || 0) >= 10000 ? "Micro-Tier" : "Nano-Tier"}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </TableCell>
                                         <TableCell onClick={(e) => e.stopPropagation()}>
@@ -431,7 +486,16 @@ function InfluencersContent() {
                         </TableBody>
                     </Table>
                 </CardContent>
+                <TablePagination
+                    currentPage={currentPage}
+                    totalItems={sortedKols.length}
+                    pageSize={pageSize}
+                    onPageChange={handlePageChange}
+                    onPageSizeChange={handlePageSizeChange}
+                />
             </Card>
+                </>
+            )}
         </div>
     );
 }

@@ -84,8 +84,8 @@ export function SmartMatchDialog({ campaign }: SmartMatchDialogProps) {
                                 >
                                     <div className="flex items-start gap-4 flex-1">
                                         <div className="relative shrink-0">
-                                            <Avatar className="h-14 w-14 border-2 border-black shadow-sm">
-                                                <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${kol.id}`} />
+                                            <Avatar key={kol.avatar} className="h-14 w-14 border-2 border-black shadow-sm">
+                                                <AvatarImage src={kol.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${kol.id}`} />
                                                 <AvatarFallback>{kol.name.charAt(0)}</AvatarFallback>
                                             </Avatar>
                                             <div className="absolute -top-3 -right-3 bg-indigo-600 text-white text-[10px] font-bold px-2 py-1 rounded-full border-2 border-black shadow-[1px_1px_0px_0px_rgba(255,255,255,1)]">

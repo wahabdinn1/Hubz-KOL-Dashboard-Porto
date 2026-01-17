@@ -16,7 +16,8 @@ export const MOCK_KOLS: KOL[] = [
         instagramUsername: '@aurelia.official',
         instagramFollowers: 800000,
         rateCardTiktok: 15000000,
-        rateCardReels: 12000000
+        rateCardReels: 12000000,
+        avatar: ''
     },
     {
         id: 'b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a12',
@@ -41,7 +42,8 @@ export const MOCK_KOLS: KOL[] = [
         avgViews: 800000,
         tiktokUsername: '@junarorimpandey',
         tiktokFollowers: 3500000,
-        rateCardTiktok: 45000000
+        rateCardTiktok: 45000000,
+        avatar: ''
     },
 
     // MACRO (100k - 1M)

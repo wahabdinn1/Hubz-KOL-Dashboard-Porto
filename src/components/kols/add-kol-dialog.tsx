@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/retroui/Button";
 import { useData } from "@/context/data-context";
-import { Plus, Users, UserPlus, AlertTriangle } from "lucide-react";
+import { Plus, Users, UserPlus, AlertTriangle, Loader2 } from "lucide-react";
 import { KOL } from "@/lib/static-data";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import {
@@ -23,6 +23,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface AddKOLDialogProps {
     enableAutoLink?: boolean;
@@ -43,6 +44,7 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
         categoryId: "",
         followers: "",
         avgViews: "",
+        avatar: "",
 
         // TikTok
         tiktokUsername: "",
@@ -60,6 +62,29 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
         rateCardPdfLink: ""
     });
     const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
+    const [fetchingTikTok, setFetchingTikTok] = useState(false);
+
+    // Fetch TikTok data
+    const fetchTikTokData = async () => {
+        if (!formData.tiktokUsername) return;
+        setFetchingTikTok(true);
+        try {
+            const response = await fetch(`/api/tiktok/stalk?username=${encodeURIComponent(formData.tiktokUsername)}`);
+            const data = await response.json();
+            if (data.status === 'success' && data.data) {
+                setFormData(prev => ({
+                    ...prev,
+                    tiktokFollowers: data.data.followers?.toString() || prev.tiktokFollowers,
+                    name: prev.name || data.data.nickname || '',
+                    avatar: data.data.avatar || prev.avatar,
+                }));
+            }
+        } catch (error) {
+            console.error('Failed to fetch TikTok data:', error);
+        } finally {
+            setFetchingTikTok(false);
+        }
+    };
 
     // Filter KOLs not in current campaign AND by Tier
     const availableKOLs = useMemo(() => {
@@ -94,7 +119,6 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
         );
 
         const newKOL: KOL = {
-            // eslint-disable-next-line react-hooks/purity
             id: `kol-${Date.now()}`,
             name: formData.name,
             category: 'General', // Placeholder
@@ -113,7 +137,8 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
 
             rateCardTiktok: Number(formData.rateCardTiktok) || 0,
             rateCardReels: Number(formData.rateCardReels) || 0,
-            rateCardPdfLink: formData.rateCardPdfLink
+            rateCardPdfLink: formData.rateCardPdfLink,
+            avatar: formData.avatar
         };
 
         await addKOL(newKOL, enableAutoLink);
@@ -130,7 +155,7 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
     const resetAndClose = () => {
         setOpen(false);
         setFormData({
-            name: "", categoryId: "", followers: "", avgViews: "",
+            name: "", categoryId: "", followers: "", avgViews: "", avatar: "",
             tiktokUsername: "", tiktokProfileLink: "", tiktokFollowers: "", rateCardTiktok: "",
             instagramUsername: "", instagramProfileLink: "", instagramFollowers: "", rateCardReels: "",
             rateCardPdfLink: ""
@@ -258,6 +283,30 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
                         {/* --- Basic Info --- */}
                         <div className="space-y-4">
                             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Basic Information</h3>
+                            
+                            {/* Avatar Input */}
+                            <div className="flex items-center gap-4">
+                                <Avatar className="h-16 w-16 border">
+                                    <AvatarImage src={formData.avatar} alt={formData.name} />
+                                    <AvatarFallback>{formData.name?.charAt(0) || "K"}</AvatarFallback>
+                                </Avatar>
+                                <div className="space-y-2 flex-1">
+                                    <Label htmlFor="avatar">Avatar URL</Label>
+                                    <div className="flex gap-2">
+                                        <Input 
+                                            id="avatar" 
+                                            name="avatar" 
+                                            value={formData.avatar} 
+                                            onChange={handleChange} 
+                                            placeholder="https://..." 
+                                        />
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">
+                                        Enter a URL or fetch from TikTok to auto-fill.
+                                    </p>
+                                </div>
+                            </div>
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="name">Full Name</Label>
@@ -286,7 +335,18 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="tiktokUsername">Username</Label>
-                                    <Input id="tiktokUsername" name="tiktokUsername" value={formData.tiktokUsername} onChange={handleChange} placeholder="@username" />
+                                    <div className="flex gap-2">
+                                        <Input id="tiktokUsername" name="tiktokUsername" value={formData.tiktokUsername} onChange={handleChange} placeholder="@username" className="flex-1" />
+                                        <Button 
+                                            type="button" 
+                                            variant="outline" 
+                                            size="sm"
+                                            onClick={fetchTikTokData}
+                                            disabled={!formData.tiktokUsername || fetchingTikTok}
+                                        >
+                                            {fetchingTikTok ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Fetch'}
+                                        </Button>
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="tiktokFollowers">Followers</Label>

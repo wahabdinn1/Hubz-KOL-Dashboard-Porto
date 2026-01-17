@@ -40,13 +40,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { PageLoadingTable } from "@/components/shared/page-loading";
+import { EmptyState, EmptyStateIcons } from "@/components/retroui/EmptyState";
+import { TablePagination } from "@/components/shared/table-pagination";
 
 function CampaignsListContent() {
-  const { campaigns, kols, deleteCampaigns, duplicateCampaign } = useData();
+  const { campaigns, kols, deleteCampaigns, duplicateCampaign, loading } = useData();
 
   const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Batch Select Handlers
   const handleSelectAll = (checked: boolean) => {
@@ -142,6 +149,21 @@ function CampaignsListContent() {
     return sortableItems;
   }, [campaigns, sortConfig, getCampaignMetrics]);
 
+  // Paginated data
+  const paginatedCampaigns = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return sortedCampaigns.slice(startIndex, startIndex + pageSize);
+  }, [sortedCampaigns, currentPage, pageSize]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="space-y-6 w-full max-w-full overflow-hidden">
       {/* Header */}
@@ -168,8 +190,29 @@ function CampaignsListContent() {
         </div>
       </div>
 
-      {/* Campaigns Table */}
-      <Card>
+      {/* Loading State */}
+      {loading && (
+        <PageLoadingTable rows={6} />
+      )}
+
+      {/* Empty State */}
+      {!loading && campaigns.length === 0 && (
+        <Card>
+          <CardContent className="py-12">
+            <EmptyState
+              title="No campaigns yet"
+              description="Create your first campaign to start tracking influencer collaborations."
+              icon={EmptyStateIcons.folder}
+              action={<CreateCampaignDialog />}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Campaigns Table - only show when not loading and has data */}
+      {!loading && campaigns.length > 0 && (
+        <>
+          <Card>
         <CardHeader>
           <CardTitle>Active Campaigns</CardTitle>
           <CardDescription>Click on a campaign to view detailed performance metrics.</CardDescription>
@@ -282,7 +325,7 @@ function CampaignsListContent() {
                   </TableCell>
                 </TableRow>
               ) : (
-                sortedCampaigns.map((campaign) => {
+                paginatedCampaigns.map((campaign) => {
                   const metrics = getCampaignMetrics(campaign);
                   const isSelected = selectedIds.includes(campaign.id);
                   return (
@@ -395,10 +438,19 @@ function CampaignsListContent() {
             </TableBody>
           </Table>
         </CardContent>
+        <TablePagination
+          currentPage={currentPage}
+          totalItems={sortedCampaigns.length}
+          pageSize={pageSize}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+        />
       </Card>
 
       {/* Campaign Timeline */}
       <CampaignGantt campaigns={campaigns} className="mt-8" />
+        </>
+      )}
     </div>
   );
 }

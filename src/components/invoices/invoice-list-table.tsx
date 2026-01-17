@@ -23,6 +23,7 @@ import {
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { InvoiceStatus } from "@/lib/invoice-utils";
+import { TablePagination, usePagination } from "@/components/shared/table-pagination";
 
 interface InvoiceListTableProps {
     kolId?: string;
@@ -52,6 +53,16 @@ export function InvoiceListTable({ kolId, campaignId, limit }: InvoiceListTableP
     const [invoices, setInvoices] = useState<InvoiceDB[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+    const {
+        currentPage,
+        pageSize,
+        handlePageChange,
+        handlePageSizeChange
+    } = usePagination(invoices.length);
+
+    // Paginated Invoices
+    const paginatedInvoices = limit ? invoices : invoices.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
     const fetchInvoices = useCallback(async () => {
         setIsLoading(true);
@@ -199,7 +210,7 @@ export function InvoiceListTable({ kolId, campaignId, limit }: InvoiceListTableP
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {invoices.map((invoice) => {
+                    {paginatedInvoices.map((invoice) => {
                         const isSelected = selectedIds.includes(invoice.id);
                         return (
                             <TableRow key={invoice.id} className={isSelected ? 'bg-muted' : ''}>
@@ -265,6 +276,15 @@ export function InvoiceListTable({ kolId, campaignId, limit }: InvoiceListTableP
                     })}
                 </TableBody>
             </Table>
+            {!limit && (
+                <TablePagination
+                    currentPage={currentPage}
+                    totalItems={invoices.length}
+                    pageSize={pageSize}
+                    onPageChange={handlePageChange}
+                    onPageSizeChange={handlePageSizeChange}
+                />
+            )}
         </div>
     );
 }

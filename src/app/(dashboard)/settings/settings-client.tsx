@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useData } from "@/context/data-context";
-import { Plus, Trash2, GripVertical, Settings, User as UserIcon, List, Database, FileText, HelpCircle, Info } from "lucide-react";
+import { Plus, Trash2, GripVertical, Settings, User as UserIcon, List, Database, FileText, HelpCircle, Info, Loader2, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import {
     Tooltip,
     TooltipContent,
@@ -19,7 +19,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { updatePassword } from "@/app/auth/actions";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
     DndContext,
     closestCenter,
@@ -104,6 +104,49 @@ export function SettingsClient({ user }: { user: User | null }) {
     const { role, isSuperAdmin, isAdmin } = useAuth();
     const [newCategory, setNewCategory] = useState("");
 
+    // TikTok session cookie state
+    const [tiktokCookie, setTiktokCookie] = useState("");
+    const [tiktokCookieLoading, setTiktokCookieLoading] = useState(false);
+    const [tiktokCookieSaved, setTiktokCookieSaved] = useState(false);
+    const [showCookie, setShowCookie] = useState(false);
+
+    // Fetch TikTok cookie on mount
+    useEffect(() => {
+        const fetchTikTokSettings = async () => {
+            try {
+                const response = await fetch('/api/tiktok/settings');
+                const data = await response.json();
+                if (data.status === 'success') {
+                    setTiktokCookie(data.data.tiktok_session_cookie || '');
+                }
+            } catch (error) {
+                console.error('Failed to fetch TikTok settings:', error);
+            }
+        };
+        fetchTikTokSettings();
+    }, []);
+
+    const handleSaveTikTokCookie = async () => {
+        setTiktokCookieLoading(true);
+        setTiktokCookieSaved(false);
+        try {
+            const response = await fetch('/api/tiktok/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tiktok_session_cookie: tiktokCookie }),
+            });
+            const data = await response.json();
+            if (data.status === 'success') {
+                setTiktokCookieSaved(true);
+                setTimeout(() => setTiktokCookieSaved(false), 3000);
+            }
+        } catch (error) {
+            console.error('Failed to save TikTok settings:', error);
+        } finally {
+            setTiktokCookieLoading(false);
+        }
+    };
+
     // Templates form state
     const [newTemplateName, setNewTemplateName] = useState("");
     const [newTemplateDesc, setNewTemplateDesc] = useState("");
@@ -177,7 +220,10 @@ export function SettingsClient({ user }: { user: User | null }) {
                 <Tabs defaultValue="general" className="space-y-4">
                     <TabsList>
                         <TabsTrigger value="general" className="gap-2"><UserIcon className="h-4 w-4" /> General</TabsTrigger>
-
+                        <TabsTrigger value="tiktok" className="gap-2">
+                            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" /></svg>
+                            TikTok
+                        </TabsTrigger>
                         {isAdmin && (
                             <TabsTrigger value="members" className="gap-2"><UsersIcon className="h-4 w-4" /> Team Members</TabsTrigger>
                         )}
@@ -253,6 +299,65 @@ export function SettingsClient({ user }: { user: User | null }) {
                                     </div>
                                     <Button type="submit" variant="secondary">Update Password</Button>
                                 </form>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    {/* TikTok Integration Tab - Available to all users */}
+                    <TabsContent value="tiktok" className="space-y-4">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z" /></svg>
+                                    TikTok Integration
+                                </CardTitle>
+                                <CardDescription>
+                                    Configure your TikTok session cookie to enable trending features and API access.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="tiktokCookie">Session Cookie (sessionid)</Label>
+                                    <div className="flex gap-2">
+                                        <div className="relative flex-1">
+                                            <Input
+                                                id="tiktokCookie"
+                                                type={showCookie ? "text" : "password"}
+                                                value={tiktokCookie}
+                                                onChange={(e) => setTiktokCookie(e.target.value)}
+                                                placeholder="Paste your TikTok sessionid here..."
+                                                className="pr-10"
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                                                onClick={() => setShowCookie(!showCookie)}
+                                            >
+                                                {showCookie ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                                            </Button>
+                                        </div>
+                                        <Button onClick={handleSaveTikTokCookie} disabled={tiktokCookieLoading}>
+                                            {tiktokCookieLoading ? (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : tiktokCookieSaved ? (
+                                                <><CheckCircle2 className="h-4 w-4 mr-2 text-green-500" /> Saved</>
+                                            ) : (
+                                                'Save'
+                                            )}
+                                        </Button>
+                                    </div>
+                                </div>
+                                <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg space-y-2">
+                                    <p className="font-medium">How to get your TikTok session cookie:</p>
+                                    <ol className="list-decimal list-inside space-y-1 text-xs">
+                                        <li>Log in to TikTok in your browser</li>
+                                        <li>Open Developer Tools (F12)</li>
+                                        <li>Go to Application → Cookies → tiktok.com</li>
+                                        <li>Find and copy the &quot;sessionid&quot; value</li>
+                                    </ol>
+                                </div>
                             </CardContent>
                         </Card>
                     </TabsContent>

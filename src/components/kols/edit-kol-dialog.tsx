@@ -14,9 +14,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useData } from "@/context/data-context";
-import { Pencil } from "lucide-react";
+import { Pencil, Loader2 } from "lucide-react";
 import { KOL } from "@/lib/static-data";
 import { CurrencyInput } from "@/components/ui/currency-input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface EditKOLDialogProps {
     kol: KOL;
@@ -25,12 +26,35 @@ interface EditKOLDialogProps {
 export function EditKOLDialog({ kol }: EditKOLDialogProps) {
     const { updateKOL, categories } = useData();
     const [open, setOpen] = useState(false);
+    const [fetchingTikTok, setFetchingTikTok] = useState(false);
+
+    // Fetch TikTok data
+    const fetchTikTokData = async () => {
+        if (!formData.tiktokUsername) return;
+        setFetchingTikTok(true);
+        try {
+            const response = await fetch(`/api/tiktok/stalk?username=${encodeURIComponent(formData.tiktokUsername)}`);
+            const data = await response.json();
+            if (data.status === 'success' && data.data) {
+                setFormData(prev => ({
+                    ...prev,
+                    tiktokFollowers: data.data.followers?.toString() || prev.tiktokFollowers,
+                    avatar: data.data.avatar || prev.avatar,
+                }));
+            }
+        } catch (error) {
+            console.error('Failed to fetch TikTok data:', error);
+        } finally {
+            setFetchingTikTok(false);
+        }
+    };
 
     const [formData, setFormData] = useState({
         name: "",
         categoryId: "",
         followers: "",
         avgViews: "",
+        avatar: "",
 
         tiktokUsername: "",
         tiktokProfileLink: "",
@@ -53,6 +77,7 @@ export function EditKOLDialog({ kol }: EditKOLDialogProps) {
                     categoryId: kol.categoryId || "",
                     followers: kol.followers.toString(),
                     avgViews: kol.avgViews.toString(),
+                    avatar: kol.avatar || "",
 
                     tiktokUsername: kol.tiktokUsername || "",
                     tiktokProfileLink: kol.tiktokProfileLink || "",
@@ -97,7 +122,8 @@ export function EditKOLDialog({ kol }: EditKOLDialogProps) {
 
             rateCardTiktok: Number(formData.rateCardTiktok) || 0,
             rateCardReels: Number(formData.rateCardReels) || 0,
-            rateCardPdfLink: formData.rateCardPdfLink
+            rateCardPdfLink: formData.rateCardPdfLink,
+            avatar: formData.avatar
         });
 
         setOpen(false);
@@ -151,6 +177,27 @@ export function EditKOLDialog({ kol }: EditKOLDialogProps) {
                     {/* --- Basic Info --- */}
                     <div className="space-y-4">
                         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Basic Information</h3>
+                        
+                        {/* Avatar Input */}
+                        <div className="flex items-center gap-4">
+                            <Avatar className="h-16 w-16 border">
+                                <AvatarImage src={formData.avatar} alt={formData.name} />
+                                <AvatarFallback>{formData.name?.charAt(0) || "K"}</AvatarFallback>
+                            </Avatar>
+                            <div className="space-y-2 flex-1">
+                                <Label htmlFor="avatar">Avatar URL</Label>
+                                <div className="flex gap-2">
+                                    <Input 
+                                        id="avatar" 
+                                        name="avatar" 
+                                        value={formData.avatar} 
+                                        onChange={handleChange} 
+                                        placeholder="https://..." 
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="name">Full Name</Label>
@@ -178,7 +225,18 @@ export function EditKOLDialog({ kol }: EditKOLDialogProps) {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="tiktokUsername">Username</Label>
-                                <Input id="tiktokUsername" name="tiktokUsername" value={formData.tiktokUsername} onChange={handleChange} />
+                                <div className="flex gap-2">
+                                    <Input id="tiktokUsername" name="tiktokUsername" value={formData.tiktokUsername} onChange={handleChange} className="flex-1" />
+                                    <Button 
+                                        type="button" 
+                                        variant="outline" 
+                                        size="sm"
+                                        onClick={fetchTikTokData}
+                                        disabled={!formData.tiktokUsername || fetchingTikTok}
+                                    >
+                                        {fetchingTikTok ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Fetch'}
+                                    </Button>
+                                </div>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="tiktokFollowers">Followers</Label>
