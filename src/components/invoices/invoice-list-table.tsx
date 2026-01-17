@@ -51,6 +51,7 @@ interface InvoiceDB {
 export function InvoiceListTable({ kolId, campaignId, limit }: InvoiceListTableProps) {
     const [invoices, setInvoices] = useState<InvoiceDB[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
     const fetchInvoices = useCallback(async () => {
         setIsLoading(true);
@@ -106,6 +107,44 @@ export function InvoiceListTable({ kolId, campaignId, limit }: InvoiceListTableP
         }
     };
 
+    // Bulk select handlers
+    const handleSelectAll = (checked: boolean) => {
+        if (checked) {
+            setSelectedIds(invoices.filter(i => i.status !== 'PAID').map(i => i.id));
+        } else {
+            setSelectedIds([]);
+        }
+    };
+
+    const handleSelectRow = (id: string, checked: boolean) => {
+        if (checked) {
+            setSelectedIds(prev => [...prev, id]);
+        } else {
+            setSelectedIds(prev => prev.filter(i => i !== id));
+        }
+    };
+
+    // Bulk mark as paid
+    const handleBulkMarkAsPaid = async () => {
+        if (!confirm(`Mark ${selectedIds.length} invoices as PAID?`)) return;
+        
+        try {
+            for (const id of selectedIds) {
+                await (supabase
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    .from('invoices') as any)
+                    .update({ status: 'PAID' })
+                    .eq('id', id);
+            }
+            toast.success(`${selectedIds.length} invoices marked as PAID`);
+            setSelectedIds([]);
+            fetchInvoices();
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to update invoices");
+        }
+    };
+
     if (isLoading) {
         return <div className="p-8 text-center text-muted-foreground">Loading invoices...</div>;
     }
@@ -125,9 +164,32 @@ export function InvoiceListTable({ kolId, campaignId, limit }: InvoiceListTableP
 
     return (
         <div className="border rounded-md">
+            {/* Bulk Actions Bar */}
+            {selectedIds.length > 0 && (
+                <div className="p-2 bg-muted flex items-center justify-between border-b">
+                    <span className="text-sm text-muted-foreground">
+                        {selectedIds.length} selected
+                    </span>
+                    <Button
+                        size="sm"
+                        onClick={handleBulkMarkAsPaid}
+                        className="h-7 text-xs"
+                    >
+                        Mark as Paid ({selectedIds.length})
+                    </Button>
+                </div>
+            )}
             <Table>
                 <TableHeader>
                     <TableRow>
+                        <TableHead className="w-[40px]">
+                            <input
+                                type="checkbox"
+                                className="translate-y-[2px]"
+                                checked={selectedIds.length > 0 && selectedIds.length === invoices.filter(i => i.status !== 'PAID').length}
+                                onChange={(e) => handleSelectAll(e.target.checked)}
+                            />
+                        </TableHead>
                         <TableHead>Invoice #</TableHead>
                         <TableHead>Recipient</TableHead>
                         <TableHead>Status</TableHead>
@@ -137,13 +199,25 @@ export function InvoiceListTable({ kolId, campaignId, limit }: InvoiceListTableP
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {invoices.map((invoice) => (
-                        <TableRow key={invoice.id}>
-                            <TableCell className="font-medium font-mono">
-                                <Link href={`/invoices/${invoice.id}`} className="hover:underline text-primary">
-                                    {invoice.invoice_number}
-                                </Link>
-                            </TableCell>
+                    {invoices.map((invoice) => {
+                        const isSelected = selectedIds.includes(invoice.id);
+                        return (
+                            <TableRow key={invoice.id} className={isSelected ? 'bg-muted' : ''}>
+                                <TableCell className="w-[40px]">
+                                    {invoice.status !== 'PAID' && (
+                                        <input
+                                            type="checkbox"
+                                            className="translate-y-[2px]"
+                                            checked={isSelected}
+                                            onChange={(e) => handleSelectRow(invoice.id, e.target.checked)}
+                                        />
+                                    )}
+                                </TableCell>
+                                <TableCell className="font-medium font-mono">
+                                    <Link href={`/invoices/${invoice.id}`} className="hover:underline text-primary">
+                                        {invoice.invoice_number}
+                                    </Link>
+                                </TableCell>
                             <TableCell>{invoice.recipient_name}</TableCell>
                             <TableCell>
                                 <Badge
@@ -187,7 +261,8 @@ export function InvoiceListTable({ kolId, campaignId, limit }: InvoiceListTableP
                                 </DropdownMenu>
                             </TableCell>
                         </TableRow>
-                    ))}
+                    );
+                    })}
                 </TableBody>
             </Table>
         </div>

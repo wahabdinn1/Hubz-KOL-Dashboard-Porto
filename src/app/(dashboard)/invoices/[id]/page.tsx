@@ -12,6 +12,7 @@ import { MY_BANK_DETAILS, Invoice, InvoiceStatus } from "@/lib/invoice-utils";
 import { formatIDR } from "@/lib/analytics";
 import { supabase } from "@/lib/supabase";
 import { Database } from "@/types/supabase";
+import { PaymentTracker } from "@/components/invoices/payment-tracker";
 
 type InvoiceRow = Database['public']['Tables']['invoices']['Row'];
 type InvoiceItemRow = Database['public']['Tables']['invoice_items']['Row'];
@@ -209,6 +210,14 @@ export default function InvoicePage({ params }: { params: Promise<{ id: string }
 
                 </CardContent>
             </Card>
+
+            {/* Payment Tracking Section - Below invoice */}
+            <PaymentTracker
+                invoiceId={invoice.id}
+                totalAmount={invoice.totalAmount}
+                invoiceStatus={invoice.status}
+                onStatusChange={(newStatus) => setInvoice({ ...invoice, status: newStatus as InvoiceStatus })}
+            />
         </div>
     );
 }

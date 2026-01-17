@@ -9,6 +9,9 @@ import { CreateCampaignDialog } from "@/components/campaigns/create-campaign-dia
 import { AddKOLDialog } from "@/components/kols/add-kol-dialog";
 import { BarChart } from "@/components/retroui/charts/BarChart";
 import { Progress } from "@/components/retroui/Progress";
+import { DateRangeFilter } from "@/components/shared/date-range-filter";
+import { DateRange } from "react-day-picker";
+import { isWithinInterval, parseISO } from "date-fns";
 
 import {
   Tooltip,
@@ -21,7 +24,35 @@ import { HelpCircle } from "lucide-react";
 function DashboardContent() {
   const { kols, campaigns } = useData();
   const [activeChart, setActiveChart] = useState<"revenue" | "views">("revenue");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const isMounted = typeof window !== "undefined";
+
+  // Filter campaigns by date range
+  const filteredCampaigns = useMemo(() => {
+    if (!dateRange?.from) return campaigns;
+    
+    return campaigns.filter(c => {
+      if (!c.startDate && !c.endDate) return true; // Include campaigns without dates
+      
+      const campaignStart = c.startDate ? parseISO(c.startDate) : null;
+      const campaignEnd = c.endDate ? parseISO(c.endDate) : null;
+      
+      // Check if campaign overlaps with selected range
+      if (dateRange.from && dateRange.to) {
+        if (campaignStart && campaignEnd) {
+          return (
+            isWithinInterval(campaignStart, { start: dateRange.from, end: dateRange.to }) ||
+            isWithinInterval(campaignEnd, { start: dateRange.from, end: dateRange.to }) ||
+            isWithinInterval(dateRange.from, { start: campaignStart, end: campaignEnd })
+          );
+        }
+        if (campaignStart) {
+          return isWithinInterval(campaignStart, { start: dateRange.from, end: dateRange.to });
+        }
+      }
+      return true;
+    });
+  }, [campaigns, dateRange]);
 
   // --- Calculate Metrics ---
   const metrics = useMemo(() => {
@@ -35,7 +66,7 @@ function DashboardContent() {
       'SUBMITTED': 0, 'POSTED': 0, 'COMPLETED': 0
     };
 
-    campaigns.forEach(c => {
+    filteredCampaigns.forEach(c => {
       totalBudget += c.budget || 0;
 
       // Calculate spend based on platform rates
@@ -61,7 +92,7 @@ function DashboardContent() {
     });
 
     const activeKOLs = kols.length;
-    const activeCampaigns = campaigns.length;
+    const activeCampaigns = filteredCampaigns.length;
 
     // Tier Counts
     const tierCounts = { 'Nano-Tier': 0, 'Micro-Tier': 0, 'Macro-Tier': 0, 'Mega-Tier': 0 };
@@ -75,7 +106,7 @@ function DashboardContent() {
 
     // Category Performance
     const categoryPerformance: Record<string, { revenue: number; views: number }> = {};
-    campaigns.forEach(c => {
+    filteredCampaigns.forEach(c => {
       c.deliverables.forEach(d => {
         const kol = kols.find(k => k.id === d.kolId);
         if (kol) {
@@ -88,7 +119,7 @@ function DashboardContent() {
     });
 
     return { totalRevenue, totalViews, activeKOLs, activeCampaigns, totalSpend, totalBudget, statusCounts, tierCounts, categoryPerformance };
-  }, [kols, campaigns]);
+  }, [kols, filteredCampaigns]);
 
   // --- Prepare Chart Data ---
   const chartData = useMemo(() => {
@@ -212,10 +243,14 @@ function DashboardContent() {
             Performance Overview
           </h1>
           <p className="text-muted-foreground mt-1">
-            Aggregate metrics across {metrics.activeCampaigns} active campaign{metrics.activeCampaigns !== 1 ? 's' : ''}.
+            Aggregate metrics across {metrics.activeCampaigns} {dateRange?.from ? "filtered" : "active"} campaign{metrics.activeCampaigns !== 1 ? 's' : ''}.
           </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap">
+          <DateRangeFilter 
+            dateRange={dateRange} 
+            onDateRangeChange={setDateRange} 
+          />
           <div className="flex items-center gap-2">
             <CreateCampaignDialog />
             <div className="hidden sm:block">
@@ -228,7 +263,11 @@ function DashboardContent() {
       {/* --- KPI Cards --- */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* REVENUE & BUDGET */}
-        <Card className={`transition-transform hover:scale-[1.02] ${activeChart === 'revenue' ? "border-primary/50 shadow-md" : ""}`}>
+        <Card 
+            className={`transition-all hover:-translate-y-1 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ${
+              activeChart === 'revenue' ? "bg-primary/5 ring-2 ring-primary ring-offset-2" : ""
+            }`}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Financials</CardTitle>
             <TooltipProvider delayDuration={200}>
@@ -258,7 +297,7 @@ function DashboardContent() {
         </Card>
 
         {/* ACTIVE KOLS */}
-        <Card className="transition-transform hover:scale-[1.02]">
+        <Card className="transition-all hover:-translate-y-1 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active KOLs</CardTitle>
             <TooltipProvider delayDuration={200}>
@@ -286,7 +325,11 @@ function DashboardContent() {
         </Card>
 
         {/* TOTAL VIEWS */}
-        <Card className={`transition-transform hover:scale-[1.02] ${activeChart === 'views' ? "border-purple-500/50 shadow-md" : ""}`}>
+        <Card 
+            className={`transition-all hover:-translate-y-1 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] ${
+              activeChart === 'views' ? "bg-purple-500/10 ring-2 ring-purple-500 ring-offset-2" : ""
+            }`}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Views</CardTitle>
             <TooltipProvider delayDuration={200}>
@@ -307,7 +350,7 @@ function DashboardContent() {
         </Card>
 
         {/* AVG PERFORMANCE */}
-        <Card className="transition-transform hover:scale-[1.02]">
+        <Card className="transition-all hover:-translate-y-1 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Avg. {activeChart === 'revenue' ? 'Rev' : 'Views'} / Campaign</CardTitle>
             <TooltipProvider delayDuration={200}>
@@ -341,7 +384,7 @@ function DashboardContent() {
       {/* --- Charts Section --- */}
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-12">
         {/* Interactive Chart */}
-        <Card className="col-span-1 lg:col-span-8">
+        <Card className="col-span-1 lg:col-span-8 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
           <CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row">
             <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-5 sm:py-6">
               <CardTitle className="flex items-center gap-2">
@@ -414,7 +457,8 @@ function DashboardContent() {
 
 
         {/* Platform Comparison */}
-        <Card className="col-span-1 lg:col-span-4">
+        {/* Platform Comparison */}
+        <Card className="col-span-1 lg:col-span-4 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Platform Comparison</CardTitle>
             <CardDescription>Head-to-head metrics.</CardDescription>
@@ -463,7 +507,8 @@ function DashboardContent() {
 
         {/* Right Column: Platform & Top KOLs */}
         {/* Platform Distribution */}
-        <Card className="col-span-1 lg:col-span-4">
+        {/* Platform Distribution */}
+        <Card className="col-span-1 lg:col-span-4 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               Budget Allocation
@@ -533,7 +578,8 @@ function DashboardContent() {
         </Card>
 
         {/* Category Performance */}
-        <Card className="col-span-1 lg:col-span-4">
+        {/* Category Performance */}
+        <Card className="col-span-1 lg:col-span-4 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <div>
               <CardTitle className="text-base flex items-center gap-2">
@@ -577,7 +623,8 @@ function DashboardContent() {
         </Card>
 
         {/* Top KOLs Leaderboard */}
-        <Card className="col-span-1 lg:col-span-4">
+        {/* Top KOLs Leaderboard */}
+        <Card className="col-span-1 lg:col-span-4 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               Top {activeChart === 'revenue' ? 'Earners' : 'Profiles by Reach'}

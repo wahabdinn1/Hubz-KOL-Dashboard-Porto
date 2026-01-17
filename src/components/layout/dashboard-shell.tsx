@@ -15,7 +15,8 @@ import {
     Zap,
     Calendar,
     LucideIcon,
-    FileText
+    FileText,
+    DollarSign
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/app/auth/actions";
@@ -62,6 +63,7 @@ const NAV_ITEMS: NavItem[] = [
             { name: "Calendar", href: "/campaigns/calendar", icon: Calendar },
         ]
     },
+    { name: "Influencers", href: "/influencers", icon: Users },
     {
         name: "Invoices",
         icon: FileText,
@@ -70,7 +72,7 @@ const NAV_ITEMS: NavItem[] = [
             { name: "Create New", href: "/invoices/new", icon: FileText }
         ]
     },
-    { name: "Influencers", href: "/influencers", icon: Users },
+    { name: "Finance", href: "/finance", icon: DollarSign },
     {
         name: "Tools",
         icon: Calculator,

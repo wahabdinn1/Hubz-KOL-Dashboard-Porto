@@ -74,27 +74,19 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     }, [activeCampaignId]);
 
     // 1. Fetch KOLs
-    const { data: kols = [], isLoading: kolsLoading } = useQuery({
+    const { data: rawKols = [], isLoading: kolsLoading } = useQuery({
         queryKey: ['kols'],
         queryFn: async () => {
             const { data, error } = await supabase.from('kols').select('*');
             if (error) throw error;
 
-            return (data || []).map((k: KOLRow) => ({
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return (data || []).map((k: any) => ({
                 id: k.id,
                 name: k.name,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                type: (k.type as any) || 'Micro',
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                category: (k.category_id as any) || 'General', // Correct mapping if needed? No, Kols table has 'category_id' in types, but earlier code used 'category'. Checked supabase types: 'category_id'. Code was 'category: k.category'.
-                // Wait, checking Step 1449: 'category_id' exists in Row. 'category' does NOT exist in Row.
-                // But the legacy code (Step 1439 line 84) used `k.category`.
-                // It seems the legacy code was relying on `any` cast to access a property that might not exist in type but existed in DB?
-                // Or maybe `category` column was renamed to `category_id`?
-                // I'll stick to `category_id` if that is what the type says, but maybe I should map it to `category` in frontend KOL type.
-                // Frontend KOL type has `category: string`.
-                // I will assume `category_id` stores the string or ID. If it's a join, then we need to fetch category name.
-                // For now, I'll map `category: k.category_id || 'General'`.
+                type: k.type || 'Micro',
+                category: k.category || 'General',
+                categoryId: k.category_id,
                 followers: k.followers,
                 avgViews: k.avg_views,
                 tiktokUsername: k.tiktok_username,
@@ -137,6 +129,21 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             return data as CampaignRow[];
         }
     });
+
+    const kols = React.useMemo(() => {
+        return rawKols.map(kol => {
+            // DB has 'category' (text). match it to our categories list.
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const dbCategoryName = (kol as any).category; 
+            const matchedCategory = categories.find(c => c.name === dbCategoryName);
+
+            return {
+                ...kol,
+                category: matchedCategory ? matchedCategory.name : (dbCategoryName || 'General'),
+                categoryId: matchedCategory ? matchedCategory.id : undefined
+            };
+        });
+    }, [rawKols, categories]);
 
     const { data: rawDeliverables = [] } = useQuery({
         queryKey: ['deliverables'],
@@ -371,18 +378,14 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     const addKOL = async (newKOL: KOL, addToCurrentCampaign = true) => {
         const promise = async () => {
             // Map frontend to DB columns
-            const payload: Database['public']['Tables']['kols']['Insert'] = {
+            // Map ID back to Name for Text column in DB
+            const catName = categories.find(c => c.id === newKOL.categoryId)?.name || newKOL.category || 'General';
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const payload: any = {
                 name: newKOL.name,
                 type: newKOL.type,
-                // category_id: newKOL.category, // Assuming category maps to category_id
-                // But wait, kols table has `category_id` (uuid) but frontend uses `category` (string name).
-                // If I insert string name into uuid column -> ERROR.
-                // If `category_id` is string in DB (it is UUID usually, but generated types say string? let's check Step 1449 line 24: `category_id: string | null`)
-                // It is just string. So if it's not UUID, it might be fine.
-                // But typically category_id implies foreign key.
-                // If the user inputs a new category name, we might need to create it or find it.
-                // For now, I'll comment out category_id or try to use it if it looks like an ID.
-                // Since I don't have the category logic fully mapped, I'll assume standard string for now or skip it.
+                category: catName, // Save as Text
                 username: newKOL.tiktokUsername || newKOL.instagramUsername || 'unknown', // mandatory field in DB
                 followers: newKOL.followers,
                 avg_views: newKOL.avgViews,
@@ -447,7 +450,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             const dbUpdates: Database['public']['Tables']['kols']['Update'] = {};
             if (updates.name) dbUpdates.name = updates.name;
             if (updates.type) dbUpdates.type = updates.type;
-            // if (updates.category) dbUpdates.category_id = updates.category;
+            if (updates.categoryId) {
+                const catName = categories.find(c => c.id === updates.categoryId)?.name;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                if (catName) (dbUpdates as any).category = catName;
+            }
             if (updates.followers) dbUpdates.followers = updates.followers;
             if (updates.avgViews) dbUpdates.avg_views = updates.avgViews;
             if (updates.tiktokUsername) dbUpdates.tiktok_username = updates.tiktokUsername;

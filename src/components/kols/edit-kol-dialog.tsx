@@ -28,7 +28,7 @@ export function EditKOLDialog({ kol }: EditKOLDialogProps) {
 
     const [formData, setFormData] = useState({
         name: "",
-        category: "",
+        categoryId: "",
         followers: "",
         avgViews: "",
 
@@ -50,7 +50,7 @@ export function EditKOLDialog({ kol }: EditKOLDialogProps) {
             const timer = setTimeout(() => {
                 setFormData({
                     name: kol.name,
-                    category: kol.category,
+                    categoryId: kol.categoryId || "",
                     followers: kol.followers.toString(),
                     avgViews: kol.avgViews.toString(),
 
@@ -82,7 +82,7 @@ export function EditKOLDialog({ kol }: EditKOLDialogProps) {
 
         await updateKOL(kol.id, {
             name: formData.name,
-            category: formData.category,
+            categoryId: formData.categoryId,
             followers: totalFollowers,
             avgViews: 0,
             type: totalFollowers > 1000000 ? 'Macro' : totalFollowers < 100000 ? 'Micro' : 'Macro',
@@ -157,14 +157,14 @@ export function EditKOLDialog({ kol }: EditKOLDialogProps) {
                                 <Input id="name" name="name" value={formData.name} onChange={handleChange} required />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="category">Category</Label>
+                                <Label htmlFor="categoryId">Category</Label>
                                 {categories.length > 0 ? (
-                                    <select id="category" name="category" value={formData.category} onChange={handleChange} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" required>
+                                    <select id="categoryId" name="categoryId" value={formData.categoryId} onChange={handleChange} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" required>
                                         <option value="" disabled>Select Category</option>
-                                        {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                     </select>
                                 ) : (
-                                    <Input id="category" name="category" value={formData.category} onChange={handleChange} required />
+                                    <Input id="categoryId" name="categoryId" value={formData.categoryId} onChange={handleChange} required />
                                 )}
                             </div>
                         </div>

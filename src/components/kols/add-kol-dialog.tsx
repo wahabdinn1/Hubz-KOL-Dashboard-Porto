@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/retroui/Button";
 import { useData } from "@/context/data-context";
 import { Plus, Users, UserPlus, AlertTriangle } from "lucide-react";
 import { KOL } from "@/lib/static-data";
@@ -40,7 +40,7 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
     // For New Mode
     const [formData, setFormData] = useState({
         name: "",
-        category: "",
+        categoryId: "",
         followers: "",
         avgViews: "",
 
@@ -97,7 +97,8 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
             // eslint-disable-next-line react-hooks/purity
             id: `kol-${Date.now()}`,
             name: formData.name,
-            category: formData.category,
+            category: 'General', // Placeholder
+            categoryId: formData.categoryId,
             followers: totalFollowers, // Auto-calculated
             avgViews: 0, // Deprecated/Hidden
             type: totalFollowers > 1000000 ? 'Macro' : totalFollowers < 100000 ? 'Micro' : 'Macro', // Fallback logic
@@ -129,7 +130,7 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
     const resetAndClose = () => {
         setOpen(false);
         setFormData({
-            name: "", category: "", followers: "", avgViews: "",
+            name: "", categoryId: "", followers: "", avgViews: "",
             tiktokUsername: "", tiktokProfileLink: "", tiktokFollowers: "", rateCardTiktok: "",
             instagramUsername: "", instagramProfileLink: "", instagramFollowers: "", rateCardReels: "",
             rateCardPdfLink: ""
@@ -263,14 +264,14 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
                                     <Input id="name" name="name" value={formData.name} onChange={handleChange} onBlur={handleNameBlur} required placeholder="e.g. Jane Doe" />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="category">Category</Label>
+                                    <Label htmlFor="categoryId">Category</Label>
                                     {categories.length > 0 ? (
-                                        <select id="category" name="category" value={formData.category} onChange={handleChange} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" required>
+                                        <select id="categoryId" name="categoryId" value={formData.categoryId} onChange={handleChange} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" required>
                                             <option value="" disabled>Select Category</option>
-                                            {categories.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                                            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                         </select>
                                     ) : (
-                                        <Input id="category" name="category" value={formData.category} onChange={handleChange} required />
+                                        <Input id="categoryId" name="categoryId" value={formData.categoryId} onChange={handleChange} required />
                                     )}
                                 </div>
                             </div>

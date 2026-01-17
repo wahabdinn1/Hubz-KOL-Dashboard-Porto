@@ -8,12 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { formatIDR } from "@/lib/analytics";
 import { formatCompactNumber } from "@/lib/utils";
-import { ArrowLeft, Instagram } from "lucide-react";
+import { ArrowLeft, Instagram, Briefcase, Eye, DollarSign } from "lucide-react";
 import Link from "next/link";
 
 import { EditKOLDialog } from "@/components/kols/edit-kol-dialog";
 import { KOLPerformanceChart } from "@/components/kols/kol-performance-chart";
 import { InvoiceListTable } from "@/components/invoices/invoice-list-table";
+import { KOLRating } from "@/components/kols/kol-rating";
+import { TierBadge } from "@/components/ui/tier-badge";
 
 // Helper to resolve params in Next.js 15+ (if applicable, but safe for 14 too)
 // Actually params is a Promise in newer Next.js versions, but for client components usually it's passed as prop or use useParams.
@@ -54,6 +56,12 @@ function InfluencerDetailContent() {
         c.deliverables.some(d => d.kolId === kol.id)
     );
 
+    // Calculate tier
+    let tier = "Nano-Tier";
+    if (kol.followers >= 1000000) tier = "Mega-Tier";
+    else if (kol.followers >= 100000) tier = "Macro-Tier";
+    else if (kol.followers >= 10000) tier = "Micro-Tier";
+
     // Calculate aggregated stats
     const totalCampaigns = history.length;
     const totalViews = history.reduce((acc, c) => {
@@ -69,17 +77,23 @@ function InfluencerDetailContent() {
         <div className="space-y-6">
             <div className="flex items-center gap-4">
                 <Link href="/influencers">
-                    <Button variant="ghost" size="icon">
+                    <Button variant="ghost" size="icon" className="border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-[2px] transition-all">
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                 </Link>
                 <div className="flex items-center gap-4">
+                    {/* Avatar */}
+                    <div className="h-16 w-16 rounded-full bg-gradient-to-br from-pink-500 to-purple-600 flex items-center justify-center text-white text-2xl font-bold border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                        {kol.name.charAt(0)}
+                    </div>
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">{kol.name}</h1>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Badge variant="outline">{kol.category}</Badge>
-                            <span>•</span>
-                            <span>{kol.type} level</span>
+                            <TierBadge tier={tier} />
+                            <Badge variant="outline" className="border-2 border-black">{kol.category}</Badge>
+                        </div>
+                        <div className="mt-1">
+                            <KOLRating rating={3} readonly />
                         </div>
                     </div>
                     <EditKOLDialog kol={kol} />
@@ -88,7 +102,7 @@ function InfluencerDetailContent() {
 
             <div className="grid gap-6 md:grid-cols-3">
                 {/* Profile Card */}
-                <Card className="md:col-span-1">
+                <Card className="md:col-span-1 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                     <CardHeader>
                         <CardTitle>Profile</CardTitle>
                     </CardHeader>
@@ -153,22 +167,31 @@ function InfluencerDetailContent() {
                 <div className="md:col-span-2 space-y-6">
                     {/* Aggregated Stats */}
                     <div className="grid grid-cols-3 gap-4">
-                        <Card>
+                        <Card className="border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                             <CardContent className="p-6">
-                                <div className="text-sm font-medium text-muted-foreground">Total Campaigns</div>
-                                <div className="text-2xl font-bold">{totalCampaigns}</div>
+                                <div className="flex items-center gap-2">
+                                    <Briefcase className="h-4 w-4 text-blue-500" />
+                                    <span className="text-sm font-medium text-muted-foreground">Total Campaigns</span>
+                                </div>
+                                <div className="text-2xl font-bold mt-1">{totalCampaigns}</div>
                             </CardContent>
                         </Card>
-                        <Card>
+                        <Card className="border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                             <CardContent className="p-6">
-                                <div className="text-sm font-medium text-muted-foreground">Lifetime Views</div>
-                                <div className="text-2xl font-bold">{formatCompactNumber(totalViews)}</div>
+                                <div className="flex items-center gap-2">
+                                    <Eye className="h-4 w-4 text-purple-500" />
+                                    <span className="text-sm font-medium text-muted-foreground">Lifetime Views</span>
+                                </div>
+                                <div className="text-2xl font-bold mt-1">{formatCompactNumber(totalViews)}</div>
                             </CardContent>
                         </Card>
-                        <Card>
+                        <Card className="border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                             <CardContent className="p-6">
-                                <div className="text-sm font-medium text-muted-foreground">Lifetime Sales</div>
-                                <div className="text-2xl font-bold">{formatIDR(totalRevenue)}</div>
+                                <div className="flex items-center gap-2">
+                                    <DollarSign className="h-4 w-4 text-emerald-500" />
+                                    <span className="text-sm font-medium text-muted-foreground">Lifetime Sales</span>
+                                </div>
+                                <div className="text-2xl font-bold mt-1">{formatIDR(totalRevenue)}</div>
                             </CardContent>
                         </Card>
                     </div>
@@ -177,7 +200,7 @@ function InfluencerDetailContent() {
                     <KOLPerformanceChart kolId={kol.id} campaigns={campaigns} />
 
                     {/* Campaign History List */}
-                    <Card>
+                    <Card className="border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                         <CardHeader>
                             <CardTitle>Campaign History</CardTitle>
                         </CardHeader>
@@ -212,7 +235,7 @@ function InfluencerDetailContent() {
                     </Card>
 
                     {/* Linked Invoices */}
-                    <Card>
+                    <Card className="border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                         <CardHeader>
                             <CardTitle>Invoices</CardTitle>
                         </CardHeader>

@@ -63,6 +63,7 @@ export function KanbanColumn({ id, title, items, activeCampaign, onAddClick }: K
                                 id={kol.id}
                                 kol={kol}
                                 status={id}
+                                campaignId={activeCampaign?.id}
                                 contentLink={deliverable?.contentLink}
                                 dueDate={deliverable?.dueDate}
                                 notes={deliverable?.notes}

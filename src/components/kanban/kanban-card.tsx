@@ -6,19 +6,26 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { KOL } from "@/lib/static-data";
-import { ExternalLink, Calendar } from "lucide-react";
+import { ExternalLink, Calendar, Paperclip } from "lucide-react";
 import { format, isPast, isToday } from "date-fns";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
+import { DeliverableAttachments } from "@/components/campaigns/deliverable-attachments";
 
 interface KanbanCardProps {
     id: string;
     kol: KOL;
     status: string;
+    campaignId?: string;
     contentLink?: string;
     dueDate?: string;
     notes?: string;
 }
 
-export function KanbanCard({ id, kol, contentLink, dueDate, notes }: KanbanCardProps) {
+export function KanbanCard({ id, kol, campaignId, contentLink, dueDate, notes }: KanbanCardProps) {
     const {
         attributes,
         listeners,
@@ -93,6 +100,27 @@ export function KanbanCard({ id, kol, contentLink, dueDate, notes }: KanbanCardP
 
                         {/* Avatar & Link */}
                         <div className="flex items-center gap-1">
+                            {/* Attachments button */}
+                            {campaignId && (
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <button
+                                            className="h-6 w-6 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
+                                            onPointerDown={(e) => e.stopPropagation()}
+                                            title="Attachments"
+                                        >
+                                            <Paperclip className="h-3 w-3" />
+                                        </button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-80 p-0" align="end">
+                                        <DeliverableAttachments
+                                            campaignId={campaignId}
+                                            deliverableKolId={kol.id}
+                                            className="border-0 shadow-none"
+                                        />
+                                    </PopoverContent>
+                                </Popover>
+                            )}
                             {contentLink && (
                                 <a
                                     href={contentLink}
