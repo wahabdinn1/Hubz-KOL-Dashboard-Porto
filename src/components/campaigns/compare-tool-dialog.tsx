@@ -70,7 +70,7 @@ export function CompareToolDialog({ selectedKols: initialKols }: CompareToolDial
                     </TooltipContent>
                 </Tooltip>
             </TooltipProvider>
-            <DialogContent className="max-w-[90vw] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-[90vw] sm:max-w-[90vw] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Influencer Comparison Tool</DialogTitle>
                     <DialogDescription>
