@@ -22,8 +22,8 @@ import {
     formatIDR,
 } from "@/lib/analytics";
 import { useData } from "@/context/data-context";
-import { EditDeliverableDialog } from "@/components/edit-deliverable-dialog";
-import { KOLProfileDialog } from "@/components/kol-profile-dialog";
+import { EditDeliverableDialog } from "@/components/campaigns/edit-deliverable-dialog";
+import { KOLProfileDialog } from "@/components/kols/kol-profile-dialog";
 
 export function KOLTable() {
     const { kols, campaign, removeKOLFromCampaignDB } = useData();

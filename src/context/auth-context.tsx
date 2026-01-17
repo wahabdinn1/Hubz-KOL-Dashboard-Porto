@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const fetchRole = async (userId: string) => {
         try {
-            const { data } = await supabase
+            const { data } = await (supabase as any)
                 .from("profiles")
                 .select("role")
                 .eq("id", userId)

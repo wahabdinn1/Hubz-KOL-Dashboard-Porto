@@ -34,7 +34,7 @@ export function UserManagementTable() {
         const fetchUsers = async () => {
             try {
                 setLoading(true);
-                const { data, error } = await supabase
+                const { data, error } = await (supabase as any)
                     .from('profiles')
                     .select('*')
                     .order('created_at', { ascending: false });
@@ -56,7 +56,7 @@ export function UserManagementTable() {
 
         try {
             setLoading(true);
-            const { error } = await supabase
+            const { error } = await (supabase as any)
                 .from('profiles')
                 .update({ role: newRole })
                 .eq('id', userId);
@@ -79,7 +79,7 @@ export function UserManagementTable() {
 
         try {
             setLoading(true);
-            const { error } = await supabase
+            const { error } = await (supabase as any)
                 .from('profiles')
                 .delete()
                 .eq('id', userId);

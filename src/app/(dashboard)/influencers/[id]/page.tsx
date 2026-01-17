@@ -11,8 +11,8 @@ import { formatCompactNumber } from "@/lib/utils";
 import { ArrowLeft, Instagram } from "lucide-react";
 import Link from "next/link";
 
-import { EditKOLDialog } from "@/components/edit-kol-dialog";
-import { KOLPerformanceChart } from "@/components/kol-performance-chart";
+import { EditKOLDialog } from "@/components/kols/edit-kol-dialog";
+import { KOLPerformanceChart } from "@/components/kols/kol-performance-chart";
 
 // Helper to resolve params in Next.js 15+ (if applicable, but safe for 14 too)
 // Actually params is a Promise in newer Next.js versions, but for client components usually it's passed as prop or use useParams.

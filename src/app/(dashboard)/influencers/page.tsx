@@ -8,12 +8,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatIDR } from "@/lib/analytics";
 import { formatCompactNumber } from "@/lib/utils";
-import { AddKOLDialog } from "@/components/add-kol-dialog";
-import { EditKOLDialog } from "@/components/edit-kol-dialog";
-import { DeleteKOLDialog } from "@/components/delete-kol-dialog";
+import { AddKOLDialog } from "@/components/kols/add-kol-dialog";
+import { EditKOLDialog } from "@/components/kols/edit-kol-dialog";
+import { DeleteKOLDialog } from "@/components/kols/delete-kol-dialog";
 import { exportToCSV, KOL_EXPORT_COLUMNS } from "@/lib/export-utils";
-import { CompareToolDialog } from "@/components/compare-tool-dialog";
-import { BulkImportDialog } from "@/components/bulk-import-dialog";
+import { CompareToolDialog } from "@/components/campaigns/compare-tool-dialog";
+import { BulkImportDialog } from "@/components/kols/bulk-import-dialog";
 import {
     Tooltip,
     TooltipContent,

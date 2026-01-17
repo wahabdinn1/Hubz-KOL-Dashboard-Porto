@@ -38,7 +38,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Category } from "@/lib/static-data";
-import { SeedDataButton } from "@/components/seed-data-button";
+import { SeedDataButton } from "@/components/shared/seed-data-button";
 import { CampaignTemplate } from "@/lib/campaign-templates";
 
 // --- Sortable Item Component ---

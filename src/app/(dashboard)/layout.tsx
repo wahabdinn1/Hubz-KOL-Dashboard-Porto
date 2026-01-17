@@ -1,6 +1,6 @@
-import { DashboardShell } from "@/components/dashboard-shell";
+import { DashboardShell } from "@/components/layout/dashboard-shell";
 import { createClient } from "@/utils/supabase/server";
-import { ErrorBoundary } from "@/components/error-boundary";
+import { ErrorBoundary } from "@/components/shared/error-boundary";
 
 export default async function DashboardLayout({
     children,

@@ -5,7 +5,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ActivityLog } from "@/components/activity-log";
+import { ActivityLog } from "@/components/kols/activity-log";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { KOL } from "@/lib/static-data";
 import { formatIDR } from "@/lib/analytics";

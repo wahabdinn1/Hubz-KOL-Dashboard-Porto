@@ -14,7 +14,7 @@ import {
     TabsTrigger,
 } from "@/components/ui/tabs";
 import { KanbanBoard } from "@/components/kanban/kanban-board";
-import { KOLTable } from "@/components/kol-table";
+import { KOLTable } from "@/components/kols/kol-table";
 import { formatIDR, calculateROI, calculateCampaignSuccess, calculateER, calculateCPV, calculateCPM } from "@/lib/analytics";
 import {
     Wallet,
@@ -25,15 +25,17 @@ import {
     List,
     LayoutDashboard,
     AlertTriangle,
+    Download,
 } from "lucide-react";
+import { CampaignReport } from "@/components/campaigns/campaign-report";
+import { PDFDownloadLink } from "@react-pdf/renderer";
 import { Button } from "@/components/ui/button";
 import { useData } from "@/context/data-context";
-import { AddKOLDialog } from "@/components/add-kol-dialog";
+import { AddKOLDialog } from "@/components/kols/add-kol-dialog";
 import { SmartMatchDialog } from "@/components/ai/smart-match-dialog";
 import Link from "next/link";
-import { EditCampaignDialog } from "@/components/edit-campaign-dialog";
-import { DeleteCampaignDialog } from "@/components/delete-campaign-dialog";
-import { CampaignDownloadButton } from "@/components/pdf/download-button";
+import { EditCampaignDialog } from "@/components/campaigns/edit-campaign-dialog";
+import { DeleteCampaignDialog } from "@/components/campaigns/delete-campaign-dialog";
 import {
     Tooltip,
     TooltipContent,
@@ -178,6 +180,21 @@ function CampaignDetailContent({ params }: { params: Promise<{ id: string }> }) 
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
+                    {/* PDF Export Button */}
+                    <div className="hidden md:block">
+                        <PDFDownloadLink
+                            document={<CampaignReport campaign={campaign} kols={kols} />}
+                            fileName={`campaign-report-${campaign.name.toLowerCase().replace(/\s+/g, '-')}.pdf`}
+                        >
+                            {({ loading }: { loading: boolean }) => (
+                                <Button variant="outline" disabled={loading} size="sm" className="h-8 border-2 border-black dark:border-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[1px] hover:shadow-none transition-all">
+                                    <Download className="h-3 w-3 mr-2" />
+                                    {loading ? '...' : 'Report'}
+                                </Button>
+                            )}
+                        </PDFDownloadLink>
+                    </div>
+
                     {/* Platform Badge */}
                     <div className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2 ${campaign.platform === 'Instagram'
                         ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300'
@@ -190,7 +207,7 @@ function CampaignDetailContent({ params }: { params: Promise<{ id: string }> }) 
                         )}
                         {campaign.platform}
                     </div>
-                    <CampaignDownloadButton campaign={campaign} kols={kols} />
+                    {/* Removed redundant CampaignDownloadButton */}
                     <EditCampaignDialog campaign={campaign} />
                     <DeleteCampaignDialog campaign={campaign} />
                 </div>

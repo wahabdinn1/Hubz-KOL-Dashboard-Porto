@@ -1,6 +1,6 @@
 "use client";
 
-import { CampaignCalendar } from "@/components/campaign-calendar";
+import { CampaignCalendar } from "@/components/campaigns/campaign-calendar";
 import { useData } from "@/context/data-context";
 
 export default function CalendarPage() {

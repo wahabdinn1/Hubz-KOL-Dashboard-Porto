@@ -14,32 +14,29 @@ A custom "Pop" design system featuring:
 
 ![Login Page](public/screenshots/login.png)
 
-### 2. Campaign Intelligence & AI Matchmaker
-Track marketing initiatives with precision. Currently featuring:
-- **AI Smart Match**: Automatically ranks influencers based on your campaign's specific objective, budget, and category overlap.
-- **Conversion Campaigns**: Focus on **ROAS (Return on Ad Spend)** and **CVR (Conversion Rate)**.
-- **Awareness Campaigns**: Focus on **CPM (Cost Per Mille)** and **Virality Rate** (Shares/Views).
-- **Efficiency Score**: A proprietary metric tracking "Views per Rp 1,000 Spend".
+### 2. Campaign Intelligence & AI
+Track from Awareness to Conversion:
+- **AI Smart Match**: Rank influencers based on campaign fit.
+- **Performance Metrics**: Monitor ROAS, CVR, CPM, and Virality Rate.
+- **Efficiency Score**: Custom metric for spend efficiency (Views per Rp 1,000).
 
 ![Analytics Detail](public/screenshots/analytics.png)
 
-### 3. Workflow & Management
-- **Kanban Board**: Drag-and-drop interface effectively manages creator status from "To Contact" to "Posted" and "Completed".
-- **PDF Reporting**: Generate professional, client-ready campaign reports with a single click.
-- **Profile Popups**: Quick-view cards for instant access to influencer stats and rates without leaving the table.
+### 3. Workflow & Reports
+- **Kanban Board**: Drag-and-drop workflow status management (`@dnd-kit`).
+- **PDF Reporting**: Client-ready campaign summaries generated client-side (`@react-pdf/renderer`).
+- **Profile Popups**: Instant access to creator stats.
 
-### 4. Influencer Management (KOLs)
-Manage your roster of Creators with detailed profiles and new standard **Tiering System** (Nano, Micro, Macro, Mega):
-- **Platform Stats**: Track Followers for TikTok & Instagram separately.
-- **Rate Cards**: Manage different rates for Reels, TikToks, and Stories.
-- **Directory**: Sort, filter, and quick-edit your influencers.
+### 4. Robust Influencer Management
+- **Real-World Schema**: Maps directly to Supabase with support for separate Platform IDs and Rate Cards.
+- **Tiering System**: Automated categorization (Nano - Mega).
+- **Type Safety**: Fully typed database interactions using Supabase generated types + Zod validation.
 
 ![Influencer Directory](public/screenshots/influencers.png)
 
 ### 5. Enterprise Controls
-- **RBAC (Role-Based Access Control)**: Granular permissions for Super Admirns (System access) vs. regular Admins (Campaign access).
-- **Delete Confirmation**: Critical actions (deleting campaigns or influencers) are protect by custom confirmation dialogs.
-- **Security**: Secure password updates via settings.
+- **RBAC (Role-Based Access Control)**: Granular permissions for Super Admins vs Members via Supabase RLS.
+- **Secure Data**: Protected mutations and read policies.
 
 ---
 
@@ -48,8 +45,9 @@ Manage your roster of Creators with detailed profiles and new standard **Tiering
 - **Framework**: [Next.js 15](https://nextjs.org/) (App Router)
 - **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) + [Shadcn UI](https://ui.shadcn.com/)
 - **Database**: [Supabase](https://supabase.com/) (PostgreSQL & Auth)
-- **State Management**: React Context + TanStack Query
-- **Features**: `@dnd-kit` (Kanban), `@react-pdf/renderer` (Reporting), `sonner` (Toasts)
+- **Data Fetching**: TanStack Query + Supabase SSR
+- **Validation**: Zod + React Hook Form
+- **Reporting**: React-PDF
 - **Visuals**: Lucide React Icons & Recharts
 
 ## ⚡ Getting Started
@@ -74,8 +72,8 @@ Manage your roster of Creators with detailed profiles and new standard **Tiering
 
 ## 📦 Optimization
 
-- **Fast Loading**: Enabled `gzip` compression and Next.js Image Optimization.
-- **Clean Architecture**: Separation of Server Components and Client Interactivity.
+- **Type Safe**: End-to-End TypeScript coverage.
+- **Fast Loading**: Server Components + Image Optimization.
 
 ---
-*Built by Antigravity for Hubz Porto.*
+*Built for Hubz Porto.*

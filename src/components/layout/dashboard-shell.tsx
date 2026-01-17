@@ -19,7 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { logout } from "@/app/auth/actions";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { ModeToggle } from "@/components/mode-toggle";
+import { ModeToggle } from "@/components/layout/mode-toggle";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { useState, useEffect } from "react";
 import {
@@ -39,9 +39,9 @@ import {
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { CommandPalette } from "@/components/command-palette";
+import { CommandPalette } from "@/components/layout/command-palette";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
-import { MobileBottomNav } from "@/components/mobile-bottom-nav";
+import { MobileBottomNav } from "@/components/layout/mobile-bottom-nav";
 
 // --- Navigation Structure ---
 type NavItem = {

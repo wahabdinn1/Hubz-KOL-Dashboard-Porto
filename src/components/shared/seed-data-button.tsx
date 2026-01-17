@@ -38,7 +38,7 @@ export function SeedDataButton() {
                 rate_card_reels: k.rateCardReels
             }));
 
-            const { error: kolError } = await supabase.from('kols').upsert(kolPayloads);
+            const { error: kolError } = await (supabase as any).from('kols').upsert(kolPayloads);
             if (kolError) throw new Error(`KOL Error: ${kolError.message}`);
 
             // 2. Seed Campaigns
@@ -46,7 +46,7 @@ export function SeedDataButton() {
             const campaigns = MOCK_CAMPAIGNS;
 
             for (const camp of campaigns) {
-                const { error: campError } = await supabase.from('campaigns').upsert({
+                const { error: campError } = await (supabase as any).from('campaigns').upsert({
                     id: camp.id,
                     name: camp.name,
                     budget: camp.budget,
@@ -71,9 +71,9 @@ export function SeedDataButton() {
                     }));
 
                     // Delete existing deliverables for this campaign to avoid duplicates/constraint issues
-                    await supabase.from('campaign_deliverables').delete().eq('campaign_id', camp.id);
+                    await (supabase as any).from('campaign_deliverables').delete().eq('campaign_id', camp.id);
 
-                    const { error: delError } = await supabase.from('campaign_deliverables').insert(delivPayloads);
+                    const { error: delError } = await (supabase as any).from('campaign_deliverables').insert(delivPayloads);
                     if (delError) throw new Error(`Deliverable Error: ${delError.message}`);
                 }
             }

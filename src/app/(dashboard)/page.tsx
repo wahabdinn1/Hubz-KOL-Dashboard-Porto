@@ -5,8 +5,8 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip } 
 import { TrendingUp, Users, DollarSign, Activity, Zap, Eye } from "lucide-react";
 import { useData } from "@/context/data-context";
 import { useMemo, useState } from "react";
-import { CreateCampaignDialog } from "@/components/create-campaign-dialog";
-import { AddKOLDialog } from "@/components/add-kol-dialog";
+import { CreateCampaignDialog } from "@/components/campaigns/create-campaign-dialog";
+import { AddKOLDialog } from "@/components/kols/add-kol-dialog";
 import { BarChart } from "@/components/retroui/charts/BarChart";
 import { Progress } from "@/components/retroui/Progress";
 

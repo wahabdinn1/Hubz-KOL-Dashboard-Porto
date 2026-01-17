@@ -47,9 +47,8 @@ export function CampaignCalendar({ campaigns }: CampaignCalendarProps) {
             const start = c.startDate?.split("T")[0];
             const end = c.endDate?.split("T")[0];
             if (!start) return false;
-            if (dateStr === start) return true;
-            if (end && dateStr >= start && dateStr <= end) return true;
-            return false;
+            // Simple check: is date between start and end?
+            return dateStr >= start && (!end || dateStr <= end);
         });
     };
 
@@ -68,18 +67,18 @@ export function CampaignCalendar({ campaigns }: CampaignCalendarProps) {
     const selectedCampaigns = selectedDate ? getCampaignsForDate(selectedDate) : [];
 
     return (
-        <Card>
-            <CardHeader className="pb-2">
+        <Card className="shadow-sm">
+            <CardHeader className="pb-4 border-b">
                 <div className="flex items-center justify-between">
                     <div>
-                        <CardTitle className="text-base">Campaign Calendar</CardTitle>
-                        <CardDescription>View campaign schedules</CardDescription>
+                        <CardTitle className="text-lg">Campaign Calendar</CardTitle>
+                        <CardDescription>Visual timeline of your active marketing campaigns.</CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="icon" onClick={prevMonth} className="h-8 w-8">
                             <ChevronLeft className="h-4 w-4" />
                         </Button>
-                        <span className="text-sm font-medium min-w-[120px] text-center">
+                        <span className="text-sm font-semibold min-w-[140px] text-center text-lg">
                             {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
                         </span>
                         <Button variant="outline" size="icon" onClick={nextMonth} className="h-8 w-8">
@@ -88,21 +87,21 @@ export function CampaignCalendar({ campaigns }: CampaignCalendarProps) {
                     </div>
                 </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
                 {/* Day headers */}
-                <div className="grid grid-cols-7 gap-1 mb-2">
+                <div className="grid grid-cols-7 border-b bg-muted/20">
                     {DAYS.map((day) => (
-                        <div key={day} className="text-center text-xs font-medium text-muted-foreground py-1">
+                        <div key={day} className="text-center text-xs font-semibold text-muted-foreground py-3 border-r last:border-r-0">
                             {day}
                         </div>
                     ))}
                 </div>
 
                 {/* Calendar grid */}
-                <div className="grid grid-cols-7 gap-1">
+                <div className="grid grid-cols-7 auto-rows-[1fr]">
                     {calendarDays.map((date, idx) => {
                         if (!date) {
-                            return <div key={`empty-${idx}`} className="h-10" />;
+                            return <div key={`empty-${idx}`} className="min-h-[120px] bg-muted/5 border-b border-r last:border-r-0" />;
                         }
 
                         const dayCampaigns = getCampaignsForDate(date);
@@ -110,59 +109,50 @@ export function CampaignCalendar({ campaigns }: CampaignCalendarProps) {
                         const isSelected = selectedDate?.toDateString() === date.toDateString();
 
                         return (
-                            <button
+                            <div
                                 key={date.toISOString()}
-                                onClick={() => setSelectedDate(date)}
                                 className={cn(
-                                    "h-10 rounded-md text-sm relative transition-colors",
-                                    "hover:bg-muted focus:outline-none focus:ring-2 focus:ring-primary",
-                                    isToday && "bg-primary/10 font-bold",
-                                    isSelected && "bg-primary text-primary-foreground",
-                                    dayCampaigns.length > 0 && !isSelected && "border-2 border-primary"
+                                    "min-h-[120px] border-b border-r last:border-r-0 p-1 relative group transition-colors",
+                                    isToday ? "bg-blue-50/50 dark:bg-blue-900/10" : "hover:bg-muted/30",
+                                    isSelected && "ring-2 ring-primary ring-inset z-10"
                                 )}
+                                onClick={() => setSelectedDate(date)}
                             >
-                                {date.getDate()}
-                                {dayCampaigns.length > 0 && (
+                                <div className="flex justify-between items-start mb-1">
                                     <span className={cn(
-                                        "absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full",
-                                        isSelected ? "bg-primary-foreground" : "bg-primary"
-                                    )} />
-                                )}
-                            </button>
+                                        "text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full",
+                                        isToday ? "bg-primary text-primary-foreground" : "text-muted-foreground",
+                                        isSelected && !isToday && "bg-muted text-foreground"
+                                    )}>
+                                        {date.getDate()}
+                                    </span>
+                                </div>
+
+                                {/* Campaign Bars */}
+                                <div className="flex flex-col gap-1">
+                                    {dayCampaigns.slice(0, 3).map((c) => (
+                                        <Link key={c.id} href={`/campaigns/${c.id}`} onClick={(e) => e.stopPropagation()}>
+                                            <div className={cn(
+                                                "text-[10px] truncate px-1.5 py-0.5 rounded-sm font-medium shadow-sm transition-opacity hover:opacity-80 cursor-pointer",
+                                                c.platform === 'Instagram'
+                                                    ? "bg-pink-100 text-pink-700 dark:bg-pink-900/50 dark:text-pink-300 border border-pink-200 dark:border-pink-800"
+                                                    : "bg-stone-100 text-stone-800 dark:bg-stone-800 dark:text-stone-300 border border-stone-200 dark:border-stone-700"
+                                            )}>
+                                                {c.name}
+                                            </div>
+                                        </Link>
+                                    ))}
+                                    {dayCampaigns.length > 3 && (
+                                        <div className="text-[10px] text-muted-foreground pl-1 font-medium">
+                                            +{dayCampaigns.length - 3} more...
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         );
                     })}
                 </div>
-
-                {/* Selected date campaigns */}
-                {selectedDate && (
-                    <div className="mt-4 pt-4 border-t">
-                        <h4 className="text-sm font-medium mb-2">
-                            {selectedDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
-                        </h4>
-                        {selectedCampaigns.length === 0 ? (
-                            <p className="text-sm text-muted-foreground">No campaigns on this date</p>
-                        ) : (
-                            <div className="space-y-2">
-                                {selectedCampaigns.map((campaign) => (
-                                    <Link
-                                        key={campaign.id}
-                                        href={`/campaigns/${campaign.id}`}
-                                        className="flex items-center justify-between p-2 rounded-md hover:bg-muted transition-colors border"
-                                    >
-                                        <div>
-                                            <p className="text-sm font-medium">{campaign.name}</p>
-                                            <div className="flex gap-1 mt-1">
-                                                <Badge variant="outline" className="text-[10px] h-4">{campaign.platform}</Badge>
-                                                <Badge variant="secondary" className="text-[10px] h-4">{campaign.status}</Badge>
-                                            </div>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                )}
             </CardContent>
-        </Card>
+        </Card >
     );
 }

@@ -19,8 +19,8 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useData } from "@/context/data-context";
-import { CreateCampaignDialog } from "@/components/create-campaign-dialog";
-import { DeleteCampaignDialog } from "@/components/delete-campaign-dialog";
+import { CreateCampaignDialog } from "@/components/campaigns/create-campaign-dialog";
+import { DeleteCampaignDialog } from "@/components/campaigns/delete-campaign-dialog";
 import { Copy, MoreHorizontal, Trash2 } from "lucide-react";
 import { Campaign } from "@/lib/static-data";
 import { useRouter } from "next/navigation";

@@ -1,10 +1,19 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
-import { KOL, Campaign, Category, CAMPAIGN_RAMADAN } from "@/lib/static-data";
+import { KOL, Campaign, Category } from "@/types";
+import { CAMPAIGN_RAMADAN } from "@/lib/static-data";
 import { supabase } from "@/lib/supabase";
 import { CampaignTemplate } from "@/lib/campaign-templates";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Database } from "@/types/supabase";
+
+type KOLRow = Database['public']['Tables']['kols']['Row'];
+type CampaignRow = Database['public']['Tables']['campaigns']['Row'];
+type DeliverableRow = Database['public']['Tables']['campaign_deliverables']['Row'];
+type CategoryRow = Database['public']['Tables']['categories']['Row'];
+type TemplateRow = Database['public']['Tables']['campaign_templates']['Row'];
+
 import { toast } from "sonner";
 
 interface DataContextType {
@@ -58,18 +67,21 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         activeIdRef.current = activeCampaignId;
     }, [activeCampaignId]);
 
+
+
     // 1. Fetch KOLs
     const { data: kols = [], isLoading: kolsLoading } = useQuery({
         queryKey: ['kols'],
         queryFn: async () => {
             const { data, error } = await supabase.from('kols').select('*');
             if (error) throw error;
+
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return data.map((k: any) => ({
+            return (data as any[]).map((k) => ({
                 id: k.id,
                 name: k.name,
-                type: k.type,
-                category: k.category,
+                type: k.type || 'Micro',
+                category: k.category || 'General',
                 followers: k.followers,
                 avgViews: k.avg_views,
                 tiktokUsername: k.tiktok_username,
@@ -89,11 +101,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     const { data: categories = [] } = useQuery({
         queryKey: ['categories'],
         queryFn: async () => {
-            const { data, error } = await supabase.from('categories').select('*').order('sort_order', { ascending: true });
+            const { data, error } = await (supabase as any).from('categories').select('*').order('sort_order', { ascending: true });
             if (error) {
                 if (error.code === '42703') {
-                    const retry = await supabase.from('categories').select('*');
-                    return retry.data?.map(c => ({ id: c.id, name: c.name, sort_order: c.sort_order })) || [];
+                    const retry = await (supabase as any).from('categories').select('*');
+                    return retry.data?.map((c: any) => ({ id: c.id, name: c.name, sort_order: c.sort_order })) || [];
                 }
                 throw error;
             }
@@ -106,7 +118,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     const { data: rawCampaigns = [], isLoading: campaignsLoading } = useQuery({
         queryKey: ['campaigns'],
         queryFn: async () => {
-            const { data, error } = await supabase.from('campaigns').select('*');
+            const { data, error } = await (supabase as any).from('campaigns').select('*');
             if (error) throw error;
             return data;
         }
@@ -115,7 +127,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     const { data: rawDeliverables = [] } = useQuery({
         queryKey: ['deliverables'],
         queryFn: async () => {
-            const { data, error } = await supabase.from('campaign_deliverables').select('*');
+            const { data, error } = await (supabase as any).from('campaign_deliverables').select('*');
             if (error) throw error;
             return data;
         }
@@ -125,7 +137,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     const { data: rawTemplates = [] } = useQuery({
         queryKey: ['campaign_templates'],
         queryFn: async () => {
-            const { data, error } = await supabase.from('campaign_templates').select('*');
+            const { data, error } = await (supabase as any).from('campaign_templates').select('*');
             if (error) {
                 console.warn('Campaign templates table may not exist yet:', error.message);
                 return [];
@@ -161,21 +173,21 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                     totalViews: d.total_views,
                     totalEngagements: d.total_engagements,
                     salesGenerated: d.sales_generated,
-                    status: d.status || 'to_contact',
-                    contentLink: d.content_link,
-                    dueDate: d.due_date,
-                    notes: d.notes
+                    status: (d.status as any) || 'to_contact',
+                    contentLink: d.content_link || undefined,
+                    dueDate: d.due_date ? new Date(d.due_date) : undefined,
+                    notes: d.notes || undefined
                 }));
 
             return {
                 id: c.id,
                 name: c.name,
                 budget: c.budget,
-                startDate: c.start_date,
-                endDate: c.end_date,
-                platform: c.platform || 'TikTok',
-                objective: c.objective || 'AWARENESS',
-                status: c.status || 'Active',
+                startDate: c.start_date || undefined,
+                endDate: c.end_date || undefined,
+                platform: (c.platform as 'TikTok' | 'Instagram') || 'TikTok',
+                objective: (c.objective as any) || 'AWARENESS',
+                status: (c.status as any) || 'Active',
                 deliverables: relatedDeliverables
             } as Campaign;
         });
@@ -194,74 +206,88 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     // --- MUTATIONS ---
 
     const addCategory = async (name: string) => {
-        try {
-            const maxOrder = categories.length > 0 ? Math.max(...categories.map(c => c.sort_order || 0)) : 0;
-            const { error } = await supabase.from('categories').insert([{ name, sort_order: maxOrder + 1 }]);
+        const promise = async () => {
+            const maxOrder = categories.length > 0 ? Math.max(...categories.map((c: any) => c.sort_order || 0)) : 0;
+            const payload: Database['public']['Tables']['categories']['Insert'] = { name, sort_order: maxOrder + 1 };
+            const { error } = await (supabase as any).from('categories').insert([payload]);
             if (error) throw error;
             queryClient.invalidateQueries({ queryKey: ['categories'] });
-            toast.success("Category added");
-        } catch (e) {
-            console.error("Error adding category:", e);
-            toast.error("Failed to add category");
-        }
+        };
+
+        toast.promise(promise(), {
+            loading: 'Adding category...',
+            success: 'Category added',
+            error: 'Failed to add category'
+        });
     };
 
     const deleteCategory = async (id: string) => {
-        try {
-            const { error } = await supabase.from('categories').delete().eq('id', id);
+        const promise = async () => {
+            const { error } = await (supabase as any).from('categories').delete().eq('id', id);
             if (error) throw error;
             queryClient.invalidateQueries({ queryKey: ['categories'] });
-            toast.success("Category deleted");
-        } catch (e) {
-            console.error("Error deleting category:", e);
-            toast.error("Failed to delete category");
-        }
+        };
+
+        toast.promise(promise(), {
+            loading: 'Deleting category...',
+            success: 'Category deleted',
+            error: 'Failed to delete category'
+        });
     };
 
     const updateCategoryOrder = async (newCategories: Category[]) => {
         try {
             const updates = newCategories.map((c, index) => ({ id: c.id, name: c.name, sort_order: index + 1 }));
-            const { error } = await supabase.from('categories').upsert(updates);
+            const { error } = await (supabase as any).from('categories').upsert(updates);
             if (error) throw error;
             queryClient.invalidateQueries({ queryKey: ['categories'] });
         } catch (e) { console.error("Error reordering categories:", e); }
     };
 
     const addCampaign = async (name: string, budget: number, platform: 'TikTok' | 'Instagram', objective: 'AWARENESS' | 'CONVERSION', startDate?: string, endDate?: string) => {
-        try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const payload: any = { name, budget, platform, objective };
-            if (startDate) payload.start_date = startDate;
-            if (endDate) payload.end_date = endDate;
-            const { data, error } = await supabase.from('campaigns').insert([payload]).select().single();
+        const promise = async () => {
+            const payload: Database['public']['Tables']['campaigns']['Insert'] = {
+                name,
+                budget,
+                platform,
+                objective,
+                start_date: startDate || null,
+                end_date: endDate || null
+            };
+
+            const { data, error } = await (supabase as any).from('campaigns').insert([payload]).select().single();
             if (error) throw error;
 
             await queryClient.invalidateQueries({ queryKey: ['campaigns'] });
             setActiveCampaignId(data.id);
-            toast.success("Campaign created");
-        } catch (err) {
-            console.error("Error adding campaign:", err);
-            toast.error("Failed to create campaign");
-        }
+        };
+
+        toast.promise(promise(), {
+            loading: 'Creating campaign...',
+            success: 'Campaign created',
+            error: 'Failed to create campaign'
+        });
     };
 
     const deleteCampaign = async (id: string) => {
-        try {
-            const { error } = await supabase.from('campaigns').delete().eq('id', id);
+        const promise = async () => {
+            const { error } = await (supabase as any).from('campaigns').delete().eq('id', id);
             if (error) throw error;
 
             await queryClient.invalidateQueries({ queryKey: ['campaigns'] });
             if (activeCampaignId === id) setActiveCampaignId(null);
-            toast.success("Campaign deleted");
-        } catch (e) {
-            console.error("Error deleting campaign:", e);
-            toast.error("Failed to delete campaign");
-        }
+        };
+
+        toast.promise(promise(), {
+            loading: 'Deleting campaign...',
+            success: 'Campaign deleted',
+            error: 'Failed to delete campaign'
+        });
     };
 
     const deleteCampaigns = async (ids: string[]) => {
         try {
-            const { error } = await supabase.from('campaigns').delete().in('id', ids);
+            const { error } = await (supabase as any).from('campaigns').delete().in('id', ids);
             if (error) throw error;
 
             await queryClient.invalidateQueries({ queryKey: ['campaigns'] });
@@ -271,7 +297,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     };
 
     const updateCampaign = async (id: string, updates: Partial<Campaign>) => {
-        try {
+        const promise = async () => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const dbUpdates: any = {};
             if (updates.name) dbUpdates.name = updates.name;
@@ -281,19 +307,21 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             if (updates.platform) dbUpdates.platform = updates.platform;
             if (updates.objective) dbUpdates.objective = updates.objective;
 
-            const { error } = await supabase.from('campaigns').update(dbUpdates).eq('id', id);
+            const { error } = await (supabase as any).from('campaigns').update(dbUpdates).eq('id', id);
             if (error) throw error;
 
             queryClient.invalidateQueries({ queryKey: ['campaigns'] });
-            toast.success("Campaign updated");
-        } catch (e) {
-            console.error("Error updating campaign:", e);
-            toast.error("Failed to update campaign");
-        }
+        };
+
+        toast.promise(promise(), {
+            loading: 'Updating campaign...',
+            success: 'Campaign updated',
+            error: 'Failed to update campaign'
+        });
     };
 
     const duplicateCampaign = async (id: string) => {
-        try {
+        const promise = async () => {
             const originalCampaign = campaigns.find(c => c.id === id);
             if (!originalCampaign) throw new Error("Campaign not found");
 
@@ -306,20 +334,22 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 // Leave dates empty for user to fill
             };
 
-            const { error } = await supabase.from('campaigns').insert([payload]).select().single();
+            const { error } = await (supabase as any).from('campaigns').insert([payload]).select().single();
             if (error) throw error;
 
             await queryClient.invalidateQueries({ queryKey: ['campaigns'] });
-            toast.success("Campaign duplicated successfully");
-        } catch (e) {
-            console.error("Error duplicating campaign:", e);
-            toast.error("Failed to duplicate campaign");
-        }
+        };
+
+        toast.promise(promise(), {
+            loading: 'Duplicating campaign...',
+            success: 'Campaign duplicated successfully',
+            error: 'Failed to duplicate campaign'
+        });
     };
 
     // KOL Mutations
     const addKOL = async (newKOL: KOL, addToCurrentCampaign = true) => {
-        try {
+        const promise = async () => {
             // Map frontend to DB columns
             const payload = {
                 name: newKOL.name,
@@ -338,7 +368,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 rate_card_pdf_link: newKOL.rateCardPdfLink
             };
 
-            const { data, error } = await supabase.from('kols').insert([payload]).select().single();
+            const { data, error } = await (supabase as any).from('kols').insert([payload]).select().single();
             if (error) throw error;
 
             await queryClient.invalidateQueries({ queryKey: ['kols'] });
@@ -346,26 +376,33 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             if (addToCurrentCampaign && activeCampaignId) {
                 await addCampaignDeliverableDB(data.id, activeCampaignId);
             }
-            toast.success("Influencer added");
-        } catch (err) {
-            console.error("Error adding KOL:", err);
-            toast.error("Failed to add influencer");
-        }
+        };
+
+        toast.promise(promise(), {
+            loading: 'Adding influencer...',
+            success: 'Influencer added',
+            error: 'Failed to add influencer'
+        });
     };
 
     const deleteKOL = async (id: string) => {
-        try {
-            const { error } = await supabase.from('kols').delete().eq('id', id);
+        const promise = async () => {
+            const { error } = await (supabase as any).from('kols').delete().eq('id', id);
             if (error) throw error;
             queryClient.invalidateQueries({ queryKey: ['kols'] });
             queryClient.invalidateQueries({ queryKey: ['deliverables'] });
-            toast.success("Influencer deleted");
-        } catch (err) { console.error("Error deleting KOL:", err); }
+        };
+
+        toast.promise(promise(), {
+            loading: 'Deleting influencer...',
+            success: 'Influencer deleted',
+            error: 'Failed to delete influencer'
+        });
     };
 
     const deleteKOLs = async (ids: string[]) => {
         try {
-            const { error } = await supabase.from('kols').delete().in('id', ids);
+            const { error } = await (supabase as any).from('kols').delete().in('id', ids);
             if (error) throw error;
             queryClient.invalidateQueries({ queryKey: ['kols'] });
             queryClient.invalidateQueries({ queryKey: ['deliverables'] });
@@ -374,7 +411,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     };
 
     const updateKOL = async (id: string, updates: Partial<KOL>) => {
-        try {
+        const promise = async () => {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const dbUpdates: any = {};
             if (updates.name) dbUpdates.name = updates.name;
@@ -388,25 +425,26 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             if (updates.instagramUsername) dbUpdates.instagram_username = updates.instagramUsername;
             if (updates.instagramProfileLink) dbUpdates.instagram_profile_link = updates.instagramProfileLink;
             if (updates.instagramFollowers) dbUpdates.instagram_followers = updates.instagramFollowers;
-            if (updates.rateCardTiktok) dbUpdates.rate_card_tiktok = updates.rateCardTiktok;
             if (updates.rateCardReels) dbUpdates.rate_card_reels = updates.rateCardReels;
             if (updates.rateCardPdfLink) dbUpdates.rate_card_pdf_link = updates.rateCardPdfLink;
 
-            const { error } = await supabase.from('kols').update(dbUpdates).eq('id', id);
+            const { error } = await (supabase as any).from('kols').update(dbUpdates).eq('id', id);
             if (error) throw error;
 
             queryClient.invalidateQueries({ queryKey: ['kols'] });
-            toast.success("Influencer updated");
-        } catch (err) {
-            console.error("Error updating KOL:", err);
-            toast.error("Failed to update influencer");
-        }
+        };
+
+        toast.promise(promise(), {
+            loading: 'Updating influencer...',
+            success: 'Influencer updated',
+            error: 'Failed to update influencer'
+        });
     };
 
     // Deliverable Mutations
     const addCampaignDeliverableDB = async (kolId: string, campaignId: string) => {
         try {
-            const { error } = await supabase.from('campaign_deliverables').insert([{
+            const { error } = await (supabase as any).from('campaign_deliverables').insert([{
                 kol_id: kolId,
                 campaign_id: campaignId,
                 videos_count: 1 // Default to 1 so Spend/ROI updates immediately
@@ -429,7 +467,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
     const removeKOLFromCampaignDB = async (campaignId: string, kolId: string) => {
         try {
-            const { error } = await supabase
+            const { error } = await (supabase as any)
                 .from('campaign_deliverables')
                 .delete()
                 .eq('campaign_id', campaignId)
@@ -474,7 +512,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         });
 
         try {
-            const { error } = await supabase
+            const { error } = await (supabase as any)
                 .from('campaign_deliverables')
                 .update(payload)
                 .eq('campaign_id', campaignId)
@@ -495,8 +533,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
     // Add Campaign Template
     const addCampaignTemplate = async (template: Omit<CampaignTemplate, "id">) => {
-        try {
-            const { error } = await supabase.from('campaign_templates').insert([{
+        const promise = async () => {
+            const { error } = await (supabase as any).from('campaign_templates').insert([{
                 name: template.name,
                 description: template.description,
                 platform: template.defaultValues.platform,
@@ -504,61 +542,63 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             }]);
             if (error) throw error;
             queryClient.invalidateQueries({ queryKey: ['campaign_templates'] });
-            toast.success("Template added");
-        } catch (e) {
-            console.error("Error adding template:", e);
-            toast.error("Failed to add template");
-        }
+        };
+
+        toast.promise(promise(), {
+            loading: 'Adding template...',
+            success: 'Template added',
+            error: 'Failed to add template'
+        });
     };
 
     // Delete Campaign Template
     const deleteCampaignTemplate = async (id: string) => {
-        try {
-            const { error } = await supabase.from('campaign_templates').delete().eq('id', id);
+        const promise = async () => {
+            const { error } = await (supabase as any).from('campaign_templates').delete().eq('id', id);
             if (error) throw error;
             queryClient.invalidateQueries({ queryKey: ['campaign_templates'] });
-            toast.success("Template deleted");
-        } catch (e) {
-            console.error("Error deleting template:", e);
-            toast.error("Failed to delete template");
-        }
+        };
+
+        toast.promise(promise(), {
+            loading: 'Deleting template...',
+            success: 'Template deleted',
+            error: 'Failed to delete template'
+        });
     };
 
     // Notes Mutations
     const addNote = async (kolId: string, content: string) => {
-        try {
-            const { error } = await supabase.from('kol_notes').insert([{
+        const promise = async () => {
+            const { error } = await (supabase as any).from('kol_notes').insert([{
                 kol_id: kolId,
                 content: content
             }]);
             if (error) {
-                // Graceful fallback for demo if table missing
-                if (error.code === '42P01') { // undefined_table
-                    toast.error("Notes table missing in database");
-                    return;
-                }
+                if (error.code === '42P01') throw new Error("Notes table missing in database");
                 throw error;
             }
             queryClient.invalidateQueries({ queryKey: ['notes', kolId] });
-            toast.success("Note added");
-        } catch (e) {
-            console.error("Error adding note:", e);
-            toast.error("Failed to add note");
-        }
+        };
+
+        toast.promise(promise(), {
+            loading: 'Adding note...',
+            success: 'Note added',
+            error: (err) => `Failed to add note: ${err.message}`
+        });
     };
 
     const deleteNote = async (id: string) => {
-        try {
-            const { error } = await supabase.from('kol_notes').delete().eq('id', id);
+        const promise = async () => {
+            const { error } = await (supabase as any).from('kol_notes').delete().eq('id', id);
             if (error) throw error;
-            // We need kolId to invalidate query, but delete only takes ID. 
-            // Ideally we invalidate all notes or pass kolId. For now invalidate all 'notes' queries.
             queryClient.invalidateQueries({ queryKey: ['notes'] });
-            toast.success("Note deleted");
-        } catch (e) {
-            console.error("Error deleting note:", e);
-            toast.error("Failed to delete note");
-        }
+        };
+
+        toast.promise(promise(), {
+            loading: 'Deleting note...',
+            success: 'Note deleted',
+            error: 'Failed to delete note'
+        });
     };
 
     const safeCampaign = activeCampaign || CAMPAIGN_RAMADAN;

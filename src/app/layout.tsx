@@ -5,6 +5,7 @@ import { DataProvider } from "@/context/data-context";
 import { AuthProvider } from "@/context/auth-context";
 import QueryProvider from "@/components/providers/query-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { NetworkStatus } from "@/components/shared/network-status";
 
 import { Epilogue } from "next/font/google";
 
@@ -34,14 +35,15 @@ export default function RootLayout({
         <div suppressHydrationWarning>
           <ThemeProvider
             attribute="class"
-            defaultTheme="system"
-            enableSystem
+            defaultTheme="light"
+            enableSystem={false}
             disableTransitionOnChange
           >
             <QueryProvider>
               <AuthProvider>
                 <DataProvider>
                   {children}
+                  <NetworkStatus />
                   <Toaster />
                 </DataProvider>
               </AuthProvider>
