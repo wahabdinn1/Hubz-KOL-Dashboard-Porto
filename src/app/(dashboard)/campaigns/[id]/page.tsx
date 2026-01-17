@@ -26,6 +26,7 @@ import {
     LayoutDashboard,
     AlertTriangle,
     Download,
+    FileText,
 } from "lucide-react";
 import { CampaignReport } from "@/components/campaigns/campaign-report";
 import { PDFDownloadLink } from "@react-pdf/renderer";
@@ -33,6 +34,7 @@ import { Button } from "@/components/ui/button";
 import { useData } from "@/context/data-context";
 import { AddKOLDialog } from "@/components/kols/add-kol-dialog";
 import { SmartMatchDialog } from "@/components/ai/smart-match-dialog";
+import { InvoiceListTable } from "@/components/invoices/invoice-list-table";
 import Link from "next/link";
 import { EditCampaignDialog } from "@/components/campaigns/edit-campaign-dialog";
 import { DeleteCampaignDialog } from "@/components/campaigns/delete-campaign-dialog";
@@ -338,6 +340,10 @@ function CampaignDetailContent({ params }: { params: Promise<{ id: string }> }) 
                             <LayoutDashboard className="h-4 w-4 mr-2" />
                             Kanban Board
                         </TabsTrigger>
+                        <TabsTrigger value="invoices" className="data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-950">
+                            <FileText className="h-4 w-4 mr-2" />
+                            Invoices
+                        </TabsTrigger>
                     </TabsList>
                     <div className="flex items-center gap-2">
                         <SmartMatchDialog campaign={campaign} />
@@ -357,6 +363,17 @@ function CampaignDetailContent({ params }: { params: Promise<{ id: string }> }) 
                     <div className="h-full w-full">
                         <KanbanBoard />
                     </div>
+                </TabsContent>
+
+                <TabsContent value="invoices" className="space-y-4">
+                    <Card className="shadow-sm border-border">
+                        <CardHeader>
+                            <CardTitle className="text-base font-semibold">Related Invoices</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <InvoiceListTable campaignId={campaign.id} />
+                        </CardContent>
+                    </Card>
                 </TabsContent>
             </Tabs>
         </div>

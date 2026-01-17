@@ -14,7 +14,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { TierBadge } from "@/components/ui/tier-badge";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Trash2, ArrowUpDown } from "lucide-react";
+import { useState, useMemo } from "react";
 import {
     calculateER,
     calculateCPM,
@@ -63,29 +64,141 @@ export function KOLTable() {
         };
     }).filter((item) => item !== null);
 
+    const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+
+    const handleSort = (key: string) => {
+        let direction: 'asc' | 'desc' = 'asc';
+        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    const sortedData = useMemo(() => {
+        const sortableItems = [...data];
+        if (sortConfig !== null) {
+            sortableItems.sort((a, b) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                let aValue: any;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                let bValue: any;
+
+                switch (sortConfig.key) {
+                    case 'name':
+                        aValue = a?.kol.name;
+                        bValue = b?.kol.name;
+                        break;
+                    case 'category':
+                        aValue = a?.kol.category;
+                        bValue = b?.kol.category;
+                        break;
+                    case 'videos':
+                        aValue = a?.del.videosCount;
+                        bValue = b?.del.videosCount;
+                        break;
+                    case 'views':
+                        aValue = a?.del.totalViews;
+                        bValue = b?.del.totalViews;
+                        break;
+                    case 'rate':
+                        aValue = campaign.platform === 'Instagram' ? (a?.kol.rateCardReels || 0) : (a?.kol.rateCardTiktok || 0);
+                        bValue = campaign.platform === 'Instagram' ? (b?.kol.rateCardReels || 0) : (b?.kol.rateCardTiktok || 0);
+                        break;
+                    case 'er':
+                        aValue = a?.er;
+                        bValue = b?.er;
+                        break;
+                    case 'cpm':
+                        aValue = a?.cpm;
+                        bValue = b?.cpm;
+                        break;
+                    case 'efficiency':
+                        aValue = a?.efficiency;
+                        bValue = b?.efficiency;
+                        break;
+                    case 'status':
+                        aValue = a?.del.status;
+                        bValue = b?.del.status;
+                        break;
+                    default:
+                        return 0;
+                }
+
+                if (aValue < bValue) {
+                    return sortConfig.direction === 'asc' ? -1 : 1;
+                }
+                if (aValue > bValue) {
+                    return sortConfig.direction === 'asc' ? 1 : -1;
+                }
+                return 0;
+            });
+        }
+        return sortableItems;
+    }, [data, sortConfig, campaign.platform]);
+
     return (
         <div>
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Name & Tier</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead className="text-center">Videos</TableHead>
-                        <TableHead>Total Views</TableHead>
+                        <TableHead>
+                             <Button variant="ghost" onClick={() => handleSort('name')} className="hover:bg-transparent px-0 font-semibold text-muted-foreground">
+                                Name & Tier <ArrowUpDown className="ml-2 h-4 w-4" />
+                            </Button>
+                        </TableHead>
+                        <TableHead>
+                             <Button variant="ghost" onClick={() => handleSort('category')} className="hover:bg-transparent px-0 font-semibold text-muted-foreground">
+                                Category <ArrowUpDown className="ml-2 h-4 w-4" />
+                            </Button>
+                        </TableHead>
+                        <TableHead className="text-center">
+                             <Button variant="ghost" onClick={() => handleSort('videos')} className="hover:bg-transparent px-0 font-semibold text-muted-foreground">
+                                Videos <ArrowUpDown className="ml-2 h-4 w-4" />
+                            </Button>
+                        </TableHead>
+                        <TableHead>
+                             <Button variant="ghost" onClick={() => handleSort('views')} className="hover:bg-transparent px-0 font-semibold text-muted-foreground">
+                                Total Views <ArrowUpDown className="ml-2 h-4 w-4" />
+                            </Button>
+                        </TableHead>
                         {campaign.platform === 'Instagram' ? (
-                            <TableHead>Rate Reels</TableHead>
+                            <TableHead>
+                                 <Button variant="ghost" onClick={() => handleSort('rate')} className="hover:bg-transparent px-0 font-semibold text-muted-foreground">
+                                    Rate Reels <ArrowUpDown className="ml-2 h-4 w-4" />
+                                </Button>
+                            </TableHead>
                         ) : (
-                            <TableHead>Rate TikTok</TableHead>
+                            <TableHead>
+                                 <Button variant="ghost" onClick={() => handleSort('rate')} className="hover:bg-transparent px-0 font-semibold text-muted-foreground">
+                                    Rate TikTok <ArrowUpDown className="ml-2 h-4 w-4" />
+                                </Button>
+                            </TableHead>
                         )}
-                        <TableHead>ER</TableHead>
-                        <TableHead>CPM</TableHead>
-                        <TableHead>Efficiency</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead>
+                             <Button variant="ghost" onClick={() => handleSort('er')} className="hover:bg-transparent px-0 font-semibold text-muted-foreground">
+                                ER <ArrowUpDown className="ml-2 h-4 w-4" />
+                            </Button>
+                        </TableHead>
+                        <TableHead>
+                             <Button variant="ghost" onClick={() => handleSort('cpm')} className="hover:bg-transparent px-0 font-semibold text-muted-foreground">
+                                CPM <ArrowUpDown className="ml-2 h-4 w-4" />
+                            </Button>
+                        </TableHead>
+                        <TableHead>
+                             <Button variant="ghost" onClick={() => handleSort('efficiency')} className="hover:bg-transparent px-0 font-semibold text-muted-foreground">
+                                Efficiency <ArrowUpDown className="ml-2 h-4 w-4" />
+                            </Button>
+                        </TableHead>
+                        <TableHead>
+                             <Button variant="ghost" onClick={() => handleSort('status')} className="hover:bg-transparent px-0 font-semibold text-muted-foreground">
+                                Status <ArrowUpDown className="ml-2 h-4 w-4" />
+                            </Button>
+                        </TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {data.map((item) => (
+                    {sortedData.map((item) => (
                         <TableRow key={item?.kol.id}>
                             <TableCell className="font-medium">
                                 <div className="flex flex-col gap-1">

@@ -34,6 +34,7 @@ export function UserManagementTable() {
         const fetchUsers = async () => {
             try {
                 setLoading(true);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const { data, error } = await (supabase as any)
                     .from('profiles')
                     .select('*')
@@ -56,6 +57,7 @@ export function UserManagementTable() {
 
         try {
             setLoading(true);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const { error } = await (supabase as any)
                 .from('profiles')
                 .update({ role: newRole })
@@ -79,6 +81,7 @@ export function UserManagementTable() {
 
         try {
             setLoading(true);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const { error } = await (supabase as any)
                 .from('profiles')
                 .delete()

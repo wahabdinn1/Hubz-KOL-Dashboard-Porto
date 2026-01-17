@@ -21,10 +21,10 @@ import { Button } from "@/components/ui/button";
 import { useData } from "@/context/data-context";
 import { CreateCampaignDialog } from "@/components/campaigns/create-campaign-dialog";
 import { DeleteCampaignDialog } from "@/components/campaigns/delete-campaign-dialog";
-import { Copy, MoreHorizontal, Trash2 } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
+import { Copy, MoreHorizontal, Trash2, ArrowUpDown } from "lucide-react";
 import { Campaign } from "@/lib/static-data";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import {
   Tooltip,
   TooltipContent,
@@ -45,6 +45,7 @@ function CampaignsListContent() {
 
   const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
   // Batch Select Handlers
   const handleSelectAll = (checked: boolean) => {
@@ -70,7 +71,7 @@ function CampaignsListContent() {
   }
 
   // Helper to calculate metrics for a single campaign row
-  const getCampaignMetrics = (campaign: Campaign) => {
+  const getCampaignMetrics = useCallback((campaign: Campaign) => {
     let totalSpend = 0;
     let totalRevenue = 0;
 
@@ -91,7 +92,54 @@ function CampaignsListContent() {
       : 0;
 
     return { totalSpend, totalRevenue, roi, completionPercent };
+  }, [kols]);
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+        direction = 'desc';
+    }
+    setSortConfig({ key, direction });
   };
+
+  const sortedCampaigns = useMemo(() => {
+    const sortableItems = [...campaigns];
+    if (sortConfig !== null) {
+      sortableItems.sort((a, b) => {
+        const metricsA = getCampaignMetrics(a);
+        const metricsB = getCampaignMetrics(b);
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let aValue: any = a[sortConfig.key as keyof typeof a];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let bValue: any = b[sortConfig.key as keyof typeof b];
+
+        // Handle computed metrics
+        if (sortConfig.key === 'totalSpend') {
+            aValue = metricsA.totalSpend;
+            bValue = metricsB.totalSpend;
+        } else if (sortConfig.key === 'totalRevenue') {
+            aValue = metricsA.totalRevenue;
+            bValue = metricsB.totalRevenue;
+        } else if (sortConfig.key === 'completionPercent') {
+            aValue = metricsA.completionPercent;
+            bValue = metricsB.completionPercent;
+        } else if (sortConfig.key === 'roi') {
+            aValue = metricsA.roi;
+            bValue = metricsB.roi;
+        }
+
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [campaigns, sortConfig, getCampaignMetrics]);
 
   return (
     <div className="space-y-8">
@@ -137,15 +185,39 @@ function CampaignsListContent() {
                     onChange={(e) => handleSelectAll(e.target.checked)}
                   />
                 </TableHead>
-                <TableHead>Platform</TableHead>
-                <TableHead>Campaign Name</TableHead>
-                <TableHead>Objective</TableHead>
-                <TableHead>Start Date</TableHead>
-                <TableHead>End Date</TableHead>
+                <TableHead>
+                    <Button variant="ghost" onClick={() => handleSort('platform')} className="hover:bg-transparent px-0 font-semibold text-muted-foreground">
+                        Platform <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                </TableHead>
+                <TableHead>
+                    <Button variant="ghost" onClick={() => handleSort('name')} className="hover:bg-transparent px-0 font-semibold text-muted-foreground">
+                        Campaign Name <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                </TableHead>
+                <TableHead>
+                    <Button variant="ghost" onClick={() => handleSort('objective')} className="hover:bg-transparent px-0 font-semibold text-muted-foreground">
+                        Objective <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                </TableHead>
+                <TableHead>
+                    <Button variant="ghost" onClick={() => handleSort('startDate')} className="hover:bg-transparent px-0 font-semibold text-muted-foreground">
+                        Start Date <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                </TableHead>
+                <TableHead>
+                    <Button variant="ghost" onClick={() => handleSort('endDate')} className="hover:bg-transparent px-0 font-semibold text-muted-foreground">
+                        End Date <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                </TableHead>
                 <TableHead>
                   <TooltipProvider delayDuration={200}>
                     <Tooltip>
-                      <TooltipTrigger className="cursor-help">Budget</TooltipTrigger>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" onClick={() => handleSort('budget')} className="hover:bg-transparent px-0 font-semibold text-muted-foreground">
+                            Budget <ArrowUpDown className="ml-2 h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
                       <TooltipContent><p className="text-xs">Total allocated campaign budget</p></TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -153,7 +225,11 @@ function CampaignsListContent() {
                 <TableHead>
                   <TooltipProvider delayDuration={200}>
                     <Tooltip>
-                      <TooltipTrigger className="cursor-help">Total Spend</TooltipTrigger>
+                      <TooltipTrigger asChild>
+                         <Button variant="ghost" onClick={() => handleSort('totalSpend')} className="hover:bg-transparent px-0 font-semibold text-muted-foreground">
+                            Total Spend <ArrowUpDown className="ml-2 h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
                       <TooltipContent><p className="text-xs">Sum of all KOL rates × videos</p></TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -161,7 +237,11 @@ function CampaignsListContent() {
                 <TableHead>
                   <TooltipProvider delayDuration={200}>
                     <Tooltip>
-                      <TooltipTrigger className="cursor-help">Revenue</TooltipTrigger>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" onClick={() => handleSort('totalRevenue')} className="hover:bg-transparent px-0 font-semibold text-muted-foreground">
+                            Revenue <ArrowUpDown className="ml-2 h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
                       <TooltipContent><p className="text-xs">Total sales generated from campaign</p></TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -169,7 +249,11 @@ function CampaignsListContent() {
                 <TableHead>
                   <TooltipProvider delayDuration={200}>
                     <Tooltip>
-                      <TooltipTrigger className="cursor-help">Progress</TooltipTrigger>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" onClick={() => handleSort('completionPercent')} className="hover:bg-transparent px-0 font-semibold text-muted-foreground">
+                            Progress <ArrowUpDown className="ml-2 h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
                       <TooltipContent><p className="text-xs">Campaign completion based on deliverable statuses</p></TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -177,7 +261,11 @@ function CampaignsListContent() {
                 <TableHead>
                   <TooltipProvider delayDuration={200}>
                     <Tooltip>
-                      <TooltipTrigger className="cursor-help">ROI</TooltipTrigger>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" onClick={() => handleSort('roi')} className="hover:bg-transparent px-0 font-semibold text-muted-foreground">
+                            ROI <ArrowUpDown className="ml-2 h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
                       <TooltipContent><p className="text-xs">Return on Investment: (Revenue - Spend) / Spend</p></TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
@@ -193,7 +281,7 @@ function CampaignsListContent() {
                   </TableCell>
                 </TableRow>
               ) : (
-                campaigns.map((campaign) => {
+                sortedCampaigns.map((campaign) => {
                   const metrics = getCampaignMetrics(campaign);
                   const isSelected = selectedIds.includes(campaign.id);
                   return (

@@ -1,8 +1,7 @@
 "use client";
 
-import * as React from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Campaign } from "@/lib/static-data";
@@ -20,8 +19,8 @@ const MONTHS = [
 ];
 
 export function CampaignCalendar({ campaigns }: CampaignCalendarProps) {
-    const [currentDate, setCurrentDate] = React.useState(new Date());
-    const [selectedDate, setSelectedDate] = React.useState<Date | null>(null);
+    const [currentDate, setCurrentDate] = useState(new Date());
+    const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
     // Get first day and number of days in month
     const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
@@ -62,9 +61,6 @@ export function CampaignCalendar({ campaigns }: CampaignCalendarProps) {
     for (let day = 1; day <= daysInMonth; day++) {
         calendarDays.push(new Date(currentDate.getFullYear(), currentDate.getMonth(), day));
     }
-
-    // Get selected date campaigns
-    const selectedCampaigns = selectedDate ? getCampaignsForDate(selectedDate) : [];
 
     return (
         <Card className="shadow-sm">

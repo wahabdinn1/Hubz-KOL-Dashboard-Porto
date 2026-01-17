@@ -14,6 +14,7 @@ export interface Database {
                     id: string
                     created_at: string
                     name: string
+                    type: string | null
                     username: string
                     avatar: string
                     platform: 'TikTok' | 'Instagram'
@@ -27,6 +28,15 @@ export interface Database {
                     manager_name: string | null
                     rate_card_min: number | null
                     rate_card_max: number | null
+                    tiktok_username: string | null
+                    tiktok_profile_link: string | null
+                    tiktok_followers: number | null
+                    instagram_username: string | null
+                    instagram_profile_link: string | null
+                    instagram_followers: number | null
+                    rate_card_tiktok: number | null
+                    rate_card_reels: number | null
+                    rate_card_pdf_link: string | null
                 }
                 Insert: {
                     id?: string
@@ -46,6 +56,15 @@ export interface Database {
                     manager_name?: string | null
                     rate_card_min?: number | null
                     rate_card_max?: number | null
+                    tiktok_username?: string | null
+                    tiktok_profile_link?: string | null
+                    tiktok_followers?: number | null
+                    instagram_username?: string | null
+                    instagram_profile_link?: string | null
+                    instagram_followers?: number | null
+                    rate_card_tiktok?: number | null
+                    rate_card_reels?: number | null
+                    rate_card_pdf_link?: string | null
                 }
                 Update: {
                     id?: string
@@ -65,6 +84,15 @@ export interface Database {
                     manager_name?: string | null
                     rate_card_min?: number | null
                     rate_card_max?: number | null
+                    tiktok_username?: string | null
+                    tiktok_profile_link?: string | null
+                    tiktok_followers?: number | null
+                    instagram_username?: string | null
+                    instagram_profile_link?: string | null
+                    instagram_followers?: number | null
+                    rate_card_tiktok?: number | null
+                    rate_card_reels?: number | null
+                    rate_card_pdf_link?: string | null
                 }
             }
             campaigns: {
@@ -213,6 +241,88 @@ export interface Database {
                     created_at?: string
                     kol_id?: string
                     content?: string
+                }
+            }
+            invoices: {
+                Row: {
+                    id: string
+                    invoice_number: string
+                    recipient_name: string
+                    recipient_address: string | null
+                    issued_date: string
+                    due_date: string | null
+                    status: string
+                    total_amount: number
+                    kol_id: string | null
+                    campaign_id: string | null
+                    bank_name: string | null
+                    bank_account_no: string | null
+                    bank_account_name: string | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    invoice_number: string
+                    recipient_name: string
+                    recipient_address?: string | null
+                    issued_date?: string
+                    due_date?: string | null
+                    status?: string
+                    total_amount?: number
+                    kol_id?: string | null
+                    campaign_id?: string | null
+                    bank_name?: string | null
+                    bank_account_no?: string | null
+                    bank_account_name?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    invoice_number?: string
+                    recipient_name?: string
+                    recipient_address?: string | null
+                    issued_date?: string
+                    due_date?: string | null
+                    status?: string
+                    total_amount?: number
+                    kol_id?: string | null
+                    campaign_id?: string | null
+                    bank_name?: string | null
+                    bank_account_no?: string | null
+                    bank_account_name?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+            }
+            invoice_items: {
+                Row: {
+                    id: string
+                    invoice_id: string
+                    description: string
+                    quantity: number
+                    price: number
+                    total: number
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    invoice_id: string
+                    description: string
+                    quantity?: number
+                    price?: number
+                    total?: number
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    invoice_id?: string
+                    description?: string
+                    quantity?: number
+                    price?: number
+                    total?: number
+                    created_at?: string
                 }
             }
         }

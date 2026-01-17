@@ -14,7 +14,8 @@ import {
     ChevronDown,
     Zap,
     Calendar,
-    LucideIcon
+    LucideIcon,
+    FileText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/app/auth/actions";
@@ -59,6 +60,14 @@ const NAV_ITEMS: NavItem[] = [
         items: [
             { name: "List", href: "/campaigns", icon: Briefcase },
             { name: "Calendar", href: "/campaigns/calendar", icon: Calendar },
+        ]
+    },
+    {
+        name: "Invoices",
+        icon: FileText,
+        items: [
+            { name: "List", href: "/invoices", icon: FileText }, // Placeholder for list view
+            { name: "Create New", href: "/invoices/new", icon: FileText }
         ]
     },
     { name: "Influencers", href: "/influencers", icon: Users },

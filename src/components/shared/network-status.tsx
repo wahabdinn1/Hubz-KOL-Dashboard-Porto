@@ -9,7 +9,7 @@ export function NetworkStatus() {
 
     useEffect(() => {
         // Initial check
-        setIsOnline(navigator.onLine);
+        setTimeout(() => setIsOnline(navigator.onLine), 0);
 
         const handleOnline = () => {
             setIsOnline(true);
