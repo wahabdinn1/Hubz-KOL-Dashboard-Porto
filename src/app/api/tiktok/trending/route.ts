@@ -20,6 +20,14 @@ export async function GET(request: NextRequest) {
                 message: 'Please log in to access trending content'
             }, { status: 401 });
         }
+        
+        // CUSTOM OPTIONS FOR API
+        // Zen Browser / Firefox Windows User Agent (matches user's cookie context)
+        const API_OPTIONS = {
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/115.0',
+            region: 'ID', // Indicated by previous debug snippet "region":"ID"
+            sid_tt: searchParams.get('sid_tt') // Optional if we want to pass more
+        };
 
         // Fetch user's TikTok session cookie from profile
         const { data: profile } = await supabase
@@ -28,63 +36,178 @@ export async function GET(request: NextRequest) {
             .eq('id', user.id)
             .single();
 
-        const sessionCookie = profile?.tiktok_session_cookie;
-
-        if (!sessionCookie) {
-            return NextResponse.json({
-                status: 'success',
-                message: 'TikTok session cookie not configured',
-                type: type,
-                data: [],
-                note: 'Configure your TikTok session cookie in Settings → General → TikTok Integration'
-            });
+        // Note: TrendingCreators from this library seemingly doesn't require a cookie.
+        // We will proceed without strict cookie check for this endpoint, 
+        // but keep the logic available if we need to pass session_id for other endpoints.
+        
+        let sessionCookie = profile?.tiktok_session_cookie;
+        if (!sessionCookie && process.env.TIKTOK_SESSION_ID) {
+            sessionCookie = process.env.TIKTOK_SESSION_ID;
         }
-
-        // Once user has configured their cookie, we can use the TikTok API
-        // The tiktok-api-dl library doesn't have a direct trending endpoint
-        // This would need to be implemented with custom scraping or TikTok's official API
         
-        // For now, return a message indicating the cookie is configured but trending needs more setup
-        return NextResponse.json({
-            status: 'success',
-            message: 'Session cookie configured. Trending feature coming soon!',
-            type: type,
-            data: [],
-            hasSession: true,
-            note: 'Your TikTok session is connected. Full trending support requires additional API integration.'
-        });
+        let filteredData: any[] = [];
+        let message: string | undefined;
 
-        // Future implementation with proper TikTok trending API would look like:
-        /*
-        const { TikTokTrending } = await import('@tobyg74/tiktok-api-dl');
-        const result = await TikTokTrending({
-            cookie: sessionCookie,
-        });
+        // Import the library dynamically
+        const { Trending, TrendingCreators } = await import('@tobyg74/tiktok-api-dl');
         
-        if (result.status === 'error') {
-            return NextResponse.json({ error: result.message }, { status: 404 });
-        }
+        let result: any = null;
 
-        // Filter/transform based on type
-        let filteredData = result.result || [];
-        
         if (type === 'creator') {
-            filteredData = filteredData.filter(item => item.type === 'user');
-        } else if (type === 'video') {
-            filteredData = filteredData.filter(item => item.type === 'video');
+             // https://github.com/TobyG74/tiktok-api-dl?tab=readme-ov-file#tiktok-trending
+             // Returns TrendingCreatorsResponse
+             // We can try passing cookie if available, or empty object
+             const creatorOptions = sessionCookie ? { 
+                cookie: sessionCookie,
+                ...API_OPTIONS 
+             } as any : { ...API_OPTIONS } as any;
+
+             result = await TrendingCreators(creatorOptions);
+             
+             // Retry logic for creators
+             let creators = (result.status === 'success' && Array.isArray(result.result)) ? result.result : [];
+             if (creators.length === 0 && sessionCookie) {
+                 const retryResult = await TrendingCreators({ ...API_OPTIONS } as any);
+                 if (retryResult.status === 'success' && Array.isArray(retryResult.result) && retryResult.result.length > 0) {
+                     result = retryResult;
+                 }
+             }
+
+             if (result.status === 'success') {
+                 // Normalize creator data
+                 creators = (result.result as any[]) || [];
+                 filteredData = creators.map((item: any) => ({
+                     id: item.id,
+                     type: 'user',
+                     title: item.nickname,
+                     subtitle: item.username,
+                     cover: item.avatarThumb,
+                     description: item.description,
+                     link: item.link,
+                     stats: {
+                         followers: item.followerCount,
+                         likes: item.heartCount,
+                         videos: item.videoCount
+                     }
+                 }));
+             } else {
+                 throw new Error(result.message || 'Failed to fetch trending creators');
+             }
+        } else {
+            // Video (General Trending)
+            // https://github.com/TobyG74/tiktok-api-dl?tab=readme-ov-file#tiktok-trending
+            
+            // Helper to aggregate exploreList from all sections
+            const aggregateExploreList = (res: any) => {
+                let list: any[] = [];
+                const raw = (res?.status === 'success' && Array.isArray(res?.result)) ? res.result : [];
+                raw.forEach((section: any) => {
+                    if (section.exploreList && Array.isArray(section.exploreList)) {
+                        list = list.concat(section.exploreList);
+                    }
+                });
+                return list;
+            };
+
+            // Attempt to use cookie
+            const cookieOptions = sessionCookie ? { 
+                cookie: sessionCookie,
+                ...API_OPTIONS
+            } as any : { ...API_OPTIONS } as any;
+            
+            result = await Trending(cookieOptions);
+            
+            let allExploreItems = aggregateExploreList(result);
+
+            // Retry logic: If result is empty and we used a cookie, try without cookie but WITH options
+            if (allExploreItems.length === 0 && sessionCookie) {
+                const retryResult = await Trending({ ...API_OPTIONS } as any);
+                const retryItems = aggregateExploreList(retryResult);
+                
+                // Mark that we attempted retry
+                (result as any).retryAttempted = true;
+
+                if (retryItems.length > 0) {
+                     // Use the anonymous result
+                     result = retryResult;
+                     allExploreItems = retryItems;
+                     (result as any).retrySuccess = true;
+                }
+            }
+
+            if (result.status === 'success') {
+                 // Collect types for debug
+                const typesFound = new Set<number>();
+
+                filteredData = allExploreItems
+                    .filter((item: any) => {
+                        const t = item.cardItem?.type;
+                        if (t !== undefined) typesFound.add(t);
+                         // Type 1 = Video usually. User reported Hashtag(13), Audio(3), Creator(5).
+                        return t === 1; 
+                    })
+                    .map((item: any) => {
+                    const card = item.cardItem;
+                    return {
+                        id: card.id,
+                        type: 'video',
+                        title: card.title || card.description, 
+                        subtitle: card.subTitle, 
+                        cover: card.cover,
+                        description: card.description,
+                        link: card.link,
+                        stats: {
+                            likes: card.extraInfo?.likes || 0,
+                            plays: card.extraInfo?.play || 0,
+                            digg: card.extraInfo?.digg || 0,
+                        }
+                    };
+                });
+                
+                // Store types in debug
+                if (!result.debug) result.debug = {};
+                result.debug.typesFound = Array.from(typesFound);
+
+            } else {
+                 throw new Error(result.message || 'Failed to fetch trending videos');
+            }
         }
         
         return NextResponse.json({
             status: 'success',
             type: type,
             data: filteredData,
+            message: message,
+            debug: {
+                hasCookie: !!sessionCookie,
+                cookieLength: sessionCookie?.length || 0,
+                resultStatus: 'success', 
+                retryAttempted: !!(result as any).retryAttempted,
+                retrySuccess: !!(result as any).retrySuccess,
+                rawResultCount: Array.isArray(filteredData) ? filteredData.length : 0,
+                // @ts-ignore
+                typesFound: result?.debug?.typesFound || [],
+                // @ts-ignore
+                rawResponseKeys: typeof result === 'object' ? Object.keys(result || {}) : [],
+                // @ts-ignore
+                rawResponseResultType: typeof result?.result,
+                 // @ts-ignore
+                rawResponseResultIsArray: Array.isArray(result?.result),
+                // @ts-ignore
+                resultResultLength: Array.isArray(result?.result) ? result.result.length : 'N/A',
+                // @ts-ignore
+                firstItemKeys: Array.isArray(result?.result) && result.result[0] ? Object.keys(result.result[0]) : [],
+                // @ts-ignore
+                firstItemSnippet: Array.isArray(result?.result) && result.result[0] ? JSON.stringify(result.result[0]).substring(0, 200) : 'null'
+            }
         });
-        */
+
     } catch (error) {
         console.error('TikTok Trending API Error:', error);
         return NextResponse.json(
-            { error: 'Failed to fetch trending content' },
+            { status: 'error', error: 'Failed to fetch trending content' },
             { status: 500 }
         );
     }
 }
+

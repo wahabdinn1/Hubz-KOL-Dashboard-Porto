@@ -317,7 +317,7 @@ export function SettingsClient({ user }: { user: User | null }) {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="tiktokCookie">Session Cookie (sessionid)</Label>
+                                    <Label htmlFor="tiktokCookie">Full TikTok Cookie String</Label>
                                     <div className="flex gap-2">
                                         <div className="relative flex-1">
                                             <Input
@@ -325,7 +325,7 @@ export function SettingsClient({ user }: { user: User | null }) {
                                                 type={showCookie ? "text" : "password"}
                                                 value={tiktokCookie}
                                                 onChange={(e) => setTiktokCookie(e.target.value)}
-                                                placeholder="Paste your TikTok sessionid here..."
+                                                placeholder="Paste full cookie string (sessionid=...; msToken=...)"
                                                 className="pr-10"
                                             />
                                             <Button
@@ -350,12 +350,15 @@ export function SettingsClient({ user }: { user: User | null }) {
                                     </div>
                                 </div>
                                 <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg space-y-2">
-                                    <p className="font-medium">How to get your TikTok session cookie:</p>
+                                    <p className="font-medium">How to get your FULL TikTok cookie (Zen/Chrome/Firefox):</p>
                                     <ol className="list-decimal list-inside space-y-1 text-xs">
-                                        <li>Log in to TikTok in your browser</li>
-                                        <li>Open Developer Tools (F12)</li>
-                                        <li>Go to Application → Cookies → tiktok.com</li>
-                                        <li>Find and copy the &quot;sessionid&quot; value</li>
+                                        <li>Log in to TikTok.com</li>
+                                        <li>Right-click page &rarr; <strong>Inspect</strong> (or F12)</li>
+                                        <li>Go to <strong>Network</strong> tab. Refresh the page.</li>
+                                        <li>Filter by "Doc" or find the request named <code>www.tiktok.com</code></li>
+                                        <li>Click that request. Look for <strong>Request Headers</strong> on the right/bottom.</li>
+                                        <li>Find <strong>Cookie</strong> line. Right-click the value &rarr; <strong>Copy Value</strong>.</li>
+                                        <li>The string should be VERY long (begins with <code>tt_webid=...</code> usually).</li>
                                     </ol>
                                 </div>
                             </CardContent>
