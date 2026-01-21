@@ -16,7 +16,6 @@ A **Neo-Brutalist** Influencer Management & Analytics Dashboard built for the mo
 - Detailed influencer profiles with engagement rates
 - Auto-fetch TikTok & Instagram profiles
 - Tiering system (Nano, Micro, Macro, Mega)
-- Content library with embedded media
 - Performance history tracking
 
 ### 📋 Campaign Operations
