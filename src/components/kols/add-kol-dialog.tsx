@@ -87,7 +87,7 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
         }
     };
 
-    // Fetch Instagram data
+    // Fetch Instagram data - only updates followers/name, preserves existing avatar
     const fetchInstagramData = async () => {
         if (!formData.instagramUsername) return;
         setFetchingInstagram(true);
@@ -100,7 +100,8 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
                     ...prev,
                     instagramFollowers: data.data.followers?.toString() || prev.instagramFollowers,
                     name: prev.name || data.data.full_name || '',
-                    avatar: data.data.profile_pic_url ? `/api/image-proxy?url=${encodeURIComponent(data.data.profile_pic_url)}` : prev.avatar,
+                    // Only set avatar if not already filled (e.g., from TikTok fetch)
+                    avatar: prev.avatar || (data.data.profile_pic_url ? `/api/image-proxy?url=${encodeURIComponent(data.data.profile_pic_url)}` : ''),
                 }));
             }
         } catch (error) {
