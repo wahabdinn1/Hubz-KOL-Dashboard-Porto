@@ -40,6 +40,7 @@ export default function TrendingPage() {
                 setMessage(result.message || null);
                 // Capture debug info
                 if (result.debug) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     (window as any).lastDebug = result.debug;
                 }
             } else {
@@ -156,7 +157,7 @@ export default function TrendingPage() {
                                 }
                             />
                             {/* Debug Info */}
-                            {/* @ts-ignore */}
+                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                             {(data as any)?.debug || (window as any).lastDebug && (
                                 <Card className="border-2 border-dashed border-slate-300">
                                     <CardHeader>
@@ -164,6 +165,7 @@ export default function TrendingPage() {
                                     </CardHeader>
                                     <CardContent>
                                         <pre className="text-xs bg-slate-100 dark:bg-slate-900 p-2 rounded overflow-auto max-h-40">
+                                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                                             {JSON.stringify((window as any).lastDebug, null, 2)}
                                         </pre>
                                     </CardContent>
@@ -174,7 +176,7 @@ export default function TrendingPage() {
 
                     {/* Results Grid */}
                     {!loading && data.length > 0 && (
-                        <TabsContent value={activeTab} className="mt-0">
+                        <TabsContent value="activeTab" className="mt-0">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                                 {data.map((item: any) => (
@@ -182,6 +184,7 @@ export default function TrendingPage() {
                                         <div className="aspect-video relative bg-slate-100 dark:bg-slate-800">
                                             {/* Use img for simplicity, fallback to generic if missing */}
                                             {item.cover ? (
+                                                /* eslint-disable-next-line @next/next/no-img-element */
                                                 <img 
                                                     src={item.cover} 
                                                     alt={item.title} 

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/utils/supabase/server';
 
@@ -185,20 +186,13 @@ export async function GET(request: NextRequest) {
                 retryAttempted: !!(result as any).retryAttempted,
                 retrySuccess: !!(result as any).retrySuccess,
                 rawResultCount: Array.isArray(filteredData) ? filteredData.length : 0,
-                // @ts-ignore
-                typesFound: result?.debug?.typesFound || [],
-                // @ts-ignore
+                typesFound: (result as any)?.debug?.typesFound || [],
                 rawResponseKeys: typeof result === 'object' ? Object.keys(result || {}) : [],
-                // @ts-ignore
-                rawResponseResultType: typeof result?.result,
-                 // @ts-ignore
-                rawResponseResultIsArray: Array.isArray(result?.result),
-                // @ts-ignore
-                resultResultLength: Array.isArray(result?.result) ? result.result.length : 'N/A',
-                // @ts-ignore
-                firstItemKeys: Array.isArray(result?.result) && result.result[0] ? Object.keys(result.result[0]) : [],
-                // @ts-ignore
-                firstItemSnippet: Array.isArray(result?.result) && result.result[0] ? JSON.stringify(result.result[0]).substring(0, 200) : 'null'
+                rawResponseResultType: typeof (result as any)?.result,
+                rawResponseResultIsArray: Array.isArray((result as any)?.result),
+                resultResultLength: Array.isArray((result as any)?.result) ? (result as any).result.length : 'N/A',
+                firstItemKeys: Array.isArray((result as any)?.result) && (result as any).result[0] ? Object.keys((result as any).result[0]) : [],
+                firstItemSnippet: Array.isArray((result as any)?.result) && (result as any).result[0] ? JSON.stringify((result as any).result[0]).substring(0, 200) : 'null'
             }
         });
 

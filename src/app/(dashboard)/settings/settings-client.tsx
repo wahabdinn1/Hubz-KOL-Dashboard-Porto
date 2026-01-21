@@ -94,7 +94,7 @@ function SortableCategoryItem({ category, onDelete }: SortableCategoryProps) {
 
 import { User } from "@supabase/supabase-js";
 
-import { UserManagementTable } from "@/components/user-management-table-fixed";
+
 import { useAuth } from "@/context/auth-context";
 import { Users as UsersIcon } from "lucide-react";
 
@@ -355,7 +355,7 @@ export function SettingsClient({ user }: { user: User | null }) {
                                         <li>Log in to TikTok.com</li>
                                         <li>Right-click page &rarr; <strong>Inspect</strong> (or F12)</li>
                                         <li>Go to <strong>Network</strong> tab. Refresh the page.</li>
-                                        <li>Filter by "Doc" or find the request named <code>www.tiktok.com</code></li>
+                                        <li>Filter by &quot;Doc&quot; or find the request named <code>www.tiktok.com</code></li>
                                         <li>Click that request. Look for <strong>Request Headers</strong> on the right/bottom.</li>
                                         <li>Find <strong>Cookie</strong> line. Right-click the value &rarr; <strong>Copy Value</strong>.</li>
                                         <li>The string should be VERY long (begins with <code>tt_webid=...</code> usually).</li>
@@ -365,17 +365,6 @@ export function SettingsClient({ user }: { user: User | null }) {
                         </Card>
                     </TabsContent>
 
-                    {isAdmin && (
-                        <TabsContent value="members" className="space-y-4">
-                            <div className="flex flex-col gap-4">
-                                <div>
-                                    <h3 className="text-lg font-medium">Team Management</h3>
-                                    <p className="text-sm text-muted-foreground">Manage user access and roles.</p>
-                                </div>
-                                <UserManagementTable />
-                            </div>
-                        </TabsContent>
-                    )}
 
                     {isAdmin && (
                         <TabsContent value="categories" className="space-y-4">
