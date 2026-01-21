@@ -27,6 +27,7 @@ export function EditKOLDialog({ kol }: EditKOLDialogProps) {
     const { updateKOL, categories } = useData();
     const [open, setOpen] = useState(false);
     const [fetchingTikTok, setFetchingTikTok] = useState(false);
+    const [fetchingInstagram, setFetchingInstagram] = useState(false);
 
     // Fetch TikTok data
     const fetchTikTokData = async () => {
@@ -46,6 +47,28 @@ export function EditKOLDialog({ kol }: EditKOLDialogProps) {
             console.error('Failed to fetch TikTok data:', error);
         } finally {
             setFetchingTikTok(false);
+        }
+    };
+
+    // Fetch Instagram data
+    const fetchInstagramData = async () => {
+        if (!formData.instagramUsername) return;
+        setFetchingInstagram(true);
+        try {
+            const username = formData.instagramUsername.replace('@', '');
+            const response = await fetch(`/api/instagram/profile?username=${encodeURIComponent(username)}`);
+            const data = await response.json();
+            if (data.status === 'success' && data.data) {
+                setFormData(prev => ({
+                    ...prev,
+                    instagramFollowers: data.data.followers?.toString() || prev.instagramFollowers,
+                    avatar: data.data.profile_pic_url ? `/api/image-proxy?url=${encodeURIComponent(data.data.profile_pic_url)}` : prev.avatar,
+                }));
+            }
+        } catch (error) {
+            console.error('Failed to fetch Instagram data:', error);
+        } finally {
+            setFetchingInstagram(false);
         }
     };
 
@@ -257,7 +280,18 @@ export function EditKOLDialog({ kol }: EditKOLDialogProps) {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="instagramUsername">Username</Label>
-                                <Input id="instagramUsername" name="instagramUsername" value={formData.instagramUsername} onChange={handleChange} />
+                                <div className="flex gap-2">
+                                    <Input id="instagramUsername" name="instagramUsername" value={formData.instagramUsername} onChange={handleChange} className="flex-1" />
+                                    <Button 
+                                        type="button" 
+                                        variant="outline" 
+                                        size="sm"
+                                        onClick={fetchInstagramData}
+                                        disabled={!formData.instagramUsername || fetchingInstagram}
+                                    >
+                                        {fetchingInstagram ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Fetch'}
+                                    </Button>
+                                </div>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="instagramFollowers">Followers</Label>

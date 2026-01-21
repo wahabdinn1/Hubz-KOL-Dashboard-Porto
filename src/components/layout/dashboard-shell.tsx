@@ -81,7 +81,8 @@ const NAV_ITEMS: NavItem[] = [
         icon: Calculator,
         items: [
             { name: "ER Calculator", href: "/er-calculator", icon: Zap },
-            { name: "Stalk User", href: "/tools/stalk-user", icon: Search },
+            { name: "Stalk TikTok", href: "/tools/stalk-user", icon: Search },
+            { name: "Stalk Instagram", href: "/tools/instagram-stalk", icon: Search },
             { name: "TikTok Trending", href: "/tools/trending", icon: TrendingUp },
             { name: "Video Info", href: "/tools/downloader", icon: Download },
         ]

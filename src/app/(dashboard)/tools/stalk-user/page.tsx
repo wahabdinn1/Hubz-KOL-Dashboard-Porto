@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/retroui/Button";
 import { Skeleton } from "@/components/retroui/Skeleton";
-import { Search, User, Heart, Video, Users, MapPin, BadgeCheck, AlertCircle, UserPlus } from "lucide-react";
+import { Search, User, Heart, Video, Users, MapPin, BadgeCheck, AlertCircle, UserPlus, Loader2, Check } from "lucide-react";
 import { formatCompactNumber } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
+import { useData } from "@/context/data-context";
+import { useRouter } from "next/navigation";
 
 interface TikTokUser {
     username: string;
@@ -25,10 +27,14 @@ interface TikTokUser {
 }
 
 export default function StalkUserPage() {
+    const { addKOL, categories } = useData();
+    const router = useRouter();
     const [username, setUsername] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [userData, setUserData] = useState<TikTokUser | null>(null);
+    const [addingKOL, setAddingKOL] = useState(false);
+    const [kolAdded, setKolAdded] = useState(false);
 
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -51,6 +57,39 @@ export default function StalkUserPage() {
             setError('Network error. Please try again.');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleAddAsKOL = async () => {
+        if (!userData) return;
+        setAddingKOL(true);
+        try {
+            const newKOL = {
+                id: `kol-${Date.now()}`,
+                name: userData.nickname || userData.username,
+                category: 'General',
+                categoryId: categories[0]?.id || '',
+                followers: userData.followers,
+                avgViews: 0,
+                type: userData.followers > 1000000 ? 'Mega' as const : userData.followers > 100000 ? 'Macro' as const : userData.followers > 10000 ? 'Micro' as const : 'Nano' as const,
+                tiktokUsername: userData.username,
+                tiktokProfileLink: `https://www.tiktok.com/@${userData.username}`,
+                tiktokFollowers: userData.followers,
+                instagramUsername: '',
+                instagramProfileLink: '',
+                instagramFollowers: 0,
+                rateCardTiktok: 0,
+                rateCardReels: 0,
+                rateCardPdfLink: '',
+                avatar: userData.avatar,
+            };
+            await addKOL(newKOL, false);
+            setKolAdded(true);
+            setTimeout(() => router.push('/influencers'), 1500);
+        } catch (error) {
+            console.error('Failed to add KOL:', error);
+        } finally {
+            setAddingKOL(false);
         }
     };
 
@@ -185,12 +224,19 @@ export default function StalkUserPage() {
                                             View on TikTok
                                         </Button>
                                     </Link>
-                                    <Link href={`/influencers?prefill=${userData.username}&followers=${userData.followers}`}>
-                                        <Button size="sm">
-                                            <UserPlus className="h-4 w-4 mr-1" />
-                                            Add as KOL
-                                        </Button>
-                                    </Link>
+                                    <Button 
+                                        size="sm" 
+                                        onClick={handleAddAsKOL}
+                                        disabled={addingKOL || kolAdded}
+                                    >
+                                        {kolAdded ? (
+                                            <><Check className="h-4 w-4 mr-1" /> Added!</>
+                                        ) : addingKOL ? (
+                                            <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Adding...</>
+                                        ) : (
+                                            <><UserPlus className="h-4 w-4 mr-1" /> Add as KOL</>
+                                        )}
+                                    </Button>
                                 </div>
                             </div>
                         </div>
