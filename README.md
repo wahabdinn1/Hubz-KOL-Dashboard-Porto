@@ -1,104 +1,114 @@
-# Hubz Porto KOL
+# Hubz KOL Dashboard
 
-A **Neo-Brutalist** Influencer Management & Analytics Dashboard built for the modern marketing era. It combines high-impact aesthetics with powerful campaign tracking logic.
+A **Neo-Brutalist** Influencer Management & Analytics Dashboard built for the modern marketing era.
 
-![Dashboard Overview](public/screenshots/dashboard.png)
+## ✨ Features
 
-## 🚀 Key Features
+### 📊 Dashboard & Analytics
 
-### 1. Finance Command Center
+- Real-time revenue & spend tracking
+- Profitability metrics and ROI calculations
+- Campaign performance analytics
+- Finance command center
 
-Comprehensive financial oversight built directly into your workflow:
+### 👥 KOL Management
 
-- **Revenue & Spend Tracking**: Real-time P&L analysis per campaign and platform.
-- **Invoicing System**: Create, track, and manage invoices with status workflows (Draft -> Paid).
-- **Profitability Metrics**: Automated ROI calculations and budget utilization tracking.
-- **PDF Generation**: Instant invoice PDF generation for billing.
+- Detailed influencer profiles with engagement rates
+- Auto-fetch TikTok & Instagram profiles
+- Tiering system (Nano, Micro, Macro, Mega)
+- Content library with embedded media
+- Performance history tracking
 
-### 2. Advanced KOL Management
+### 📋 Campaign Operations
 
-A robust CRM for your influencer network:
+- Kanban task board with drag-and-drop
+- Gantt chart timeline view
+- Calendar view for scheduling
+- Deliverables tracking
+- AI Smart Match for influencer recommendations
 
-- **Detailed Profiles**: Track engagement rates, follower counts, and contact info.
-- **Content Library**: Embed and play TikTok/Instagram content directly within the profile using the `ContentEmbed` system.
-- **Tiering System**: Automated categorization (Nano, Micro, Macro, Mega) based on follower count.
-- **Performance History**: View past campaign performance and payment history for every creator.
+### 💰 Finance & Invoicing
 
-### 3. Campaign Operations
+- Invoice creation and management
+- Status workflows (Draft → Paid)
+- PDF generation
+- Budget utilization tracking
 
-End-to-end campaign lifecycle management:
+### 🔧 Tools
 
-- **Kanban Task Board**: Drag-and-drop workflow status management.
-- **Gantt Chart Timeline**: Visual project planning and scheduling.
-- **Deliverables Tracking**: Track video/post submissions and approval status.
-- **AI Smart Match**: Rank influencers based on campaign fit.
+- **Profile Lookup**: Fetch TikTok & Instagram profiles with platform tabs
+- **TikTok Trending**: Browse trending videos and creators
+- **Video Info**: Get TikTok video details
+- **ER Calculator**: Engagement rate calculator
 
-### 4. RetroUI Design System
+### 🎨 Design System
 
-A custom "Pop" design system featuring:
+- Neo-Brutalist RetroUI components
+- Vibrant color palette (#FFDA5C primary)
+- Dark mode support
+- Responsive design
 
-- **Vibrant Aesthetic**: Primary Yellow (`#FFDA5C`), Stark Black, and Soft Cream.
-- **Tactile Interactions**: Buttons and cards feature dynamic "press" states and hard shadows.
-- **Consistent Styling**: Unified design language across Dashboard, Forms, and Lists.
+### ⌨️ Productivity
 
-### 5. Productivity Tools
-
-- **Keyboard Shortcuts**: Navigate efficiently with `Ctrl+K` command palette and hotkeys.
-- **Onboarding Tour**: Interactive guided tour for new users.
-- **Date Range Filtering**: Global date filtering for all analytics views.
-- **Quick Actions**: "New Invoice", "Add KOL", and "New Campaign" accessible from anywhere.
-
-### 6. TikTok API Integration
-
-Powered by `@tobyg74/tiktok-api-dl`:
-
-- **Stalk User**: Fetch any TikTok profile - followers, bio, videos, and engagement metrics.
-- **Video Info/Downloader**: Get video details and download without watermark.
-- **TikTok Trending**: Browse trending videos, creators, and campaigns.
-- **KOL Auto-Fetch**: "Fetch from TikTok" button in Add/Edit KOL dialogs to auto-populate follower data.
-- **Per-User Session**: Configure your TikTok session cookie in Settings → TikTok tab.
+- Command palette (`Ctrl+K`)
+- Keyboard shortcuts
+- Global date filtering
+- Quick actions
 
 ---
 
 ## 🛠 Tech Stack
 
-- **Framework**: [Next.js 15](https://nextjs.org/) (App Router)
-- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) + [Shadcn UI](https://ui.shadcn.com/) + RetroUI
-- **Database**: [Supabase](https://supabase.com/) (PostgreSQL & Auth)
-- **Data Fetching**: TanStack Query + Supabase SSR
-- **TikTok API**: [@tobyg74/tiktok-api-dl](https://www.npmjs.com/package/@tobyg74/tiktok-api-dl)
-- **Visualization**: Recharts, React Day Picker
-- **Validation**: Zod + React Hook Form
-- **Utilities**: Framer Motion, Sonner, React-PDF
-
-## ⚡ Getting Started
-
-1. **Install Dependencies**:
-
-   ```bash
-   npm install
-   ```
-
-2. **Configure Environment**:
-   Create a `.env` file in the root directory:
-
-   ```env
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-   ```
-
-3. **Run Development Server**:
-   ```bash
-   npm run dev
-   ```
-   Open [http://localhost:3000](http://localhost:3000) to view the dashboard.
-
-## 📦 Optimization
-
-- **Type Safe**: End-to-End TypeScript coverage.
-- **Fast Loading**: Server Components + Image Optimization.
-- **Responsive**: Fully optimized for Desktop, Tablet, and Mobile devices.
+| Category   | Technology                   |
+| ---------- | ---------------------------- |
+| Framework  | Next.js 16 (App Router)      |
+| Styling    | Tailwind CSS v4 + Shadcn UI  |
+| Database   | Supabase (PostgreSQL & Auth) |
+| TikTok API | @tobyg74/tiktok-api-dl       |
+| Instagram  | Custom JS scraper            |
+| Charts     | Recharts                     |
+| Forms      | React Hook Form + Zod        |
 
 ---
 
-_Built for Hubz Porto._
+## ⚡ Getting Started
+
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Configure Environment
+
+Create `.env`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+### 3. Run Development Server
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000)
+
+---
+
+## 📦 Deployment
+
+Deploy to Vercel:
+
+1. Push to GitHub
+2. Import to Vercel
+3. Add environment variables
+4. Deploy
+
+---
+
+## 📄 License
+
+MIT License © 2026 Wahabdinn
