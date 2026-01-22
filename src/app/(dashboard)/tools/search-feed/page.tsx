@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,7 +54,7 @@ export default function SearchFeedPage() {
         }
     };
 
-    const loadMore = async () => {
+    const loadMore = useCallback(async () => {
         if (!hasMore || loading) return;
         setLoading(true);
 
@@ -83,7 +83,27 @@ export default function SearchFeedPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [hasMore, loading, keyword, cursor]);
+
+    // Infinite scroll with IntersectionObserver
+    const sentinelRef = useRef<HTMLDivElement>(null);
+    
+    useEffect(() => {
+        const sentinel = sentinelRef.current;
+        if (!sentinel) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore && !loading && posts.length > 0) {
+                    loadMore();
+                }
+            },
+            { threshold: 0.1, rootMargin: '100px' }
+        );
+
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+    }, [hasMore, loading, loadMore, posts.length]);
 
     return (
         <div className="space-y-6">
@@ -187,27 +207,18 @@ export default function SearchFeedPage() {
                         ))}
                     </div>
 
-                    {/* Load More Button */}
-                    {hasMore && (
-                        <div className="flex justify-center py-4">
-                            <Button 
-                                variant="outline" 
-                                size="lg" 
-                                onClick={loadMore} 
-                                disabled={loading}
-                                className="min-w-[200px]"
-                            >
-                                {loading ? (
-                                    <>
-                                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                        Loading...
-                                    </>
-                                ) : (
-                                    "Load More Results"
-                                )}
-                            </Button>
-                        </div>
-                    )}
+                    {/* Infinite Scroll Sentinel */}
+                    <div ref={sentinelRef} className="flex justify-center py-8">
+                        {loading && posts.length > 0 && (
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                                <span>Loading more...</span>
+                            </div>
+                        )}
+                        {!hasMore && posts.length > 0 && (
+                            <p className="text-sm text-muted-foreground">No more results</p>
+                        )}
+                    </div>
                 </div>
             )}
 

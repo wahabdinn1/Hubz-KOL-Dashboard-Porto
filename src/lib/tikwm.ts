@@ -154,7 +154,6 @@ export const TikWMService = {
 
     async searchPosts(keyword: string, cursor: number = 0) {
         try {
-            console.log(`[TikWM] Searching posts for keyword: ${keyword}, cursor: ${cursor}`);
             const { data } = await axios.get<TikWMSearchResponse>(`https://www.tikwm.com/api/feed/search?keywords=${keyword}&cursor=${cursor}`);
             
             if (data.code === 0 && data.data?.videos) {

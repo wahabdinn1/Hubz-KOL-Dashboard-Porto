@@ -37,7 +37,9 @@ A **Neo-Brutalist** Influencer Management & Analytics Dashboard built for the mo
 
 - **Profile Lookup**: Fetch TikTok & Instagram profiles with platform tabs
 - **TikTok Trending**: Browse trending videos and creators
-- **Video Info**: Get TikTok video details
+- **Video Downloader**: Get TikTok video info, embedded preview, and HD download (no watermark)
+- **Hashtag Search**: Discover videos by keyword with infinite scroll
+- **User Posts**: Fetch user's TikTok videos
 - **ER Calculator**: Engagement rate calculator
 
 ### 🎨 Design System
@@ -45,7 +47,7 @@ A **Neo-Brutalist** Influencer Management & Analytics Dashboard built for the mo
 - Neo-Brutalist RetroUI components
 - Vibrant color palette (#FFDA5C primary)
 - Dark mode support
-- Responsive design
+- Fully responsive mobile design
 
 ### ⌨️ Productivity
 
@@ -105,6 +107,8 @@ Deploy to Vercel:
 2. Import to Vercel
 3. Add environment variables
 4. Deploy
+
+> **Note**: Some TikTok features (like direct user posts via Puppeteer) only work in local development due to Cloudflare protection. The fallback search-based method works on Vercel.
 
 ---
 

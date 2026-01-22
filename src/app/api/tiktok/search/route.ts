@@ -24,7 +24,6 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        console.log(`[API] Searching TikTok posts for: ${keyword}, cursor: ${cursor}`);
         const result = await TikWMService.searchPosts(keyword, cursor);
 
         return NextResponse.json({

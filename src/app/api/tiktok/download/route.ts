@@ -36,6 +36,14 @@ export async function GET(request: NextRequest) {
         // Transform response for clean UI consumption
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const videoData = result.result as any;
+        
+        // Helper to get first element from array or return the value if it's a string
+        const getFirst = (arr: unknown): string => {
+            if (Array.isArray(arr) && arr.length > 0) return arr[0];
+            if (typeof arr === 'string') return arr;
+            return '';
+        };
+        
         return NextResponse.json({
             status: 'success',
             data: {
@@ -51,7 +59,7 @@ export async function GET(request: NextRequest) {
                     nickname: videoData?.author?.nickname,
                     signature: videoData?.author?.signature,
                     region: videoData?.author?.region,
-                    avatar: videoData?.author?.avatarLarger || videoData?.author?.avatarMedium || videoData?.author?.avatar,
+                    avatar: getFirst(videoData?.author?.avatarLarger) || getFirst(videoData?.author?.avatarMedium) || getFirst(videoData?.author?.avatar),
                 },
                 statistics: {
                     playCount: videoData?.statistics?.playCount,
@@ -59,10 +67,21 @@ export async function GET(request: NextRequest) {
                     shareCount: videoData?.statistics?.shareCount,
                     commentCount: videoData?.statistics?.commentCount,
                     likeCount: videoData?.statistics?.diggCount || videoData?.statistics?.likeCount,
-                    collectCount: videoData?.statistics?.collectCount || 0,
+                    collectCount: videoData?.statistics?.collectCount || videoData?.statistics?.favoriteCount || 0,
                 },
-                video: videoData?.video,
-                music: videoData?.music,
+                video: {
+                    noWatermark: getFirst(videoData?.video?.playAddr) || getFirst(videoData?.video?.noWatermark),
+                    watermark: getFirst(videoData?.video?.downloadAddr) || getFirst(videoData?.video?.watermark),
+                    cover: getFirst(videoData?.video?.cover) || getFirst(videoData?.video?.originCover) || getFirst(videoData?.video?.dynamicCover),
+                    dynamicCover: getFirst(videoData?.video?.dynamicCover),
+                    originCover: getFirst(videoData?.video?.originCover),
+                },
+                music: {
+                    title: videoData?.music?.title || '',
+                    author: videoData?.music?.author || videoData?.music?.authorName || '',
+                    cover: getFirst(videoData?.music?.coverLarge) || getFirst(videoData?.music?.coverMedium) || getFirst(videoData?.music?.cover),
+                    playUrl: getFirst(videoData?.music?.playUrl),
+                },
             }
         });
     } catch (error) {

@@ -4,7 +4,6 @@ import { TikWMService } from "@/lib/tikwm";
 
 export async function POST(request: NextRequest) {
     try {
-
         const { username } = await request.json();
 
         if (!username) {
@@ -25,21 +24,15 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Determine which method to use: Library (Authenticated) or TikWM (Public)
-        
-
         // EXECUTION STRATEGY:
-        // Use TikWMService which now implements the hybrid strategy internally (User Posts -> Fallback to Search)
+        // Use TikWMService which implements the hybrid strategy internally (User Posts -> Fallback to Search)
         
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let posts: any[] = [];
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let authorData: any = null;
-        // eslint-disable-next-line prefer-const
-        let errorMsg = "";
+        const errorMsg = "";
 
-        console.log(`Fetching posts for user: ${username} via TikWM`);
-        
         // 1. Get User Info first (reliable)
         const userInfo = await TikWMService.getUserInfo(username);
 

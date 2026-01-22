@@ -14,8 +14,7 @@ import {
     Eye, 
     Heart, 
     MessageCircle, 
-    Share2, 
-    Bookmark,
+    Share2,
     AlertCircle,
     User,
     ExternalLink 
@@ -176,31 +175,48 @@ export default function VideoInfoDownloaderPage() {
                             </CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <div className="relative aspect-[9/16] w-full max-w-[300px] mx-auto bg-black rounded-lg overflow-hidden border-2 border-black">
-                                {videoData.video?.cover ? (
-                                    <Image 
-                                        src={videoData.video.cover} 
-                                        alt="Video thumbnail"
-                                        width={300}
-                                        height={533}
-                                        className="w-full h-full object-cover"
-                                        unoptimized
-                                    />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-white">
-                                        <Play className="h-12 w-12" />
+                            {(() => {
+                                const videoUrl = videoData.video?.noWatermark;
+                                const hasValidVideo = typeof videoUrl === 'string' && videoUrl.trim().length > 0;
+                                const videoCover = videoData.video?.cover;
+                                const hasValidCover = typeof videoCover === 'string' && videoCover.trim().length > 0;
+                                
+                                return (
+                                    <div className="relative aspect-[9/16] w-full max-w-[300px] mx-auto bg-black rounded-lg overflow-hidden border-2 border-black">
+                                        {hasValidVideo ? (
+                                            <video
+                                                src={videoUrl}
+                                                poster={hasValidCover ? videoCover : undefined}
+                                                controls
+                                                playsInline
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : hasValidCover ? (
+                                            <Image 
+                                                src={videoCover} 
+                                                alt="Video thumbnail"
+                                                width={300}
+                                                height={533}
+                                                className="w-full h-full object-cover"
+                                                unoptimized
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-white">
+                                                <Play className="h-12 w-12" />
+                                            </div>
+                                        )}
+                                        {videoData.isADS && (
+                                            <span className="absolute top-2 right-2 bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded z-10">
+                                                AD
+                                            </span>
+                                        )}
                                     </div>
-                                )}
-                                {videoData.isADS && (
-                                    <span className="absolute top-2 right-2 bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded">
-                                        AD
-                                    </span>
-                                )}
-                            </div>
+                                );
+                            })()}
 
-                            {/* Download Buttons */}
-                            <div className="mt-4 space-y-2">
-                                {videoData.video?.noWatermark && (
+                            {/* Download Button - HD Only */}
+                            {videoData.video?.noWatermark && (
+                                <div className="mt-4">
                                     <Button 
                                         className="w-full"
                                         onClick={() => handleDownload(videoData.video.noWatermark, 'no_watermark.mp4')}
@@ -208,28 +224,8 @@ export default function VideoInfoDownloaderPage() {
                                         <Download className="h-4 w-4 mr-2" />
                                         Download HD (No Watermark)
                                     </Button>
-                                )}
-                                {videoData.video?.watermark && (
-                                    <Button 
-                                        variant="outline"
-                                        className="w-full"
-                                        onClick={() => handleDownload(videoData.video.watermark, 'watermark.mp4')}
-                                    >
-                                        <Download className="h-4 w-4 mr-2" />
-                                        Download (With Watermark)
-                                    </Button>
-                                )}
-                                {videoData.music?.playUrl && (
-                                    <Button 
-                                        variant="secondary"
-                                        className="w-full"
-                                        onClick={() => handleDownload(videoData.music.playUrl, 'audio.mp3')}
-                                    >
-                                        <Music className="h-4 w-4 mr-2" />
-                                        Download Audio Only
-                                    </Button>
-                                )}
-                            </div>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
 
@@ -280,7 +276,7 @@ export default function VideoInfoDownloaderPage() {
                                             {videoData.hashtag.slice(0, 10).map((tag, i) => (
                                                 <span 
                                                     key={i} 
-                                                    className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded"
+                                                    className="text-xs bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-400 px-2 py-0.5 rounded font-medium"
                                                 >
                                                     #{tag}
                                                 </span>
@@ -319,11 +315,6 @@ export default function VideoInfoDownloaderPage() {
                                         <p className="text-xs text-muted-foreground">Shares</p>
                                     </div>
                                     <div className="text-center p-2 bg-muted/50 rounded border">
-                                        <Bookmark className="h-4 w-4 mx-auto mb-1 text-yellow-500" />
-                                        <p className="font-bold">{formatCompactNumber(videoData.statistics?.collectCount || 0)}</p>
-                                        <p className="text-xs text-muted-foreground">Saved</p>
-                                    </div>
-                                    <div className="text-center p-2 bg-muted/50 rounded border">
                                         <Download className="h-4 w-4 mx-auto mb-1 text-orange-500" />
                                         <p className="font-bold">{formatCompactNumber(videoData.statistics?.downloadCount || 0)}</p>
                                         <p className="text-xs text-muted-foreground">Downloads</p>
@@ -341,22 +332,28 @@ export default function VideoInfoDownloaderPage() {
                                     </CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="flex items-center gap-3">
-                                        {videoData.music.cover && (
-                                            <Image 
-                                                src={videoData.music.cover} 
-                                                alt="Music cover"
-                                                width={48}
-                                                height={48}
-                                                className="h-12 w-12 rounded border-2 border-black object-cover"
-                                                unoptimized
-                                            />
-                                        )}
-                                        <div className="flex-1">
-                                            <p className="font-semibold text-sm">{videoData.music.title}</p>
-                                            <p className="text-xs text-muted-foreground">{videoData.music.author}</p>
-                                        </div>
-                                    </div>
+                                    {(() => {
+                                        const musicCover = videoData.music?.cover;
+                                        const hasValidMusicCover = typeof musicCover === 'string' && musicCover.trim().length > 0;
+                                        return (
+                                            <div className="flex items-center gap-3">
+                                                {hasValidMusicCover && (
+                                                    <Image 
+                                                        src={musicCover} 
+                                                        alt="Music cover"
+                                                        width={48}
+                                                        height={48}
+                                                        className="h-12 w-12 rounded border-2 border-black object-cover"
+                                                        unoptimized
+                                                    />
+                                                )}
+                                                <div className="flex-1">
+                                                    <p className="font-semibold text-sm">{videoData.music.title}</p>
+                                                    <p className="text-xs text-muted-foreground">{videoData.music.author}</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
                                 </CardContent>
                             </Card>
                         )}
