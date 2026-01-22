@@ -58,15 +58,13 @@ export const TikWMService = {
                 return data.data.user;
             }
             return null;
-        } catch (error) {
-            console.error('TikWM User Info Error:', error);
+        } catch {
             return null;
         }
     },
 
     async getUserPosts(username: string) {
         try {
-            console.log(`[TikWM] Fetching posts for ${username} via Puppeteer`);
             
             // Import dynamically to avoid build issues on edge (though this is a Node environment)
             const { PuppeteerService } = await import('./puppeteer');
@@ -99,8 +97,7 @@ export const TikWMService = {
                 }));
             }
             return [];
-        } catch (error) {
-            console.error('[TikWM] User Posts Puppeteer Error:', error);
+        } catch {
             return [];
         }
     },
@@ -111,7 +108,6 @@ export const TikWMService = {
         if (posts.length > 0) return posts;
 
         try {
-            console.log(`[TikWM] Fallback to feed/search for ${username}`);
             const { data } = await axios.get<TikWMSearchResponse>(`https://www.tikwm.com/api/feed/search?keywords=${username}`);
             
             if (data.code === 0 && data.data?.videos) {
@@ -146,8 +142,7 @@ export const TikWMService = {
                 }));
             }
             return [];
-        } catch (error) {
-            console.error('TikWM Feed Search Error:', error);
+        } catch {
             return [];
         }
     },
@@ -186,8 +181,7 @@ export const TikWMService = {
                 };
             }
             return { posts: [], cursor: 0, hasMore: false };
-        } catch (error) {
-            console.error('[TikWM] Search Posts Error:', error);
+        } catch {
             return { posts: [], cursor: 0, hasMore: false };
         }
     }

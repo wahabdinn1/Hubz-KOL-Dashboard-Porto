@@ -4,24 +4,58 @@ export const PuppeteerService = {
     async fetchTikWMUserPosts(username: string) {
         let browser;
         try {
-            console.log(`[Puppeteer] Launching browser (Chrome, Non-Headless) for ${username}...`);
             browser = await puppeteer.launch({
-                channel: 'chrome', // Use installed Chrome
-                headless: false,   // Show browser for manual captcha solving
+                channel: 'chrome',
+                headless: false, // Show browser window
                 args: [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
-                    '--window-size=1200,800',
-                    '--disable-blink-features=AutomationControlled'
+                    '--window-size=1920,1080',
+                    '--disable-blink-features=AutomationControlled',
+                    '--disable-web-security',
+                    '--disable-features=IsolateOrigins,site-per-process',
+                    '--disable-dev-shm-usage',
+                    '--disable-infobars',
+                    '--no-first-run',
+                    '--no-default-browser-check',
                 ],
                 ignoreDefaultArgs: ['--enable-automation']
             });
 
             const page = await browser.newPage();
             
-            // Set Viewport & User Agent
-            await page.setViewport({ width: 1200, height: 800 });
-            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+            // Manual stealth: Override navigator.webdriver
+            await page.evaluateOnNewDocument(() => {
+                Object.defineProperty(navigator, 'webdriver', {
+                    get: () => undefined,
+                });
+                
+                // Override chrome object
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (window as any).chrome = {
+                    runtime: {},
+                };
+                
+                // Override permissions
+                const originalQuery = window.navigator.permissions.query;
+                window.navigator.permissions.query = (parameters: PermissionDescriptor) =>
+                    parameters.name === 'notifications'
+                        ? Promise.resolve({ state: 'denied' } as PermissionStatus)
+                        : originalQuery(parameters);
+            });
+            
+            // Set viewport and realistic user agent
+            await page.setViewport({ width: 1920, height: 1080 });
+            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36');
+
+            // Set extra headers to appear more like a real browser
+            await page.setExtraHTTPHeaders({
+                'Accept-Language': 'en-US,en;q=0.9',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                'sec-ch-ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+                'sec-ch-ua-mobile': '?0',
+                'sec-ch-ua-platform': '"Windows"',
+            });
 
             // Variable to store the API response
             let apiResponseData: string | null = null;
@@ -33,7 +67,6 @@ export const PuppeteerService = {
                     try {
                         const text = await response.text();
                         if (text.startsWith('{')) {
-                            console.log('[Puppeteer] ✅ Captured API response from network!');
                             apiResponseData = text;
                         }
                     } catch {
@@ -42,80 +75,68 @@ export const PuppeteerService = {
                 }
             });
 
-            // Navigate directly to the API URL
+            // Navigate to the API URL
             const apiUrl = `https://www.tikwm.com/api/user/posts?unique_id=${username}`;
-            console.log(`[Puppeteer] Navigating to API: ${apiUrl}`);
-            console.log('[Puppeteer] ⚠️ If you see a Cloudflare captcha, please solve it manually!');
             
-            await page.goto(apiUrl, { waitUntil: 'networkidle2', timeout: 120000 }); // 2 min timeout for captcha
+            await page.goto(apiUrl, { waitUntil: 'networkidle2', timeout: 60000 });
 
-            // Wait for captcha resolution and API response
+            // Wait for captcha resolution - poll for up to 2 minutes
             const maxWaitTime = 120000; // 2 minutes
-            const startTime = Date.now();
+            const pollInterval = 2000; // Check every 2 seconds
+            let elapsed = 0;
             
-            while (!apiResponseData && (Date.now() - startTime) < maxWaitTime) {
-                const elapsed = Math.round((Date.now() - startTime) / 1000);
-                if (elapsed % 10 === 0 && elapsed > 0) {
-                    console.log(`[Puppeteer] Waiting for captcha resolution... (${elapsed}s)`);
+            while (elapsed < maxWaitTime) {
+                // Check if we got API response via network interception
+                if (apiResponseData) {
+                    try {
+                        const json = JSON.parse(apiResponseData);
+                        return json;
+                    } catch {
+                        // Parse error, continue waiting
+                    }
                 }
                 
-                // Check if page content looks like JSON (fallback)
-                const content = await page.evaluate(() => document.body.innerText);
-                if (content.trim().startsWith('{') && !apiResponseData) {
-                    // Try to get fresh response by reloading
-                    console.log('[Puppeteer] JSON detected in DOM, checking network capture...');
-                    await new Promise(r => setTimeout(r, 1000));
+                // Check if page content is JSON (captcha solved)
+                const pageContent = await page.evaluate(() => {
+                    const pre = document.querySelector('pre');
+                    if (pre) return pre.textContent || '';
+                    return document.body.innerText;
+                });
+                
+                if (pageContent.trim().startsWith('{')) {
+                    try {
+                        const cleanedContent = pageContent.replace(/[\x00-\x1F\x7F]/g, '').trim();
+                        const json = JSON.parse(cleanedContent);
+                        return json;
+                    } catch {
+                        // Continue waiting
+                    }
                 }
                 
-                await new Promise(r => setTimeout(r, 2000));
+                await new Promise(r => setTimeout(r, pollInterval));
+                elapsed += pollInterval;
             }
 
-            // If we captured from network, use that (most reliable)
-            if (apiResponseData) {
-                try {
-                    const json = JSON.parse(apiResponseData);
-                    console.log('[Puppeteer] Successfully parsed JSON from network response!');
-                    return json;
-                } catch (e) {
-                    console.error('[Puppeteer] Network JSON parse error:', e);
-                }
-            }
-
-            // Fallback: Try to get from page content using <pre> tag first
-            console.log('[Puppeteer] Trying fallback: extracting from page content...');
-            const content = await page.evaluate(() => {
-                // Try to get content from <pre> tag first (common for raw JSON display)
+            // Timeout - try one last time from page content
+            const finalContent = await page.evaluate(() => {
                 const pre = document.querySelector('pre');
-                if (pre) {
-                    return pre.textContent || '';
-                }
-                // Fall back to body innerText
+                if (pre) return pre.textContent || '';
                 return document.body.innerText;
             });
 
-            if (content.trim().startsWith('{')) {
+            if (finalContent.trim().startsWith('{')) {
                 try {
-                    // Clean the content - remove any non-printable characters
-                    const cleanedContent = content
-                        .replace(/[\x00-\x1F\x7F]/g, '') // Remove control characters
-                        .trim();
-                    
+                    const cleanedContent = finalContent.replace(/[\x00-\x1F\x7F]/g, '').trim();
                     const json = JSON.parse(cleanedContent);
-                    console.log('[Puppeteer] Successfully parsed JSON from page content!');
                     return json;
-                } catch (e) {
-                    console.error('[Puppeteer] Page content JSON parse error:', e);
-                    console.log('[Puppeteer] First 500 chars:', content.substring(0, 500));
+                } catch {
                     return null;
                 }
-            } else {
-                console.log('[Puppeteer] Response is not JSON. Captcha may not have been solved.');
-                console.log('[Puppeteer] First 200 chars:', content.substring(0, 200));
-                return null;
             }
+            
+            return null;
 
-        } catch (error) {
-            console.error('[Puppeteer] Error fetching user posts:', error);
+        } catch {
             return null;
         } finally {
             if (browser) {
