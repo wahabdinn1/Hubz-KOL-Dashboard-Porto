@@ -182,20 +182,18 @@ function CampaignDetailContent({ params }: { params: Promise<{ id: string }> }) 
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    {/* PDF Export Button */}
-                    <div className="hidden md:block">
-                        <PDFDownloadLink
-                            document={<CampaignReport campaign={campaign} kols={kols} />}
-                            fileName={`campaign-report-${campaign.name.toLowerCase().replace(/\s+/g, '-')}.pdf`}
-                        >
-                            {({ loading }: { loading: boolean }) => (
-                                <Button variant="outline" disabled={loading} size="sm" className="h-8 border-2 border-black dark:border-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[1px] hover:shadow-none transition-all">
-                                    <Download className="h-3 w-3 mr-2" />
-                                    {loading ? '...' : 'Report'}
-                                </Button>
-                            )}
-                        </PDFDownloadLink>
-                    </div>
+                    {/* PDF Export Button - visible on all screens */}
+                    <PDFDownloadLink
+                        document={<CampaignReport campaign={campaign} kols={kols} />}
+                        fileName={`campaign-report-${campaign.name.toLowerCase().replace(/\s+/g, '-')}.pdf`}
+                    >
+                        {({ loading }: { loading: boolean }) => (
+                            <Button variant="outline" disabled={loading} size="sm" className="h-8 border-2 border-black dark:border-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:translate-y-[1px] hover:shadow-none transition-all">
+                                <Download className="h-3 w-3 sm:mr-2" />
+                                <span className="hidden sm:inline">{loading ? '...' : 'Report'}</span>
+                            </Button>
+                        )}
+                    </PDFDownloadLink>
 
                     {/* Platform Badge */}
                     <div className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-2 ${campaign.platform === 'Instagram'
@@ -264,7 +262,7 @@ function CampaignDetailContent({ params }: { params: Promise<{ id: string }> }) 
             </div>
 
             {/* Summary Cards */}
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-5">
+            <div className="grid gap-4 grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
                 <SummaryCard
                     title={`Primary: ${successMetrics.primaryMetricLabel}`}
                     value={successMetrics.primaryMetricValue}
@@ -330,22 +328,22 @@ function CampaignDetailContent({ params }: { params: Promise<{ id: string }> }) 
 
             {/* Tabs for Different Views */}
             <Tabs defaultValue="list" className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <TabsList className="bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg">
-                        <TabsTrigger value="list" className="data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-950">
-                            <List className="h-4 w-4 mr-2" />
-                            List View
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <TabsList className="bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg w-full sm:w-auto">
+                        <TabsTrigger value="list" className="data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-950 flex-1 sm:flex-none">
+                            <List className="h-4 w-4 sm:mr-2" />
+                            <span className="hidden sm:inline">List View</span>
                         </TabsTrigger>
-                        <TabsTrigger value="board" className="data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-950">
-                            <LayoutDashboard className="h-4 w-4 mr-2" />
-                            Kanban Board
+                        <TabsTrigger value="board" className="data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-950 flex-1 sm:flex-none">
+                            <LayoutDashboard className="h-4 w-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Kanban</span>
                         </TabsTrigger>
-                        <TabsTrigger value="invoices" className="data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-950">
-                            <FileText className="h-4 w-4 mr-2" />
-                            Invoices
+                        <TabsTrigger value="invoices" className="data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-950 flex-1 sm:flex-none">
+                            <FileText className="h-4 w-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Invoices</span>
                         </TabsTrigger>
                     </TabsList>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 justify-end">
                         <SmartMatchDialog campaign={campaign} />
                         <AddKOLDialog />
                     </div>

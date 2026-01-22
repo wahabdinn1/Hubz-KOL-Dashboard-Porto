@@ -80,6 +80,8 @@ const NAV_ITEMS: NavItem[] = [
         name: "Tools",
         icon: Calculator,
         items: [
+            { name: "Hashtag Search", href: "/tools/search-feed", icon: Search },
+            { name: "User Post", href: "/tools/user-feed", icon: Users },
             { name: "ER Calculator", href: "/er-calculator", icon: Zap },
             { name: "Profile Lookup", href: "/tools/stalk", icon: Search },
             { name: "TikTok Trending", href: "/tools/trending", icon: TrendingUp },

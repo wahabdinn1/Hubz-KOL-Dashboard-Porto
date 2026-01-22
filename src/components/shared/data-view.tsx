@@ -74,12 +74,12 @@ export function DataView({
 
             <Card>
                 {(cardTitle || cardDescription || cardActions) && (
-                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+                     <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4">
                         <div className="space-y-1">
                              {cardTitle && <CardTitle className="text-base font-semibold">{cardTitle}</CardTitle>}
                              {cardDescription && <CardDescription>{cardDescription}</CardDescription>}
                         </div>
-                        {cardActions && <div className="flex items-center gap-2">{cardActions}</div>}
+                        {cardActions && <div className="flex flex-wrap items-center gap-2">{cardActions}</div>}
                     </CardHeader>
                 )}
                

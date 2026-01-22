@@ -253,7 +253,7 @@ function InfluencersContent() {
                 value={filterTier || "all"}
                 onValueChange={(val) => setFilterTier(val === "all" ? null : val)}
             >
-                <Select.Trigger className="w-[140px] h-8 bg-background">
+                <Select.Trigger className="w-[100px] sm:w-[140px] h-8 bg-background text-xs sm:text-sm">
                     <Select.Value placeholder="All Tiers" />
                 </Select.Trigger>
                 <Select.Content>
@@ -271,8 +271,8 @@ function InfluencersContent() {
                 value={filterPlatform || "all"}
                 onValueChange={(val) => setFilterPlatform(val === "all" ? null : val)}
             >
-                <Select.Trigger className="w-[150px] h-8 bg-background">
-                    <Select.Value placeholder="Any Platform" />
+                <Select.Trigger className="w-[100px] sm:w-[150px] h-8 bg-background text-xs sm:text-sm">
+                    <Select.Value placeholder="Platform" />
                 </Select.Trigger>
                 <Select.Content>
                     <Select.Item value="all">Any Platform</Select.Item>
@@ -286,8 +286,8 @@ function InfluencersContent() {
                 value={filterFollowers || "all"}
                 onValueChange={(val) => setFilterFollowers(val === "all" ? null : val)}
             >
-                <Select.Trigger className="w-[160px] h-8 bg-background">
-                    <Select.Value placeholder="Any Followers" />
+                <Select.Trigger className="w-[100px] sm:w-[160px] h-8 bg-background text-xs sm:text-sm">
+                    <Select.Value placeholder="Followers" />
                 </Select.Trigger>
                 <Select.Content>
                     <Select.Item value="all">Any Range</Select.Item>

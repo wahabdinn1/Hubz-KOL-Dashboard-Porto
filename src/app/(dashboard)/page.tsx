@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip } from "recharts";
 import { TrendingUp, Users, DollarSign, Activity, Zap, Eye } from "lucide-react";
 import { useData } from "@/context/data-context";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { CreateCampaignDialog } from "@/components/campaigns/create-campaign-dialog";
 import { AddKOLDialog } from "@/components/kols/add-kol-dialog";
 import { BarChart } from "@/components/retroui/charts/BarChart";
@@ -25,7 +25,12 @@ function DashboardContent() {
   const { kols, campaigns } = useData();
   const [activeChart, setActiveChart] = useState<"revenue" | "views">("revenue");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-  const isMounted = typeof window !== "undefined";
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line
+    setIsMounted(true);
+  }, []);
 
   // Filter campaigns by date range
   const filteredCampaigns = useMemo(() => {
