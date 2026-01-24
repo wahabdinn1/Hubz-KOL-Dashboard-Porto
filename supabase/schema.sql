@@ -329,5 +329,34 @@ from auth.users u
 where p.id = u.id;
 
 -- ==========================================
+-- SECTION F: PAID vs AFFILIATE SUPPORT
+-- Added: 2026-01-24
+-- ==========================================
+
+-- F1. Add WhatsApp column to kols table
+ALTER TABLE kols 
+ADD COLUMN IF NOT EXISTS whatsapp_number TEXT;
+
+COMMENT ON COLUMN kols.whatsapp_number IS 'KOL WhatsApp number for direct contact (format: 628xxxxxxxxxx)';
+
+-- F2. Add collaboration type to kols table (KOL-level, not per deliverable)
+ALTER TABLE kols
+ADD COLUMN IF NOT EXISTS collaboration_type TEXT DEFAULT 'PAID' CHECK (collaboration_type IN ('PAID', 'AFFILIATE')),
+ADD COLUMN IF NOT EXISTS default_commission_rate NUMERIC DEFAULT 0;
+
+COMMENT ON COLUMN kols.collaboration_type IS 'PAID = fixed rate card, AFFILIATE = commission-based';
+COMMENT ON COLUMN kols.default_commission_rate IS 'Default commission percentage for AFFILIATE KOLs';
+
+-- F3. Add collaboration fields to campaign_deliverables (for override per campaign)
+ALTER TABLE campaign_deliverables
+ADD COLUMN IF NOT EXISTS collaboration_type TEXT DEFAULT 'PAID' CHECK (collaboration_type IN ('PAID', 'AFFILIATE')),
+ADD COLUMN IF NOT EXISTS fixed_fee NUMERIC,
+ADD COLUMN IF NOT EXISTS commission_rate NUMERIC;
+
+COMMENT ON COLUMN campaign_deliverables.collaboration_type IS 'PAID = fixed fee invoice, AFFILIATE = commission auto-deducted';
+COMMENT ON COLUMN campaign_deliverables.fixed_fee IS 'Only for PAID type - agreed fixed payment amount';
+COMMENT ON COLUMN campaign_deliverables.commission_rate IS 'Only for AFFILIATE type - percentage (e.g., 10 = 10%)';
+
+-- ==========================================
 -- END OF SCHEMA
 -- ==========================================

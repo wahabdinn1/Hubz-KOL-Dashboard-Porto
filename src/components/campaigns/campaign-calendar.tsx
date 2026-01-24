@@ -63,21 +63,31 @@ export function CampaignCalendar({ campaigns }: CampaignCalendarProps) {
     }
 
     return (
-        <Card className="shadow-sm">
-            <CardHeader className="pb-4 border-b">
+        <Card className="border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <CardHeader className="pb-4 border-b-2 border-black">
                 <div className="flex items-center justify-between">
                     <div>
                         <CardTitle className="text-lg">Campaign Calendar</CardTitle>
                         <CardDescription>Visual timeline of your active marketing campaigns.</CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" size="icon" onClick={prevMonth} className="h-8 w-8">
+                        <Button 
+                            variant="outline" 
+                            size="icon" 
+                            onClick={prevMonth} 
+                            className="h-8 w-8 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-[2px]"
+                        >
                             <ChevronLeft className="h-4 w-4" />
                         </Button>
                         <span className="text-sm font-semibold min-w-[140px] text-center text-lg">
                             {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
                         </span>
-                        <Button variant="outline" size="icon" onClick={nextMonth} className="h-8 w-8">
+                        <Button 
+                            variant="outline" 
+                            size="icon" 
+                            onClick={nextMonth} 
+                            className="h-8 w-8 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:shadow-none hover:translate-y-[2px]"
+                        >
                             <ChevronRight className="h-4 w-4" />
                         </Button>
                     </div>
@@ -85,9 +95,9 @@ export function CampaignCalendar({ campaigns }: CampaignCalendarProps) {
             </CardHeader>
             <CardContent className="p-0">
                 {/* Day headers */}
-                <div className="grid grid-cols-7 border-b bg-muted/20">
+                <div className="grid grid-cols-7 border-b-2 border-black bg-muted">
                     {DAYS.map((day) => (
-                        <div key={day} className="text-center text-xs font-semibold text-muted-foreground py-3 border-r last:border-r-0">
+                        <div key={day} className="text-center text-xs font-bold text-foreground py-3 border-r-2 border-black last:border-r-0">
                             {day}
                         </div>
                     ))}
@@ -97,7 +107,7 @@ export function CampaignCalendar({ campaigns }: CampaignCalendarProps) {
                 <div className="grid grid-cols-7 auto-rows-[1fr]">
                     {calendarDays.map((date, idx) => {
                         if (!date) {
-                            return <div key={`empty-${idx}`} className="min-h-[120px] bg-muted/5 border-b border-r last:border-r-0" />;
+                            return <div key={`empty-${idx}`} className="min-h-[120px] bg-muted/20 border-b border-black border-r border-black last:border-r-0" />;
                         }
 
                         const dayCampaigns = getCampaignsForDate(date);
@@ -108,17 +118,17 @@ export function CampaignCalendar({ campaigns }: CampaignCalendarProps) {
                             <div
                                 key={date.toISOString()}
                                 className={cn(
-                                    "min-h-[120px] border-b border-r last:border-r-0 p-1 relative group transition-colors",
-                                    isToday ? "bg-blue-50/50 dark:bg-blue-900/10" : "hover:bg-muted/30",
-                                    isSelected && "ring-2 ring-primary ring-inset z-10"
+                                    "min-h-[120px] border-b border-black border-r border-black last:border-r-0 p-1 relative group transition-colors",
+                                    isToday ? "bg-yellow-50 dark:bg-yellow-900/20" : "hover:bg-muted/50",
+                                    isSelected && "ring-2 ring-black ring-inset z-10"
                                 )}
                                 onClick={() => setSelectedDate(date)}
                             >
                                 <div className="flex justify-between items-start mb-1">
                                     <span className={cn(
-                                        "text-xs font-medium w-6 h-6 flex items-center justify-center rounded-full",
-                                        isToday ? "bg-primary text-primary-foreground" : "text-muted-foreground",
-                                        isSelected && !isToday && "bg-muted text-foreground"
+                                        "text-xs font-bold w-6 h-6 flex items-center justify-center rounded-sm border border-transparent",
+                                        isToday ? "bg-yellow-400 text-black border-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]" : "text-muted-foreground",
+                                        isSelected && !isToday && "bg-black text-white"
                                     )}>
                                         {date.getDate()}
                                     </span>
@@ -129,18 +139,18 @@ export function CampaignCalendar({ campaigns }: CampaignCalendarProps) {
                                     {dayCampaigns.slice(0, 3).map((c) => (
                                         <Link key={c.id} href={`/campaigns/${c.id}`} onClick={(e) => e.stopPropagation()}>
                                             <div className={cn(
-                                                "text-[10px] truncate px-1.5 py-0.5 rounded-sm font-medium shadow-sm transition-opacity hover:opacity-80 cursor-pointer",
+                                                "text-[10px] truncate px-1.5 py-0.5 rounded-sm font-medium border border-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)] transition-transform hover:-translate-y-[1px] cursor-pointer",
                                                 c.platform === 'Instagram'
-                                                    ? "bg-pink-100 text-pink-700 dark:bg-pink-900/50 dark:text-pink-300 border border-pink-200 dark:border-pink-800"
-                                                    : "bg-stone-100 text-stone-800 dark:bg-stone-800 dark:text-stone-300 border border-stone-200 dark:border-stone-700"
+                                                    ? "bg-purple-500 text-white"
+                                                    : "bg-pink-500 text-white"
                                             )}>
                                                 {c.name}
                                             </div>
                                         </Link>
                                     ))}
                                     {dayCampaigns.length > 3 && (
-                                        <div className="text-[10px] text-muted-foreground pl-1 font-medium">
-                                            +{dayCampaigns.length - 3} more...
+                                        <div className="text-[10px] text-muted-foreground pl-1 font-bold">
+                                            +{dayCampaigns.length - 3} more
                                         </div>
                                     )}
                                 </div>
@@ -149,6 +159,6 @@ export function CampaignCalendar({ campaigns }: CampaignCalendarProps) {
                     })}
                 </div>
             </CardContent>
-        </Card >
+        </Card>
     );
 }

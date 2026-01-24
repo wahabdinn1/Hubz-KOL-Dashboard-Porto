@@ -37,6 +37,9 @@ export interface Database {
                     rate_card_tiktok: number | null
                     rate_card_reels: number | null
                     rate_card_pdf_link: string | null
+                    whatsapp_number: string | null
+                    collaboration_type: string
+                    default_commission_rate: number | null
                 }
                 Insert: {
                     id?: string
@@ -65,6 +68,9 @@ export interface Database {
                     rate_card_tiktok?: number | null
                     rate_card_reels?: number | null
                     rate_card_pdf_link?: string | null
+                    whatsapp_number?: string | null
+                    collaboration_type?: string
+                    default_commission_rate?: number | null
                 }
                 Update: {
                     id?: string
@@ -93,6 +99,9 @@ export interface Database {
                     rate_card_tiktok?: number | null
                     rate_card_reels?: number | null
                     rate_card_pdf_link?: string | null
+                    whatsapp_number?: string | null
+                    collaboration_type?: string
+                    default_commission_rate?: number | null
                 }
             }
             campaigns: {
@@ -147,6 +156,9 @@ export interface Database {
                     content_link: string | null
                     due_date: string | null
                     notes: string | null
+                    collaboration_type: string
+                    fixed_fee: number | null
+                    commission_rate: number | null
                 }
                 Insert: {
                     id?: string
@@ -161,6 +173,9 @@ export interface Database {
                     content_link?: string | null
                     due_date?: string | null
                     notes?: string | null
+                    collaboration_type?: string
+                    fixed_fee?: number | null
+                    commission_rate?: number | null
                 }
                 Update: {
                     id?: string
@@ -175,6 +190,9 @@ export interface Database {
                     content_link?: string | null
                     due_date?: string | null
                     notes?: string | null
+                    collaboration_type?: string
+                    fixed_fee?: number | null
+                    commission_rate?: number | null
                 }
             }
             categories: {

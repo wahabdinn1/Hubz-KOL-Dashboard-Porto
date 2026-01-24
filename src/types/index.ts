@@ -17,6 +17,10 @@ export interface KOL {
     rateCardTiktok?: number;
     rateCardReels?: number;
     rateCardPdfLink?: string;
+    whatsappNumber?: string;
+    // Collaboration Type (KOL-level)
+    collaborationType: 'PAID' | 'AFFILIATE';
+    defaultCommissionRate?: number; // For AFFILIATE type
 }
 
 export interface Note {
@@ -43,6 +47,10 @@ export interface CampaignDeliverable {
     contentLink?: string;
     dueDate?: string;
     notes?: string;
+    // NEW: Collaboration type fields
+    collaborationType: 'PAID' | 'AFFILIATE';
+    fixedFee?: number;        // Only for PAID
+    commissionRate?: number;  // Only for AFFILIATE (e.g., 10 = 10%)
 }
 
 export interface Category {

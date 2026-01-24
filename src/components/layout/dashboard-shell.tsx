@@ -67,6 +67,7 @@ const NAV_ITEMS: NavItem[] = [
         ]
     },
     { name: "Influencers", href: "/influencers", icon: Users },
+    { name: "Affiliates", href: "/affiliates", icon: TrendingUp },
     {
         name: "Invoices",
         icon: FileText,

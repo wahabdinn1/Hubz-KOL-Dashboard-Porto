@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { useData } from "@/context/data-context";
 import { Pencil } from "lucide-react";
 import { CurrencyInput } from "@/components/ui/currency-input";
+import { Badge } from "@/components/ui/badge";
 
 interface EditDeliverableDialogProps {
     campaignId: string;
@@ -26,6 +27,9 @@ interface EditDeliverableDialogProps {
         totalEngagements: number;
         salesGenerated: number;
         contentLink?: string;
+        collaborationType?: 'PAID' | 'AFFILIATE';
+        fixedFee?: number;
+        commissionRate?: number;
     };
     kolName: string;
 }
@@ -40,6 +44,9 @@ export function EditDeliverableDialog({ campaignId, kolId, initialMetrics, kolNa
         totalEngagements: "",
         salesGenerated: "",
         contentLink: "",
+        collaborationType: "PAID" as 'PAID' | 'AFFILIATE',
+        fixedFee: "",
+        commissionRate: "",
     });
 
     useEffect(() => {
@@ -51,6 +58,9 @@ export function EditDeliverableDialog({ campaignId, kolId, initialMetrics, kolNa
                     totalEngagements: initialMetrics.totalEngagements.toString(),
                     salesGenerated: initialMetrics.salesGenerated.toString(),
                     contentLink: initialMetrics.contentLink || "",
+                    collaborationType: initialMetrics.collaborationType || "PAID",
+                    fixedFee: (initialMetrics.fixedFee || 0).toString(),
+                    commissionRate: (initialMetrics.commissionRate || 0).toString(),
                 });
             }, 0);
             return () => clearTimeout(timer);
@@ -66,12 +76,16 @@ export function EditDeliverableDialog({ campaignId, kolId, initialMetrics, kolNa
             totalEngagements: Number(formData.totalEngagements) || 0,
             salesGenerated: Number(formData.salesGenerated) || 0,
             contentLink: formData.contentLink,
+            // NEW: Collaboration type fields
+            collaborationType: formData.collaborationType,
+            fixedFee: formData.collaborationType === 'PAID' ? Number(formData.fixedFee) || 0 : undefined,
+            commissionRate: formData.collaborationType === 'AFFILIATE' ? Number(formData.commissionRate) || 0 : undefined,
         });
 
         setOpen(false);
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     };
@@ -83,7 +97,7 @@ export function EditDeliverableDialog({ campaignId, kolId, initialMetrics, kolNa
                     <Pencil className="h-3 w-3 text-slate-500" />
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                     <DialogTitle>Edit Performance</DialogTitle>
                     <DialogDescription>
@@ -92,6 +106,69 @@ export function EditDeliverableDialog({ campaignId, kolId, initialMetrics, kolNa
                 </DialogHeader>
 
                 <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+                    {/* Collaboration Type Selector */}
+                    <div className="space-y-3 pb-4 border-b">
+                        <Label className="text-sm font-semibold">Collaboration Type</Label>
+                        <div className="flex gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, collaborationType: 'PAID' }))}
+                                className={`flex-1 py-2 px-4 rounded-lg border-2 transition-all font-medium ${
+                                    formData.collaborationType === 'PAID'
+                                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                            >
+                                💰 PAID
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setFormData(prev => ({ ...prev, collaborationType: 'AFFILIATE' }))}
+                                className={`flex-1 py-2 px-4 rounded-lg border-2 transition-all font-medium ${
+                                    formData.collaborationType === 'AFFILIATE'
+                                        ? 'border-green-500 bg-green-50 text-green-700'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                            >
+                                🤝 AFFILIATE
+                            </button>
+                        </div>
+                        
+                        {/* Conditional Fee/Commission Field */}
+                        {formData.collaborationType === 'PAID' ? (
+                            <div className="grid grid-cols-4 items-center gap-4 pt-2">
+                                <Label htmlFor="fixedFee" className="text-right">Fixed Fee</Label>
+                                <CurrencyInput 
+                                    id="fixedFee" 
+                                    value={formData.fixedFee} 
+                                    onValueChange={(val) => setFormData(prev => ({ ...prev, fixedFee: val.toString() }))} 
+                                    className="col-span-3" 
+                                />
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-4 items-center gap-4 pt-2">
+                                <Label htmlFor="commissionRate" className="text-right">Commission %</Label>
+                                <div className="col-span-3 flex items-center gap-2">
+                                    <Input 
+                                        id="commissionRate" 
+                                        name="commissionRate"
+                                        type="number" 
+                                        min="0"
+                                        max="100"
+                                        step="0.5"
+                                        value={formData.commissionRate} 
+                                        onChange={handleChange}
+                                        className="flex-1"
+                                        placeholder="10"
+                                    />
+                                    <span className="text-muted-foreground">%</span>
+                                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Auto-Settled</Badge>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Performance Metrics */}
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="videosCount" className="text-right">Videos</Label>
                         <Input id="videosCount" name="videosCount" type="number" value={formData.videosCount} onChange={handleChange} className="col-span-3" />

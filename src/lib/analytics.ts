@@ -147,3 +147,66 @@ export function calculateCampaignSuccess(
         };
     }
 }
+
+// ==========================================
+// PAID vs AFFILIATE KOL Performance
+// ==========================================
+
+export interface KOLPerformanceInput {
+    collaborationType: 'PAID' | 'AFFILIATE';
+    fixedFee?: number;
+    commissionRate?: number;
+    revenue: number;
+    views: number;
+}
+
+export interface KOLPerformanceResult {
+    realCost: number;
+    profit: number;
+    primaryMetric: { label: string; value: string };
+    isInvoiceable: boolean;
+    settlementLabel: string;
+    collaborationType: 'PAID' | 'AFFILIATE';
+}
+
+/**
+ * Smart calculation function for KOL performance based on collaboration type.
+ * - PAID: Fixed fee, focus on CPM, invoiceable
+ * - AFFILIATE: Commission-based, focus on ROAS, auto-settled
+ */
+export function calculateKOLPerformance(input: KOLPerformanceInput): KOLPerformanceResult {
+    if (input.collaborationType === 'PAID') {
+        const cost = input.fixedFee || 0;
+        const cpm = calculateCPM(cost, input.views);
+        return {
+            realCost: cost,
+            profit: input.revenue - cost,
+            primaryMetric: { label: 'CPM', value: formatIDR(cpm) },
+            isInvoiceable: true,
+            settlementLabel: 'Invoice Required',
+            collaborationType: 'PAID'
+        };
+    } else {
+        // AFFILIATE
+        const rate = input.commissionRate || 0;
+        const cost = input.revenue * (rate / 100);
+        const roas = cost > 0 ? input.revenue / cost : 0;
+        return {
+            realCost: cost,
+            profit: input.revenue - cost,
+            primaryMetric: { label: 'ROAS', value: `${roas.toFixed(2)}x` },
+            isInvoiceable: false,
+            settlementLabel: 'Auto-Settled',
+            collaborationType: 'AFFILIATE'
+        };
+    }
+}
+
+/**
+ * Get badge color class based on collaboration type
+ */
+export function getCollaborationBadgeClass(type: 'PAID' | 'AFFILIATE'): string {
+    return type === 'PAID'
+        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+        : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+}

@@ -25,6 +25,10 @@ export interface DeliverableUpdate {
     contentLink?: string | null;
     dueDate?: string | null;
     notes?: string | null;
+    // NEW: Collaboration type fields
+    collaborationType?: 'PAID' | 'AFFILIATE';
+    fixedFee?: number;
+    commissionRate?: number;
 }
 
 interface DataContextType {
@@ -99,7 +103,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 rateCardTiktok: k.rate_card_tiktok || 0,
                 rateCardReels: k.rate_card_reels || 0,
                 rateCardPdfLink: k.rate_card_pdf_link || '',
-                avatar: k.avatar || ''
+                avatar: k.avatar || '',
+                whatsappNumber: k.whatsapp_number || '',
+                collaborationType: (k.collaboration_type as 'PAID' | 'AFFILIATE') || 'PAID',
+                defaultCommissionRate: k.default_commission_rate || 0
             })) as KOL[];
         }
     });
@@ -197,7 +204,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                     status: (d.status as any) || 'to_contact',
                     contentLink: d.content_link || undefined,
                     dueDate: d.due_date ? new Date(d.due_date) : undefined,
-                    notes: d.notes || undefined
+                    notes: d.notes || undefined,
+                    // NEW: Collaboration type fields
+                    collaborationType: (d.collaboration_type as 'PAID' | 'AFFILIATE') || 'PAID',
+                    fixedFee: d.fixed_fee || undefined,
+                    commissionRate: d.commission_rate || undefined
                 }));
 
             return {
@@ -402,7 +413,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 rate_card_tiktok: newKOL.rateCardTiktok,
                 rate_card_reels: newKOL.rateCardReels,
                 rate_card_pdf_link: newKOL.rateCardPdfLink,
-                avatar: newKOL.avatar
+                avatar: newKOL.avatar,
+                // NEW: WhatsApp and collaboration type
+                whatsapp_number: newKOL.whatsappNumber || null,
+                collaboration_type: newKOL.collaborationType || 'PAID',
+                default_commission_rate: newKOL.defaultCommissionRate || 0
             };
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -466,9 +481,14 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             if (updates.instagramUsername) dbUpdates.instagram_username = updates.instagramUsername;
             if (updates.instagramProfileLink) dbUpdates.instagram_profile_link = updates.instagramProfileLink;
             if (updates.instagramFollowers) dbUpdates.instagram_followers = updates.instagramFollowers;
-            if (updates.rateCardReels) dbUpdates.rate_card_reels = updates.rateCardReels;
-            if (updates.rateCardPdfLink) dbUpdates.rate_card_pdf_link = updates.rateCardPdfLink;
+            if (updates.rateCardTiktok !== undefined) dbUpdates.rate_card_tiktok = updates.rateCardTiktok;
+            if (updates.rateCardReels !== undefined) dbUpdates.rate_card_reels = updates.rateCardReels;
+            if (updates.rateCardPdfLink !== undefined) dbUpdates.rate_card_pdf_link = updates.rateCardPdfLink;
             if (updates.avatar) dbUpdates.avatar = updates.avatar;
+            // NEW: WhatsApp and collaboration type
+            if (updates.whatsappNumber !== undefined) dbUpdates.whatsapp_number = updates.whatsappNumber;
+            if (updates.collaborationType) dbUpdates.collaboration_type = updates.collaborationType;
+            if (updates.defaultCommissionRate !== undefined) dbUpdates.default_commission_rate = updates.defaultCommissionRate;
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const { error } = await (supabase.from('kols') as any).update(dbUpdates).eq('id', id);
@@ -540,6 +560,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         if (metrics.contentLink !== undefined) payload.content_link = metrics.contentLink;
         if (metrics.dueDate !== undefined) payload.due_date = metrics.dueDate;
         if (metrics.notes !== undefined) payload.notes = metrics.notes;
+        // NEW: Collaboration type fields
+        if (metrics.collaborationType !== undefined) payload.collaboration_type = metrics.collaborationType;
+        if (metrics.fixedFee !== undefined) payload.fixed_fee = metrics.fixedFee;
+        if (metrics.commissionRate !== undefined) payload.commission_rate = metrics.commissionRate;
 
         // Optimistic Update
         await queryClient.cancelQueries({ queryKey: ['deliverables'] });

@@ -21,6 +21,7 @@ import {
     calculateCPM,
     calculateEfficiencyScore,
     formatIDR,
+    getCollaborationBadgeClass,
 } from "@/lib/analytics";
 import { useData } from "@/context/data-context";
 import { EditDeliverableDialog } from "@/components/campaigns/edit-deliverable-dialog";
@@ -205,6 +206,7 @@ export function KOLTable() {
                                 Status <ArrowUpDown className="ml-2 h-4 w-4" />
                             </Button>
                         </TableHead>
+                        <TableHead className="text-center">Type</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
@@ -249,6 +251,11 @@ export function KOLTable() {
                                     {item?.del.status?.replace('_', ' ') || 'To Contact'}
                                 </Badge>
                             </TableCell>
+                            <TableCell className="text-center">
+                                <Badge className={`${getCollaborationBadgeClass(item?.del.collaborationType || 'PAID')} font-medium`}>
+                                    {item?.del.collaborationType || 'PAID'}
+                                </Badge>
+                            </TableCell>
                             <TableCell className="text-right flex items-center justify-end gap-2">
                                 {item?.del.contentLink && (
                                     <a
@@ -270,7 +277,10 @@ export function KOLTable() {
                                         totalViews: item!.del.totalViews,
                                         totalEngagements: item!.del.totalEngagements,
                                         salesGenerated: item!.del.salesGenerated,
-                                        contentLink: item!.del.contentLink
+                                        contentLink: item!.del.contentLink,
+                                        collaborationType: item!.del.collaborationType || 'PAID',
+                                        fixedFee: item!.del.fixedFee,
+                                        commissionRate: item!.del.commissionRate
                                     }}
                                 />
                                 <Button

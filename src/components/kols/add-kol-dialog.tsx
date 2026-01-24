@@ -59,7 +59,10 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
         rateCardReels: "",
 
         // Other
-        rateCardPdfLink: ""
+        rateCardPdfLink: "",
+        whatsappNumber: "",
+        collaborationType: "PAID" as 'PAID' | 'AFFILIATE',
+        defaultCommissionRate: ""
     });
     const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
     const [fetchingTikTok, setFetchingTikTok] = useState(false);
@@ -163,7 +166,10 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
             rateCardTiktok: Number(formData.rateCardTiktok) || 0,
             rateCardReels: Number(formData.rateCardReels) || 0,
             rateCardPdfLink: formData.rateCardPdfLink,
-            avatar: formData.avatar
+            avatar: formData.avatar,
+            whatsappNumber: formData.whatsappNumber,
+            collaborationType: formData.collaborationType,
+            defaultCommissionRate: Number(formData.defaultCommissionRate) || 0
         };
 
         await addKOL(newKOL, enableAutoLink);
@@ -183,7 +189,7 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
             name: "", categoryId: "", followers: "", avgViews: "", avatar: "",
             tiktokUsername: "", tiktokProfileLink: "", tiktokFollowers: "", rateCardTiktok: "",
             instagramUsername: "", instagramProfileLink: "", instagramFollowers: "", rateCardReels: "",
-            rateCardPdfLink: ""
+            rateCardPdfLink: "", whatsappNumber: "", collaborationType: "PAID", defaultCommissionRate: ""
         });
         setSelectedKOLId("");
         setDuplicateWarning(null);
@@ -348,6 +354,55 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
                                         <Input id="categoryId" name="categoryId" value={formData.categoryId} onChange={handleChange} required />
                                     )}
                                 </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="whatsappNumber">WhatsApp Number</Label>
+                                    <Input 
+                                        id="whatsappNumber" 
+                                        name="whatsappNumber" 
+                                        value={formData.whatsappNumber} 
+                                        onChange={handleChange} 
+                                        placeholder="628xxxxxxxxxx" 
+                                    />
+                                    <p className="text-xs text-muted-foreground">Format: 628xxxxxxxxxx (no + or spaces)</p>
+                                </div>
+                            </div>
+
+                            {/* Collaboration Type Selector */}
+                            <div className="space-y-3 pt-4 border-t">
+                                <Label className="text-sm font-semibold">Collaboration Type</Label>
+                                <div className="flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({ ...prev, collaborationType: 'PAID' }))}
+                                        className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all font-medium ${
+                                            formData.collaborationType === 'PAID'
+                                                ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                                : 'border-gray-200 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        💰 PAID
+                                        <span className="block text-xs font-normal mt-1 opacity-70">Fixed rate card pricing</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData(prev => ({ ...prev, collaborationType: 'AFFILIATE' }))}
+                                        className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all font-medium ${
+                                            formData.collaborationType === 'AFFILIATE'
+                                                ? 'border-green-500 bg-green-50 text-green-700'
+                                                : 'border-gray-200 hover:border-gray-300'
+                                        }`}
+                                    >
+                                        🤝 AFFILIATE
+                                        <span className="block text-xs font-normal mt-1 opacity-70">Commission-based, auto-settled</span>
+                                    </button>
+                                </div>
+                                
+                                {/* Info text for affiliates */}
+                                {formData.collaborationType === 'AFFILIATE' && (
+                                    <p className="text-sm text-green-600 bg-green-50 p-3 rounded-lg border border-green-200">
+                                        💡 Commission rates are set per campaign when adding this influencer to campaigns.
+                                    </p>
+                                )}
                             </div>
                         </div>
 
@@ -431,7 +486,8 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
                             </div>
                         </div>
 
-                        {/* --- Rates --- */}
+                        {/* --- Rates (Only for PAID) --- */}
+                        {formData.collaborationType === 'PAID' && (
                         <div className="space-y-4 border-t pt-4">
                             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Rate Card (IDR)</h3>
                             <div className="grid grid-cols-2 gap-4">
@@ -449,6 +505,7 @@ export function AddKOLDialog({ enableAutoLink = true }: AddKOLDialogProps) {
                                 </div>
                             </div>
                         </div>
+                        )}
 
                         <DialogFooter className="mt-4">
                             <Button type="submit">{enableAutoLink ? "Create & Add" : "Create Profile"}</Button>

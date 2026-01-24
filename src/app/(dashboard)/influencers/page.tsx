@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 
 import { Button } from "@/components/ui/button";
-import { formatIDR } from "@/lib/analytics";
+import { formatIDR, getCollaborationBadgeClass } from "@/lib/analytics";
 import { formatCompactNumber } from "@/lib/utils";
 import { AddKOLDialog } from "@/components/kols/add-kol-dialog";
 import { EditKOLDialog } from "@/components/kols/edit-kol-dialog";
@@ -395,6 +395,7 @@ function InfluencersContent() {
                             </Tooltip>
                         </TooltipProvider>
                     </TableHead>
+                    <TableHead className="text-center">Type</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
             </TableHeader>
@@ -474,6 +475,11 @@ function InfluencersContent() {
                             </TableCell>
                             <TableCell>{formatIDR(kol.rateCardTiktok || 0)}</TableCell>
                             <TableCell>{formatIDR(kol.rateCardReels || 0)}</TableCell>
+                            <TableCell className="text-center">
+                                <Badge className={`${getCollaborationBadgeClass(kol.collaborationType || 'PAID')} font-medium`}>
+                                    {kol.collaborationType || 'PAID'}
+                                </Badge>
+                            </TableCell>
                             <TableCell onClick={(e) => e.stopPropagation()}>
                                 <div className="flex items-center">
                                     <EditKOLDialog kol={kol} />
