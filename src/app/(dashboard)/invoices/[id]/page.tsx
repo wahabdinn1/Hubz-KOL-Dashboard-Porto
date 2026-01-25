@@ -8,9 +8,9 @@ import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Printer, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { MY_BANK_DETAILS, Invoice, InvoiceStatus } from "@/lib/invoice-utils";
+import { MY_BANK_DETAILS, InvoiceStatus, Invoice } from "@/components/invoices/utils";
 import { formatIDR } from "@/lib/analytics";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 import { Database } from "@/types/supabase";
 import { PaymentTracker } from "@/components/invoices/payment-tracker";
 

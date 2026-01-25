@@ -1,31 +1,14 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { FileText, MoreHorizontal, ArrowRight, Search } from "lucide-react";
 import Link from "next/link";
-import { formatIDR } from "@/lib/analytics";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import { InvoiceStatus } from "@/lib/invoice-utils";
-import { TablePagination, usePagination } from "@/components/shared/table-pagination";
 import { DataView } from "@/components/shared/data-view";
-import { Input } from "@/components/ui/input";
+import { DataTable } from "@/components/ui/data-table";
+import { getColumns, InvoiceDB } from "@/components/invoices/columns";
+import { Badge } from "@/components/ui/badge";
 
 interface InvoiceListTableProps {
     kolId?: string;
@@ -35,30 +18,10 @@ interface InvoiceListTableProps {
     title?: string;
 }
 
-interface InvoiceDB {
-    id: string;
-    invoice_number: string;
-    recipient_name: string;
-    status: InvoiceStatus;
-    total_amount: number;
-    due_date: string;
-    created_at: string;
-}
-
 export function InvoiceListTable({ kolId, campaignId, limit, title = "Recent Invoices" }: InvoiceListTableProps) {
     const [invoices, setInvoices] = useState<InvoiceDB[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [selectedIds, setSelectedIds] = useState<string[]>([]);
-
-    const {
-        currentPage,
-        pageSize,
-        handlePageChange,
-        handlePageSizeChange
-    } = usePagination(invoices.length);
-
-    // Paginated Invoices
-    const paginatedInvoices = limit ? invoices : invoices.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+    const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
 
     const fetchInvoices = useCallback(async () => {
         setIsLoading(true);
@@ -96,7 +59,7 @@ export function InvoiceListTable({ kolId, campaignId, limit, title = "Recent Inv
     }, [fetchInvoices]);
 
     // Marking as paid handler
-    const handleMarkAsPaid = async (id: string) => {
+    const handleMarkAsPaid = useCallback(async (id: string) => {
         try {
             const { error } = await (supabase
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -112,27 +75,13 @@ export function InvoiceListTable({ kolId, campaignId, limit, title = "Recent Inv
             console.error(err);
             toast.error("Failed to update status");
         }
-    };
-
-    // Bulk select handlers
-    const handleSelectAll = (checked: boolean) => {
-        if (checked) {
-            setSelectedIds(invoices.filter(i => i.status !== 'PAID').map(i => i.id));
-        } else {
-            setSelectedIds([]);
-        }
-    };
-
-    const handleSelectRow = (id: string, checked: boolean) => {
-        if (checked) {
-            setSelectedIds(prev => [...prev, id]);
-        } else {
-            setSelectedIds(prev => prev.filter(i => i !== id));
-        }
-    };
+    }, [fetchInvoices]);
 
     // Bulk mark as paid
     const handleBulkMarkAsPaid = async () => {
+        const selectedIds = Object.keys(rowSelection);
+        if (selectedIds.length === 0) return;
+        
         if (!confirm(`Mark ${selectedIds.length} invoices as PAID?`)) return;
         
         try {
@@ -144,7 +93,7 @@ export function InvoiceListTable({ kolId, campaignId, limit, title = "Recent Inv
                     .eq('id', id);
             }
             toast.success(`${selectedIds.length} invoices marked as PAID`);
-            setSelectedIds([]);
+            setRowSelection({});
             fetchInvoices();
         } catch (err) {
             console.error(err);
@@ -152,16 +101,24 @@ export function InvoiceListTable({ kolId, campaignId, limit, title = "Recent Inv
         }
     };
 
+    const columns = useMemo(() => getColumns({ onMarkAsPaid: handleMarkAsPaid }), [handleMarkAsPaid]);
+
+    const selectedCount = Object.keys(rowSelection).length;
+
     const cardActions = (
         <div className="flex items-center gap-2">
-             <div className="relative w-64 hidden sm:block">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search invoices..." className="pl-8 h-8" />
-            </div>
-            {selectedIds.length > 0 && (
-                <div className="flex items-center gap-2 bg-muted px-2 py-1 rounded-md">
+             {/* Note: DataTable has built-in search via searchKey/filter. 
+                 If we want external search bar we can control global filter or pass it.
+                 DataTable already renders a search bar if showSearch=true.
+                 The search bar below was manual. I will rely on DataTable's search unless I need it outside.
+                 If I want it in the header, I can disable DataTable search and put it here, passing value to DataTable.
+                 However, DataTable encapsulates its UI.
+                 For now, let's keep bulk actions here.
+              */}
+            {selectedCount > 0 && (
+                <div className="flex items-center gap-2 bg-muted px-2 py-1 rounded-md animate-in fade-in">
                      <span className="text-xs text-muted-foreground whitespace-nowrap">
-                        {selectedIds.length} selected
+                        {selectedCount} selected
                     </span>
                     <Button
                         size="sm"
@@ -176,8 +133,8 @@ export function InvoiceListTable({ kolId, campaignId, limit, title = "Recent Inv
     );
 
     const mobileView = (
-        <>
-            {paginatedInvoices.map((invoice) => (
+        <div className="divide-y">
+            {invoices.map((invoice) => (
                 <Link key={invoice.id} href={`/invoices/${invoice.id}`}>
                     <div className="p-4 hover:bg-muted/50 cursor-pointer">
                         <div className="flex items-center justify-between mb-2">
@@ -194,96 +151,7 @@ export function InvoiceListTable({ kolId, campaignId, limit, title = "Recent Inv
                     </div>
                 </Link>
             ))}
-        </>
-    );
-
-    const desktopView = (
-        <Table>
-            <TableHeader>
-                <TableRow>
-                    <TableHead className="w-[40px]">
-                        <input
-                            type="checkbox"
-                            className="translate-y-[2px]"
-                            checked={selectedIds.length > 0 && selectedIds.length === invoices.filter(i => i.status !== 'PAID').length}
-                            onChange={(e) => handleSelectAll(e.target.checked)}
-                        />
-                    </TableHead>
-                    <TableHead>Invoice #</TableHead>
-                    <TableHead>Recipient</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-            </TableHeader>
-            <TableBody>
-                {paginatedInvoices.map((invoice) => {
-                    const isSelected = selectedIds.includes(invoice.id);
-                    return (
-                        <TableRow key={invoice.id} className={isSelected ? 'bg-muted' : ''}>
-                            <TableCell className="w-[40px]">
-                                {invoice.status !== 'PAID' && (
-                                    <input
-                                        type="checkbox"
-                                        className="translate-y-[2px]"
-                                        checked={isSelected}
-                                        onChange={(e) => handleSelectRow(invoice.id, e.target.checked)}
-                                    />
-                                )}
-                            </TableCell>
-                            <TableCell className="font-medium font-mono">
-                                <Link href={`/invoices/${invoice.id}`} className="hover:underline text-primary">
-                                    {invoice.invoice_number}
-                                </Link>
-                            </TableCell>
-                        <TableCell>{invoice.recipient_name}</TableCell>
-                        <TableCell>
-                            <Badge
-                                variant={
-                                    invoice.status === 'PAID' ? 'default' :
-                                        invoice.status === 'OVERDUE' ? 'destructive' :
-                                            invoice.status === 'PENDING' ? 'secondary' : 'outline'
-                                }
-                            >
-                                {invoice.status}
-                            </Badge>
-                        </TableCell>
-                        <TableCell className="text-right font-bold">{formatIDR(invoice.total_amount)}</TableCell>
-                        <TableCell className="text-muted-foreground text-sm">
-                            {invoice.due_date ? new Date(invoice.due_date).toLocaleDateString('en-GB') : '-'}
-                        </TableCell>
-                        <TableCell>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 p-0">
-                                        <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <Link href={`/invoices/${invoice.id}`}>
-                                        <DropdownMenuItem className="cursor-pointer">
-                                            <FileText className="mr-2 h-4 w-4" />
-                                            View Invoice
-                                        </DropdownMenuItem>
-                                    </Link>
-                                    {invoice.status !== 'PAID' && (
-                                        <DropdownMenuItem
-                                            className="cursor-pointer"
-                                            onClick={() => handleMarkAsPaid(invoice.id)}
-                                        >
-                                            <ArrowRight className="mr-2 h-4 w-4" />
-                                            Mark as Paid
-                                        </DropdownMenuItem>
-                                    )}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </TableCell>
-                    </TableRow>
-                );
-                })}
-            </TableBody>
-        </Table>
+        </div>
     );
 
     return (
@@ -302,17 +170,20 @@ export function InvoiceListTable({ kolId, campaignId, limit, title = "Recent Inv
                     )}
                 </div>
             }
-            desktopView={desktopView}
-            mobileView={mobileView}
-            pagination={!limit ? (
-                <TablePagination
-                    currentPage={currentPage}
-                    totalItems={invoices.length}
-                    pageSize={pageSize}
-                    onPageChange={handlePageChange}
-                    onPageSizeChange={handlePageSizeChange}
+            desktopView={
+                <DataTable 
+                    columns={columns} 
+                    data={invoices}
+                    searchKey="recipient_name" 
+                    searchPlaceholder="Search recipient..."
+                    showPagination={!limit}
+                    pageSize={limit || 10}
+                    rowSelection={rowSelection}
+                    onRowSelectionChange={setRowSelection}
+                    getRowId={(row) => row.id}
                 />
-            ) : undefined}
+            }
+            mobileView={mobileView}
         />
     );
 }

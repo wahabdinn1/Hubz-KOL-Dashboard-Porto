@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Upload, File, Link as LinkIcon, Plus, ExternalLink, Trash2, Image, Video, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 import {
     Dialog,
     DialogContent,

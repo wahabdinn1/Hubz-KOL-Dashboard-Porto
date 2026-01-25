@@ -18,9 +18,9 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatIDR } from "@/lib/analytics";
-import { generateInvoiceNumber, InvoiceItem } from "@/lib/invoice-utils";
+import { generateInvoiceNumber, InvoiceItem } from "@/components/invoices/utils";
 import { useData } from "@/context/data-context";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import {
     Popover,

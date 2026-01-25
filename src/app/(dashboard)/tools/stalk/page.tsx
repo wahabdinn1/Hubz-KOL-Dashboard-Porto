@@ -177,6 +177,8 @@ export default function ProfileLookupPage() {
                     rateCardReels: 0,
                     rateCardPdfLink: '',
                     avatar: tiktokData.avatar,
+                    collaborationType: 'PAID' as const,
+                    whatsappNumber: '',
                 };
             } else if (platform === "instagram" && instagramData) {
                 newKOL = {
@@ -197,6 +199,8 @@ export default function ProfileLookupPage() {
                     rateCardReels: 0,
                     rateCardPdfLink: '',
                     avatar: instagramData.profile_pic_url ? proxyImage(instagramData.profile_pic_url) : '',
+                    collaborationType: 'PAID' as const,
+                    whatsappNumber: '',
                 };
             }
 

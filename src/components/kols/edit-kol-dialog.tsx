@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useForm } from "@tanstack/react-form";
+import { z } from "zod";
 import {
     Dialog,
     DialogContent,
@@ -18,10 +20,34 @@ import { Pencil, Loader2 } from "lucide-react";
 import { KOL } from "@/lib/static-data";
 import { CurrencyInput } from "@/components/ui/currency-input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { FormInput, FormSelect } from "@/components/ui/form-fields";
 
 interface EditKOLDialogProps {
     kol: KOL;
 }
+
+// Zod Schema
+const kolFormSchema = z.object({
+    name: z.string().min(1, "Name is required"),
+    categoryId: z.string().min(1, "Category is required"),
+    avatar: z.string(),
+    
+    tiktokUsername: z.string(),
+    tiktokProfileLink: z.string(),
+    tiktokFollowers: z.string(),
+    
+    instagramUsername: z.string(),
+    instagramProfileLink: z.string(),
+    instagramFollowers: z.string(),
+    
+    rateCardTiktok: z.string(),
+    rateCardReels: z.string(),
+    rateCardPdfLink: z.string(),
+    
+    whatsappNumber: z.string(),
+    collaborationType: z.enum(["PAID", "AFFILIATE"]),
+    defaultCommissionRate: z.string(),
+});
 
 export function EditKOLDialog({ kol }: EditKOLDialogProps) {
     const { updateKOL, categories } = useData();
@@ -29,19 +55,99 @@ export function EditKOLDialog({ kol }: EditKOLDialogProps) {
     const [fetchingTikTok, setFetchingTikTok] = useState(false);
     const [fetchingInstagram, setFetchingInstagram] = useState(false);
 
+    // TanStack Form
+    const form = useForm({
+        defaultValues: {
+            name: "",
+            categoryId: "",
+            avatar: "",
+            tiktokUsername: "",
+            tiktokProfileLink: "",
+            tiktokFollowers: "",
+            instagramUsername: "",
+            instagramProfileLink: "",
+            instagramFollowers: "",
+            rateCardTiktok: "",
+            rateCardReels: "",
+            rateCardPdfLink: "",
+            whatsappNumber: "",
+            collaborationType: "PAID" as "PAID" | "AFFILIATE",
+            defaultCommissionRate: "",
+        },
+        validators: {
+            onChange: kolFormSchema,
+        },
+        onSubmit: async ({ value }) => {
+            const totalFollowers = Math.max(
+                Number(value.tiktokFollowers) || 0,
+                Number(value.instagramFollowers) || 0
+            );
+
+            await updateKOL(kol.id, {
+                name: value.name,
+                categoryId: value.categoryId,
+                followers: totalFollowers,
+                avgViews: 0,
+                type: totalFollowers > 1000000 ? 'Macro' : totalFollowers < 100000 ? 'Micro' : 'Macro',
+                
+                tiktokUsername: value.tiktokUsername,
+                tiktokProfileLink: value.tiktokProfileLink,
+                tiktokFollowers: Number(value.tiktokFollowers) || 0,
+
+                instagramUsername: value.instagramUsername,
+                instagramProfileLink: value.instagramProfileLink,
+                instagramFollowers: Number(value.instagramFollowers) || 0,
+
+                rateCardTiktok: Number(value.rateCardTiktok) || 0,
+                rateCardReels: Number(value.rateCardReels) || 0,
+                rateCardPdfLink: value.rateCardPdfLink,
+                avatar: value.avatar,
+                whatsappNumber: value.whatsappNumber,
+                collaborationType: value.collaborationType,
+                defaultCommissionRate: Number(value.defaultCommissionRate) || 0
+            });
+
+            setOpen(false);
+        },
+    });
+
+    // Populate form when dialog opens
+    useEffect(() => {
+        if (open) {
+            form.reset();
+            // Use setTimeout to ensure form is ready
+            setTimeout(() => {
+                form.setFieldValue("name", kol.name);
+                form.setFieldValue("categoryId", kol.categoryId || "");
+                form.setFieldValue("avatar", kol.avatar || "");
+                form.setFieldValue("tiktokUsername", kol.tiktokUsername || "");
+                form.setFieldValue("tiktokProfileLink", kol.tiktokProfileLink || "");
+                form.setFieldValue("tiktokFollowers", (kol.tiktokFollowers || 0).toString());
+                form.setFieldValue("instagramUsername", kol.instagramUsername || "");
+                form.setFieldValue("instagramProfileLink", kol.instagramProfileLink || "");
+                form.setFieldValue("instagramFollowers", (kol.instagramFollowers || 0).toString());
+                form.setFieldValue("rateCardTiktok", (kol.rateCardTiktok || 0).toString());
+                form.setFieldValue("rateCardReels", (kol.rateCardReels || 0).toString());
+                form.setFieldValue("rateCardPdfLink", kol.rateCardPdfLink || "");
+                form.setFieldValue("whatsappNumber", kol.whatsappNumber || "");
+                form.setFieldValue("collaborationType", kol.collaborationType || "PAID");
+                form.setFieldValue("defaultCommissionRate", (kol.defaultCommissionRate || 0).toString());
+            }, 0);
+        }
+    }, [open, kol, form]);
+
     // Fetch TikTok data
     const fetchTikTokData = async () => {
-        if (!formData.tiktokUsername) return;
+        const username = form.getFieldValue("tiktokUsername");
+        if (!username) return;
+        
         setFetchingTikTok(true);
         try {
-            const response = await fetch(`/api/tiktok/stalk?username=${encodeURIComponent(formData.tiktokUsername)}`);
+            const response = await fetch(`/api/tiktok/stalk?username=${encodeURIComponent(username)}`);
             const data = await response.json();
             if (data.status === 'success' && data.data) {
-                setFormData(prev => ({
-                    ...prev,
-                    tiktokFollowers: data.data.followers?.toString() || prev.tiktokFollowers,
-                    avatar: data.data.avatar || prev.avatar,
-                }));
+                form.setFieldValue("tiktokFollowers", data.data.followers?.toString() || "");
+                form.setFieldValue("avatar", data.data.avatar || form.getFieldValue("avatar"));
             }
         } catch (error) {
             console.error('Failed to fetch TikTok data:', error);
@@ -50,145 +156,27 @@ export function EditKOLDialog({ kol }: EditKOLDialogProps) {
         }
     };
 
-    // Fetch Instagram data - only updates followers, preserves existing avatar
+    // Fetch Instagram data
     const fetchInstagramData = async () => {
-        if (!formData.instagramUsername) return;
+        const username = form.getFieldValue("instagramUsername");
+        if (!username) return;
+
         setFetchingInstagram(true);
         try {
-            const username = formData.instagramUsername.replace('@', '');
-            const response = await fetch(`/api/instagram/profile?username=${encodeURIComponent(username)}`);
+            const cleanUser = username.replace('@', '');
+            const response = await fetch(`/api/instagram/profile?username=${encodeURIComponent(cleanUser)}`);
             const data = await response.json();
             if (data.status === 'success' && data.data) {
-                setFormData(prev => ({
-                    ...prev,
-                    instagramFollowers: data.data.followers?.toString() || prev.instagramFollowers,
-                    // Only set avatar if not already filled (e.g., from TikTok fetch)
-                    avatar: prev.avatar || (data.data.profile_pic_url ? `/api/image-proxy?url=${encodeURIComponent(data.data.profile_pic_url)}` : ''),
-                }));
+                form.setFieldValue("instagramFollowers", data.data.followers?.toString() || "");
+                if (!form.getFieldValue("avatar") && data.data.profile_pic_url) {
+                    form.setFieldValue("avatar", `/api/image-proxy?url=${encodeURIComponent(data.data.profile_pic_url)}`);
+                }
             }
         } catch (error) {
             console.error('Failed to fetch Instagram data:', error);
         } finally {
             setFetchingInstagram(false);
         }
-    };
-
-    const [formData, setFormData] = useState({
-        name: "",
-        categoryId: "",
-        followers: "",
-        avgViews: "",
-        avatar: "",
-
-        tiktokUsername: "",
-        tiktokProfileLink: "",
-        tiktokFollowers: "",
-        rateCardTiktok: "",
-
-        instagramUsername: "",
-        instagramProfileLink: "",
-        instagramFollowers: "",
-        rateCardReels: "",
-
-        rateCardPdfLink: "",
-        whatsappNumber: "",
-        collaborationType: "PAID" as 'PAID' | 'AFFILIATE',
-        defaultCommissionRate: ""
-    });
-
-    useEffect(() => {
-        if (open) {
-            const timer = setTimeout(() => {
-                setFormData({
-                    name: kol.name,
-                    categoryId: kol.categoryId || "",
-                    followers: kol.followers.toString(),
-                    avgViews: kol.avgViews.toString(),
-                    avatar: kol.avatar || "",
-
-                    tiktokUsername: kol.tiktokUsername || "",
-                    tiktokProfileLink: kol.tiktokProfileLink || "",
-                    tiktokFollowers: (kol.tiktokFollowers || 0).toString(),
-                    rateCardTiktok: (kol.rateCardTiktok || 0).toString(),
-
-                    instagramUsername: kol.instagramUsername || "",
-                    instagramProfileLink: kol.instagramProfileLink || "",
-                    instagramFollowers: (kol.instagramFollowers || 0).toString(),
-                    rateCardReels: (kol.rateCardReels || 0).toString(),
-
-                    rateCardPdfLink: kol.rateCardPdfLink || "",
-                    whatsappNumber: kol.whatsappNumber || "",
-                    collaborationType: kol.collaborationType || "PAID",
-                    defaultCommissionRate: (kol.defaultCommissionRate || 0).toString()
-                });
-            }, 0);
-            return () => clearTimeout(timer);
-        }
-    }, [open, kol]);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        // Recalculate type
-        const totalFollowers = Math.max(
-            Number(formData.tiktokFollowers) || 0,
-            Number(formData.instagramFollowers) || 0
-        );
-
-        await updateKOL(kol.id, {
-            name: formData.name,
-            categoryId: formData.categoryId,
-            followers: totalFollowers,
-            avgViews: 0,
-            type: totalFollowers > 1000000 ? 'Macro' : totalFollowers < 100000 ? 'Micro' : 'Macro',
-
-            tiktokUsername: formData.tiktokUsername,
-            tiktokProfileLink: formData.tiktokProfileLink,
-            tiktokFollowers: Number(formData.tiktokFollowers) || 0,
-
-            instagramUsername: formData.instagramUsername,
-            instagramProfileLink: formData.instagramProfileLink,
-            instagramFollowers: Number(formData.instagramFollowers) || 0,
-
-            rateCardTiktok: Number(formData.rateCardTiktok) || 0,
-            rateCardReels: Number(formData.rateCardReels) || 0,
-            rateCardPdfLink: formData.rateCardPdfLink,
-            avatar: formData.avatar,
-            whatsappNumber: formData.whatsappNumber,
-            collaborationType: formData.collaborationType,
-            defaultCommissionRate: Number(formData.defaultCommissionRate) || 0
-        });
-
-        setOpen(false);
-    };
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setFormData((prev) => {
-            const newData = { ...prev, [name]: value };
-
-            // Auto-fill TikTok Profile Link
-            if (name === "tiktokUsername") {
-                if (value) {
-                    const cleanUser = value.replace(/^@/, '');
-                    newData.tiktokProfileLink = `https://www.tiktok.com/@${cleanUser}`;
-                } else {
-                    newData.tiktokProfileLink = "";
-                }
-            }
-
-            // Auto-fill Instagram Profile Link
-            if (name === "instagramUsername") {
-                if (value) {
-                    const cleanUser = value.replace(/^@/, '');
-                    newData.instagramProfileLink = `https://www.instagram.com/${cleanUser}/`;
-                } else {
-                    newData.instagramProfileLink = "";
-                }
-            }
-
-            return newData;
-        });
     };
 
     return (
@@ -206,189 +194,305 @@ export function EditKOLDialog({ kol }: EditKOLDialogProps) {
                     </DialogDescription>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="py-4 grid gap-6">
+                <form 
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        form.handleSubmit();
+                    }} 
+                    className="py-4 grid gap-6"
+                >
                     {/* --- Basic Info --- */}
                     <div className="space-y-4">
                         <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Basic Information</h3>
                         
-                        {/* Avatar Input */}
+                        {/* Avatar */}
                         <div className="flex items-center gap-4">
-                            <Avatar className="h-16 w-16 border">
-                                <AvatarImage src={formData.avatar} alt={formData.name} />
-                                <AvatarFallback>{formData.name?.charAt(0) || "K"}</AvatarFallback>
-                            </Avatar>
-                            <div className="space-y-2 flex-1">
-                                <Label htmlFor="avatar">Avatar URL</Label>
-                                <div className="flex gap-2">
-                                    <Input 
-                                        id="avatar" 
-                                        name="avatar" 
-                                        value={formData.avatar} 
-                                        onChange={handleChange} 
-                                        placeholder="https://..." 
-                                    />
-                                </div>
-                            </div>
+                            <form.Field name="avatar">
+                                {(field) => (
+                                    <>
+                                        <Avatar className="h-16 w-16 border">
+                                            <AvatarImage src={field.state.value} />
+                                            <AvatarFallback>{form.getFieldValue("name")?.charAt(0) || "K"}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="space-y-2 flex-1">
+                                            <FormInput
+                                                label="Avatar URL"
+                                                value={field.state.value}
+                                                onChange={(e) => field.handleChange(e.target.value)}
+                                            />
+                                        </div>
+                                    </>
+                                )}
+                            </form.Field>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Full Name</Label>
-                                <Input id="name" name="name" value={formData.name} onChange={handleChange} required />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="categoryId">Category</Label>
-                                {categories.length > 0 ? (
-                                    <select id="categoryId" name="categoryId" value={formData.categoryId} onChange={handleChange} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" required>
-                                        <option value="" disabled>Select Category</option>
-                                        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                    </select>
-                                ) : (
-                                    <Input id="categoryId" name="categoryId" value={formData.categoryId} onChange={handleChange} required />
+                            <form.Field name="name">
+                                {(field) => (
+                                    <FormInput
+                                        label="Full Name"
+                                        value={field.state.value}
+                                        onChange={(e) => field.handleChange(e.target.value)}
+                                        error={field.state.meta.errors ? field.state.meta.errors.join(", ") : undefined}
+                                        required
+                                    />
                                 )}
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="whatsappNumber">WhatsApp Number</Label>
-                                <Input 
-                                    id="whatsappNumber" 
-                                    name="whatsappNumber" 
-                                    value={formData.whatsappNumber} 
-                                    onChange={handleChange} 
-                                    placeholder="628xxxxxxxxxx" 
-                                />
-                                <p className="text-xs text-muted-foreground">Format: 628xxxxxxxxxx (no + or spaces)</p>
-                            </div>
+                            </form.Field>
+
+                            <form.Field name="categoryId">
+                                {(field) => (
+                                    categories.length > 0 ? (
+                                        <FormSelect
+                                            label="Category"
+                                            value={field.state.value}
+                                            onChange={(e) => field.handleChange(e.target.value)}
+                                            options={categories.map(c => ({ value: c.id, label: c.name }))}
+                                            error={field.state.meta.errors ? field.state.meta.errors.join(", ") : undefined}
+                                        />
+                                    ) : (
+                                        <FormInput
+                                            label="Category ID"
+                                            value={field.state.value}
+                                            onChange={(e) => field.handleChange(e.target.value)}
+                                        />
+                                    )
+                                )}
+                            </form.Field>
+
+                            <form.Field name="whatsappNumber">
+                                {(field) => (
+                                    <FormInput
+                                        label="WhatsApp Number"
+                                        placeholder="628xxxxxxxxxx"
+                                        description="Format: 628xxxxxxxxxx (no + or spaces)"
+                                        value={field.state.value || ""}
+                                        onChange={(e) => field.handleChange(e.target.value)}
+                                    />
+                                )}
+                            </form.Field>
                         </div>
 
                         {/* Collaboration Type Selector */}
-                        <div className="space-y-3 pt-4 border-t">
-                            <Label className="text-sm font-semibold">Collaboration Type</Label>
-                            <div className="flex gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData(prev => ({ ...prev, collaborationType: 'PAID' }))}
-                                    className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all font-medium ${
-                                        formData.collaborationType === 'PAID'
-                                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                            : 'border-gray-200 hover:border-gray-300'
-                                    }`}
-                                >
-                                    💰 PAID
-                                    <span className="block text-xs font-normal mt-1 opacity-70">Fixed rate card pricing</span>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData(prev => ({ ...prev, collaborationType: 'AFFILIATE' }))}
-                                    className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all font-medium ${
-                                        formData.collaborationType === 'AFFILIATE'
-                                            ? 'border-green-500 bg-green-50 text-green-700'
-                                            : 'border-gray-200 hover:border-gray-300'
-                                    }`}
-                                >
-                                    🤝 AFFILIATE
-                                    <span className="block text-xs font-normal mt-1 opacity-70">Commission-based, auto-settled</span>
-                                </button>
-                            </div>
-                            
-                            {/* Info text for affiliates */}
-                            {formData.collaborationType === 'AFFILIATE' && (
-                                <p className="text-sm text-green-600 bg-green-50 p-3 rounded-lg border border-green-200">
-                                    💡 Commission rates are set per campaign when adding this influencer to campaigns.
-                                </p>
+                        <form.Field name="collaborationType">
+                            {(field) => (
+                                <div className="space-y-3 pt-4 border-t">
+                                    <Label className="text-sm font-semibold">Collaboration Type</Label>
+                                    <div className="flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => field.handleChange("PAID")}
+                                            className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all font-medium ${
+                                                field.state.value === 'PAID'
+                                                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                                                    : 'border-gray-200 hover:border-gray-300'
+                                            }`}
+                                        >
+                                            💰 PAID
+                                            <span className="block text-xs font-normal mt-1 opacity-70">Fixed rate card pricing</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => field.handleChange("AFFILIATE")}
+                                            className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all font-medium ${
+                                                field.state.value === 'AFFILIATE'
+                                                    ? 'border-green-500 bg-green-50 text-green-700'
+                                                    : 'border-gray-200 hover:border-gray-300'
+                                            }`}
+                                        >
+                                            🤝 AFFILIATE
+                                            <span className="block text-xs font-normal mt-1 opacity-70">Commission-based, auto-settled</span>
+                                        </button>
+                                    </div>
+                                </div>
                             )}
-                        </div>
+                        </form.Field>
                     </div>
 
                     {/* --- TikTok --- */}
                     <div className="space-y-4 border-t pt-4">
-                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                            TikTok
-                        </h3>
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">TikTok</h3>
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="tiktokUsername">Username</Label>
-                                <div className="flex gap-2">
-                                    <Input id="tiktokUsername" name="tiktokUsername" value={formData.tiktokUsername} onChange={handleChange} className="flex-1" />
-                                    <Button 
-                                        type="button" 
-                                        variant="outline" 
-                                        size="sm"
-                                        onClick={fetchTikTokData}
-                                        disabled={!formData.tiktokUsername || fetchingTikTok}
-                                    >
-                                        {fetchingTikTok ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Fetch'}
-                                    </Button>
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="tiktokFollowers">Followers</Label>
-                                <Input id="tiktokFollowers" name="tiktokFollowers" type="number" value={formData.tiktokFollowers} onChange={handleChange} />
-                            </div>
-                            <div className="space-y-2 col-span-2">
-                                <Label htmlFor="tiktokProfileLink">Profile Link</Label>
-                                <Input id="tiktokProfileLink" name="tiktokProfileLink" value={formData.tiktokProfileLink} onChange={handleChange} />
-                            </div>
+                            <form.Field name="tiktokUsername">
+                                {(field) => (
+                                    <div className="space-y-2">
+                                        <Label>Username</Label>
+                                        <div className="flex gap-2">
+                                            <Input 
+                                                value={field.state.value || ""} 
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    field.handleChange(val);
+                                                    if (val) form.setFieldValue("tiktokProfileLink", `https://www.tiktok.com/@${val.replace(/^@/, '')}`);
+                                                }} 
+                                                placeholder="@username" 
+                                                className="flex-1" 
+                                            />
+                                            <Button 
+                                                type="button" 
+                                                variant="outline" 
+                                                size="sm"
+                                                onClick={fetchTikTokData}
+                                                disabled={!field.state.value || fetchingTikTok}
+                                            >
+                                                {fetchingTikTok ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Fetch'}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+                            </form.Field>
+
+                            <form.Field name="tiktokFollowers">
+                                {(field) => (
+                                    <FormInput
+                                        label="Followers"
+                                        type="number"
+                                        value={field.state.value || ""}
+                                        onChange={(e) => field.handleChange(e.target.value)}
+                                        placeholder="0"
+                                    />
+                                )}
+                            </form.Field>
+
+                            <form.Field name="tiktokProfileLink">
+                                {(field) => (
+                                    <div className="space-y-2 col-span-2">
+                                        <Label>Profile Link</Label>
+                                        <Input
+                                            value={field.state.value || ""}
+                                            onChange={(e) => field.handleChange(e.target.value)}
+                                            placeholder="https://www.tiktok.com/@..."
+                                        />
+                                    </div>
+                                )}
+                            </form.Field>
                         </div>
                     </div>
 
                     {/* --- Instagram --- */}
                     <div className="space-y-4 border-t pt-4">
-                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                            Instagram
-                        </h3>
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Instagram</h3>
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="instagramUsername">Username</Label>
-                                <div className="flex gap-2">
-                                    <Input id="instagramUsername" name="instagramUsername" value={formData.instagramUsername} onChange={handleChange} className="flex-1" />
-                                    <Button 
-                                        type="button" 
-                                        variant="outline" 
-                                        size="sm"
-                                        onClick={fetchInstagramData}
-                                        disabled={!formData.instagramUsername || fetchingInstagram}
-                                    >
-                                        {fetchingInstagram ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Fetch'}
-                                    </Button>
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="instagramFollowers">Followers</Label>
-                                <Input id="instagramFollowers" name="instagramFollowers" type="number" value={formData.instagramFollowers} onChange={handleChange} />
-                            </div>
-                            <div className="space-y-2 col-span-2">
-                                <Label htmlFor="instagramProfileLink">Profile Link</Label>
-                                <Input id="instagramProfileLink" name="instagramProfileLink" value={formData.instagramProfileLink} onChange={handleChange} />
-                            </div>
+                            <form.Field name="instagramUsername">
+                                {(field) => (
+                                    <div className="space-y-2">
+                                        <Label>Username</Label>
+                                        <div className="flex gap-2">
+                                            <Input 
+                                                value={field.state.value || ""} 
+                                                onChange={(e) => {
+                                                    const val = e.target.value;
+                                                    field.handleChange(val);
+                                                    if (val) form.setFieldValue("instagramProfileLink", `https://www.instagram.com/${val.replace(/^@/, '')}/`);
+                                                }} 
+                                                placeholder="@username" 
+                                                className="flex-1" 
+                                            />
+                                            <Button 
+                                                type="button" 
+                                                variant="outline" 
+                                                size="sm"
+                                                onClick={fetchInstagramData}
+                                                disabled={!field.state.value || fetchingInstagram}
+                                            >
+                                                {fetchingInstagram ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Fetch'}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
+                            </form.Field>
+
+                            <form.Field name="instagramFollowers">
+                                {(field) => (
+                                    <FormInput
+                                        label="Followers"
+                                        type="number"
+                                        value={field.state.value || ""}
+                                        onChange={(e) => field.handleChange(e.target.value)}
+                                        placeholder="0"
+                                    />
+                                )}
+                            </form.Field>
+
+                            <form.Field name="instagramProfileLink">
+                                {(field) => (
+                                    <div className="space-y-2 col-span-2">
+                                        <Label>Profile Link</Label>
+                                        <Input
+                                            value={field.state.value || ""}
+                                            onChange={(e) => field.handleChange(e.target.value)}
+                                            placeholder="https://www.instagram.com/..."
+                                        />
+                                    </div>
+                                )}
+                            </form.Field>
                         </div>
                     </div>
 
                     {/* --- Rates (Only for PAID) --- */}
-                    {formData.collaborationType === 'PAID' && (
-                    <div className="space-y-4 border-t pt-4">
-                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Rate Card (IDR)</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="rateCardTiktok">TikTok Video</Label>
-                                <CurrencyInput id="rateCardTiktok" value={formData.rateCardTiktok} onValueChange={(val) => setFormData(p => ({ ...p, rateCardTiktok: val.toString() }))} placeholder="0" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="rateCardReels">IG Reels</Label>
-                                <CurrencyInput id="rateCardReels" value={formData.rateCardReels} onValueChange={(val) => setFormData(p => ({ ...p, rateCardReels: val.toString() }))} placeholder="0" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="rateCardPdfLink">PDF Rate Card (URL)</Label>
-                                <Input id="rateCardPdfLink" name="rateCardPdfLink" value={formData.rateCardPdfLink} onChange={handleChange} />
-                            </div>
-                        </div>
-                    </div>
-                    )}
+                    <form.Subscribe selector={(state) => state.values.collaborationType}>
+                        {(collaborationType) => (
+                            collaborationType === 'PAID' && (
+                                <div className="space-y-4 border-t pt-4">
+                                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Rate Card (IDR)</h3>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <form.Field name="rateCardTiktok">
+                                            {(field) => (
+                                                <div className="space-y-2">
+                                                    <Label>TikTok Video</Label>
+                                                    <CurrencyInput 
+                                                        value={field.state.value || ""} 
+                                                        onValueChange={(val) => field.handleChange(val.toString())} 
+                                                        placeholder="0" 
+                                                    />
+                                                </div>
+                                            )}
+                                        </form.Field>
+
+                                        <form.Field name="rateCardReels">
+                                            {(field) => (
+                                                <div className="space-y-2">
+                                                    <Label>IG Reels</Label>
+                                                    <CurrencyInput 
+                                                        value={field.state.value || ""} 
+                                                        onValueChange={(val) => field.handleChange(val.toString())} 
+                                                        placeholder="0" 
+                                                    />
+                                                </div>
+                                            )}
+                                        </form.Field>
+
+                                        <form.Field name="rateCardPdfLink">
+                                            {(field) => (
+                                                <FormInput
+                                                    label="PDF Rate Card (URL)"
+                                                    value={field.state.value || ""}
+                                                    onChange={(e) => field.handleChange(e.target.value)}
+                                                    placeholder="https://..."
+                                                />
+                                            )}
+                                        </form.Field>
+                                    </div>
+                                </div>
+                            )
+                        )}
+                    </form.Subscribe>
 
                     <DialogFooter>
-                        <Button type="submit">Save Changes</Button>
+                        <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
+                            {([canSubmit, isSubmitting]) => (
+                                <Button type="submit" disabled={!canSubmit || isSubmitting}>
+                                    {isSubmitting ? (
+                                        <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</>
+                                    ) : (
+                                        "Save Changes"
+                                    )}
+                                </Button>
+                            )}
+                        </form.Subscribe>
                     </DialogFooter>
                 </form>
             </DialogContent>
-        </Dialog >
+        </Dialog>
     );
 }

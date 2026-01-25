@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Database, Loader2, CheckCircle } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 import { MOCK_KOLS, MOCK_CAMPAIGNS } from "@/lib/static-data";
-import { generateInvoiceNumber } from "@/lib/invoice-utils";
+import { generateInvoiceNumber } from "@/components/invoices/utils";
 
 export function SeedDataButton() {
     const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");

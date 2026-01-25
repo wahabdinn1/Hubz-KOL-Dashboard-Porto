@@ -17,7 +17,8 @@ export const MOCK_KOLS: KOL[] = [
         instagramFollowers: 800000,
         rateCardTiktok: 15000000,
         rateCardReels: 12000000,
-        avatar: ''
+        avatar: '',
+        collaborationType: 'PAID',
     },
     {
         id: 'b1eebc99-9c0b-4ef8-bb6d-6bb9bd380a12',
@@ -31,7 +32,8 @@ export const MOCK_KOLS: KOL[] = [
         instagramUsername: '@raffi.check',
         instagramFollowers: 50000000,
         rateCardTiktok: 150000000,
-        rateCardReels: 200000000
+        rateCardReels: 200000000,
+        collaborationType: 'PAID',
     },
     {
         id: 'c2eebc99-9c0b-4ef8-bb6d-6bb9bd380a13',
@@ -43,7 +45,8 @@ export const MOCK_KOLS: KOL[] = [
         tiktokUsername: '@junarorimpandey',
         tiktokFollowers: 3500000,
         rateCardTiktok: 45000000,
-        avatar: ''
+        avatar: '',
+        collaborationType: 'PAID',
     },
 
     // MACRO (100k - 1M)
@@ -56,7 +59,8 @@ export const MOCK_KOLS: KOL[] = [
         avgViews: 200000,
         tiktokUsername: '@gadgetindo_review',
         tiktokFollowers: 550000,
-        rateCardTiktok: 8000000
+        rateCardTiktok: 8000000,
+        collaborationType: 'PAID',
     },
     {
         id: 'e4eebc99-9c0b-4ef8-bb6d-6bb9bd380a15',
@@ -67,7 +71,8 @@ export const MOCK_KOLS: KOL[] = [
         avgViews: 90000,
         tiktokUsername: '@julia.ootd',
         tiktokFollowers: 250000,
-        rateCardTiktok: 5000000
+        rateCardTiktok: 5000000,
+        collaborationType: 'PAID',
     },
     {
         id: 'f5eebc99-9c0b-4ef8-bb6d-6bb9bd380a16',
@@ -81,7 +86,8 @@ export const MOCK_KOLS: KOL[] = [
         instagramUsername: '@budifit',
         instagramFollowers: 400000,
         rateCardTiktok: 10000000,
-        rateCardReels: 12000000
+        rateCardReels: 12000000,
+        collaborationType: 'PAID',
     },
     {
         id: 'a6eebc99-9c0b-4ef8-bb6d-6bb9bd380a17',
@@ -92,7 +98,8 @@ export const MOCK_KOLS: KOL[] = [
         avgViews: 150000,
         tiktokUsername: '@sarah.travels',
         tiktokFollowers: 600000,
-        rateCardTiktok: 7500000
+        rateCardTiktok: 7500000,
+        collaborationType: 'PAID',
     },
 
     // MICRO (10k - 100k)
@@ -105,7 +112,8 @@ export const MOCK_KOLS: KOL[] = [
         avgViews: 120000,
         tiktokUsername: '@jajanan_viral_indo',
         tiktokFollowers: 85000,
-        rateCardTiktok: 1500000
+        rateCardTiktok: 1500000,
+        collaborationType: 'PAID',
     },
     {
         id: 'c8eebc99-9c0b-4ef8-bb6d-6bb9bd380a19',
@@ -116,7 +124,8 @@ export const MOCK_KOLS: KOL[] = [
         avgViews: 25000,
         tiktokUsername: '@sinta_plays',
         tiktokFollowers: 45000,
-        rateCardTiktok: 1000000
+        rateCardTiktok: 1000000,
+        collaborationType: 'PAID',
     },
     {
         id: 'd9eebc99-9c0b-4ef8-bb6d-6bb9bd380a20',
@@ -127,7 +136,8 @@ export const MOCK_KOLS: KOL[] = [
         avgViews: 30000,
         tiktokUsername: '@mommy_tips_id',
         tiktokFollowers: 60000,
-        rateCardTiktok: 1200000
+        rateCardTiktok: 1200000,
+        collaborationType: 'PAID',
     },
     {
         id: 'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a21',
@@ -138,7 +148,8 @@ export const MOCK_KOLS: KOL[] = [
         avgViews: 5000,
         tiktokUsername: '@crypto.pemula',
         tiktokFollowers: 15000,
-        rateCardTiktok: 800000
+        rateCardTiktok: 800000,
+        collaborationType: 'PAID',
     },
 
     // NANO (< 10k)
@@ -151,7 +162,8 @@ export const MOCK_KOLS: KOL[] = [
         avgViews: 2000,
         tiktokUsername: '@budidailyvlog',
         tiktokFollowers: 5000,
-        rateCardTiktok: 300000
+        rateCardTiktok: 300000,
+        collaborationType: 'PAID',
     },
     {
         id: 'a2eebc99-9c0b-4ef8-bb6d-6bb9bd380a23',
@@ -162,7 +174,8 @@ export const MOCK_KOLS: KOL[] = [
         avgViews: 4000,
         tiktokUsername: '@kucing_bdg',
         tiktokFollowers: 8500,
-        rateCardTiktok: 400000
+        rateCardTiktok: 400000,
+        collaborationType: 'PAID',
     },
     {
         id: 'b3eebc99-9c0b-4ef8-bb6d-6bb9bd380a24',
@@ -173,7 +186,8 @@ export const MOCK_KOLS: KOL[] = [
         avgViews: 1000,
         tiktokUsername: '@review.jujur.skincare',
         tiktokFollowers: 2500,
-        rateCardTiktok: 150000
+        rateCardTiktok: 150000,
+        collaborationType: 'PAID',
     },
     {
         id: 'c4eebc99-9c0b-4ef8-bb6d-6bb9bd380a25',
@@ -184,7 +198,8 @@ export const MOCK_KOLS: KOL[] = [
         avgViews: 5000,
         tiktokUsername: '@indie.music.id',
         tiktokFollowers: 9000,
-        rateCardTiktok: 500000
+        rateCardTiktok: 500000,
+        collaborationType: 'PAID',
     }
 ];
 
@@ -209,6 +224,7 @@ export const MOCK_CAMPAIGNS: Campaign[] = [
                 orders: 450,
                 salesGenerated: 35000000,
                 status: 'completed',
+                collaborationType: 'PAID',
             },
             {
                 kolId: 'b7eebc99-9c0b-4ef8-bb6d-6bb9bd380a18', // kol-5
@@ -220,6 +236,7 @@ export const MOCK_CAMPAIGNS: Campaign[] = [
                 orders: 890,
                 salesGenerated: 18500000,
                 status: 'completed',
+                collaborationType: 'PAID',
             }
         ],
     },
@@ -239,7 +256,8 @@ export const MOCK_CAMPAIGNS: Campaign[] = [
                 totalViews: 1200000,
                 totalEngagements: 80000,
                 salesGenerated: 0,
-                status: 'to_contact'
+                status: 'to_contact',
+                collaborationType: 'PAID',
             },
             {
                 kolId: 'c2eebc99-9c0b-4ef8-bb6d-6bb9bd380a13', // kol-mega-1
@@ -247,7 +265,8 @@ export const MOCK_CAMPAIGNS: Campaign[] = [
                 totalViews: 500000,
                 totalEngagements: 10000,
                 salesGenerated: 0,
-                status: 'negotiating'
+                status: 'negotiating',
+                collaborationType: 'PAID',
             }
         ]
     },
@@ -267,7 +286,8 @@ export const MOCK_CAMPAIGNS: Campaign[] = [
                 totalViews: 300000,
                 totalEngagements: 15000,
                 salesGenerated: 45000000,
-                status: 'completed'
+                status: 'completed',
+                collaborationType: 'PAID',
             }
         ]
     }

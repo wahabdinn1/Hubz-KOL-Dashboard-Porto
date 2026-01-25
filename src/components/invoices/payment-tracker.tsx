@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/retroui/Progress";
 import { Plus, Check, DollarSign, Calendar } from "lucide-react";
 import { formatIDR } from "@/lib/analytics";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import {

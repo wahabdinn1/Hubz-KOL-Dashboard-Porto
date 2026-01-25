@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
+import { createClient } from "@/lib/supabase/server";
 
 // GET: Retrieve user's TikTok session cookie
 export async function GET() {

@@ -39,6 +39,10 @@ export function generateInvoiceNumber(): string {
     return `INV-${year}${month}-${random}`;
 }
 
+export function calculateTotal(items: InvoiceItem[]): number {
+    return items.reduce((acc, item) => acc + (item.quantity * item.price), 0);
+}
+
 export const MY_BANK_DETAILS = {
     bankName: "BCA",
     accountNumber: "1234567890",

@@ -1,5 +1,5 @@
 import { DashboardShell } from "@/components/layout/dashboard-shell";
-import { createClient } from "@/utils/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import { ErrorBoundary } from "@/components/shared/error-boundary";
 import { OnboardingProvider } from "@/components/shared/onboarding-tour";
 

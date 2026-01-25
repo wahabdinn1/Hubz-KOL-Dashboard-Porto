@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useForm } from "@tanstack/react-form";
+import { z } from "zod";
 import {
     Dialog,
     DialogContent,
@@ -14,62 +16,69 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useData } from "@/context/data-context";
-import { Settings } from "lucide-react";
+import { Settings, Loader2 } from "lucide-react";
 import { Campaign } from "@/lib/static-data";
 import { CurrencyInput } from "@/components/ui/currency-input";
+import { FormInput, FormSelect } from "@/components/ui/form-fields";
 
 interface EditCampaignDialogProps {
     campaign: Campaign;
 }
 
+// Zod Schema
+const campaignFormSchema = z.object({
+    name: z.string().min(1, "Name is required"),
+    budget: z.string().min(1, "Budget is required"),
+    platform: z.enum(["TikTok", "Instagram"]),
+    objective: z.enum(["AWARENESS", "CONVERSION"]),
+    startDate: z.string(),
+    endDate: z.string(),
+});
+
 export function EditCampaignDialog({ campaign }: EditCampaignDialogProps) {
     const { updateCampaign } = useData();
     const [open, setOpen] = useState(false);
 
-    const [formData, setFormData] = useState({
-        name: "",
-        budget: "",
-        platform: "TikTok",
-        objective: "AWARENESS",
-        startDate: "",
-        endDate: ""
+    const form = useForm({
+        defaultValues: {
+            name: "",
+            budget: "",
+            platform: "TikTok" as "TikTok" | "Instagram",
+            objective: "AWARENESS" as "AWARENESS" | "CONVERSION",
+            startDate: "",
+            endDate: ""
+        },
+        validators: {
+            onChange: campaignFormSchema,
+        },
+        onSubmit: async ({ value }) => {
+            await updateCampaign(campaign.id, {
+                name: value.name,
+                budget: parseFloat(value.budget) || 0,
+                platform: value.platform,
+                objective: value.objective,
+                startDate: value.startDate || undefined,
+                endDate: value.endDate || undefined
+            });
+
+            setOpen(false);
+        },
     });
 
     useEffect(() => {
         if (open) {
-            const timer = setTimeout(() => {
-                setFormData({
-                    name: campaign.name,
-                    budget: campaign.budget.toString(),
-                    platform: campaign.platform || "TikTok",
-                    objective: campaign.objective || "AWARENESS",
-                    startDate: campaign.startDate || "",
-                    endDate: campaign.endDate || ""
-                });
+            form.reset();
+            // Populate form values
+            setTimeout(() => {
+                form.setFieldValue("name", campaign.name);
+                form.setFieldValue("budget", campaign.budget.toString());
+                form.setFieldValue("platform", campaign.platform || "TikTok");
+                form.setFieldValue("objective", campaign.objective || "AWARENESS");
+                form.setFieldValue("startDate", campaign.startDate || "");
+                form.setFieldValue("endDate", campaign.endDate || "");
             }, 0);
-            return () => clearTimeout(timer);
         }
-    }, [open, campaign]);
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        await updateCampaign(campaign.id, {
-            name: formData.name,
-            budget: Number(formData.budget),
-            platform: formData.platform as "TikTok" | "Instagram",
-            objective: formData.objective as "AWARENESS" | "CONVERSION",
-            startDate: formData.startDate || undefined,
-            endDate: formData.endDate || undefined
-        });
-
-        setOpen(false);
-    };
-
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
-    };
+    }, [open, campaign, form]);
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -84,58 +93,129 @@ export function EditCampaignDialog({ campaign }: EditCampaignDialogProps) {
                     </DialogDescription>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="name" className="text-right">Name</Label>
-                        <Input id="name" name="name" value={formData.name} onChange={handleChange} className="col-span-3" required />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="budget" className="text-right">Budget (IDR)</Label>
-                        <CurrencyInput
-                            id="budget"
-                            value={formData.budget}
-                            onValueChange={(val) => setFormData(p => ({ ...p, budget: val.toString() }))}
-                            className="col-span-3"
-                            required
-                        />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="platform" className="text-right">Platform</Label>
-                        <select
-                            id="platform"
-                            name="platform"
-                            value={formData.platform}
-                            onChange={(e) => setFormData(p => ({ ...p, platform: e.target.value }))}
-                            className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                        >
-                            <option value="TikTok">TikTok</option>
-                            <option value="Instagram">Instagram</option>
-                        </select>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="objective" className="text-right">Objective</Label>
-                        <select
-                            id="objective"
-                            name="objective"
-                            value={formData.objective}
-                            onChange={(e) => setFormData(p => ({ ...p, objective: e.target.value }))}
-                            className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                        >
-                            <option value="AWARENESS">Awareness (CPM Focus)</option>
-                            <option value="CONVERSION">Conversion (ROAS Focus)</option>
-                        </select>
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="startDate" className="text-right">Start Date</Label>
-                        <Input id="startDate" name="startDate" type="date" value={formData.startDate} onChange={handleChange} className="col-span-3" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="endDate" className="text-right">End Date</Label>
-                        <Input id="endDate" name="endDate" type="date" value={formData.endDate} onChange={handleChange} className="col-span-3" />
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        form.handleSubmit();
+                    }}
+                >
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="name" className="text-right">Name</Label>
+                            <div className="col-span-3">
+                                <form.Field name="name">
+                                    {(field) => (
+                                        <FormInput
+                                            value={field.state.value}
+                                            onChange={(e) => field.handleChange(e.target.value)}
+                                            error={field.state.meta.errors ? field.state.meta.errors.join(", ") : undefined}
+                                            required
+                                        />
+                                    )}
+                                </form.Field>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="budget" className="text-right">Budget (IDR)</Label>
+                            <div className="col-span-3">
+                                <form.Field name="budget">
+                                    {(field) => (
+                                        <div className="space-y-2">
+                                            <CurrencyInput
+                                                value={field.state.value}
+                                                onValueChange={(val) => field.handleChange(val.toString())}
+                                                required
+                                            />
+                                            {field.state.meta.errors && (
+                                                <p className="text-xs text-red-500">{field.state.meta.errors.join(", ")}</p>
+                                            )}
+                                        </div>
+                                    )}
+                                </form.Field>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="platform" className="text-right">Platform</Label>
+                            <div className="col-span-3">
+                                <form.Field name="platform">
+                                    {(field) => (
+                                        <FormSelect
+                                            value={field.state.value}
+                                            onChange={(e) => field.handleChange(e.target.value as "TikTok" | "Instagram")}
+                                            options={[
+                                                { value: "TikTok", label: "TikTok" },
+                                                { value: "Instagram", label: "Instagram" }
+                                            ]}
+                                        />
+                                    )}
+                                </form.Field>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="objective" className="text-right">Objective</Label>
+                            <div className="col-span-3">
+                                <form.Field name="objective">
+                                    {(field) => (
+                                        <FormSelect
+                                            value={field.state.value}
+                                            onChange={(e) => field.handleChange(e.target.value as "AWARENESS" | "CONVERSION")}
+                                            options={[
+                                                { value: "AWARENESS", label: "Awareness (CPM Focus)" },
+                                                { value: "CONVERSION", label: "Conversion (ROAS Focus)" }
+                                            ]}
+                                        />
+                                    )}
+                                </form.Field>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="startDate" className="text-right">Start Date</Label>
+                            <div className="col-span-3">
+                                <form.Field name="startDate">
+                                    {(field) => (
+                                        <Input
+                                            type="date"
+                                            value={field.state.value}
+                                            onChange={(e) => field.handleChange(e.target.value)}
+                                        />
+                                    )}
+                                </form.Field>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="endDate" className="text-right">End Date</Label>
+                            <div className="col-span-3">
+                                <form.Field name="endDate">
+                                    {(field) => (
+                                        <Input
+                                            type="date"
+                                            value={field.state.value}
+                                            onChange={(e) => field.handleChange(e.target.value)}
+                                        />
+                                    )}
+                                </form.Field>
+                            </div>
+                        </div>
                     </div>
 
                     <DialogFooter>
-                        <Button type="submit">Save Changes</Button>
+                        <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
+                            {([canSubmit, isSubmitting]) => (
+                                <Button type="submit" disabled={!canSubmit || isSubmitting}>
+                                    {isSubmitting ? (
+                                        <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...</>
+                                    ) : (
+                                        "Save Changes"
+                                    )}
+                                </Button>
+                            )}
+                        </form.Subscribe>
                     </DialogFooter>
                 </form>
             </DialogContent>

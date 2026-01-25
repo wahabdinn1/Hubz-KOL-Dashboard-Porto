@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 import { Note } from "@/lib/static-data";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";

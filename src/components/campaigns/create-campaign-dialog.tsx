@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, HelpCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/retroui/Button";
+import { useForm } from "@tanstack/react-form";
+import { z } from "zod";
 import {
     Dialog,
     DialogContent,
@@ -23,31 +25,58 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { HelpCircle } from "lucide-react";
+import { FormInput, FormSelect } from "@/components/ui/form-fields";
+
+// Zod Schema
+const campaignFormSchema = z.object({
+    name: z.string().min(1, "Name is required"),
+    budget: z.string().min(1, "Budget is required"),
+    platform: z.enum(["TikTok", "Instagram"]),
+    objective: z.enum(["AWARENESS", "CONVERSION"]),
+    startDate: z.string(),
+    endDate: z.string(),
+});
 
 export function CreateCampaignDialog() {
     const { addCampaign } = useData();
     const [open, setOpen] = useState(false);
-    const [name, setName] = useState("");
-    const [budget, setBudget] = useState("");
-    const [platform, setPlatform] = useState<"TikTok" | "Instagram">("TikTok");
-    const [objective, setObjective] = useState<"AWARENESS" | "CONVERSION">("AWARENESS");
-    const [startDate, setStartDate] = useState("");
-    const [endDate, setEndDate] = useState("");
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            await addCampaign(name, parseFloat(budget) || 0, platform, objective, startDate, endDate);
-            setOpen(false);
-            setName("");
-            setBudget("");
-            setPlatform("TikTok");
-            setObjective("AWARENESS");
-            setStartDate("");
-            setEndDate("");
-        } catch (error) {
-            console.error("Failed to create campaign", error);
+    const form = useForm({
+        defaultValues: {
+            name: "",
+            budget: "",
+            platform: "TikTok" as "TikTok" | "Instagram",
+            objective: "AWARENESS" as "AWARENESS" | "CONVERSION",
+            startDate: "",
+            endDate: "",
+        },
+        validators: {
+            onChange: campaignFormSchema,
+        },
+        onSubmit: async ({ value }) => {
+            try {
+                await addCampaign(
+                    value.name,
+                    parseFloat(value.budget) || 0,
+                    value.platform,
+                    value.objective,
+                    value.startDate || "",
+                    value.endDate || ""
+                );
+                setOpen(false);
+                form.reset();
+            } catch (error) {
+                console.error("Failed to create campaign", error);
+            }
+        },
+    });
+
+    const handleTemplateChange = (templateId: string) => {
+        const template = CAMPAIGN_TEMPLATES.find(t => t.id === templateId);
+        if (template) {
+            form.setFieldValue("name", template.name);
+            if (template.defaultValues.platform) form.setFieldValue("platform", template.defaultValues.platform);
+            if (template.defaultValues.budget) form.setFieldValue("budget", template.defaultValues.budget.toString());
         }
     };
 
@@ -58,18 +87,24 @@ export function CreateCampaignDialog() {
                     <Plus className="mr-2 h-4 w-4" /> New Campaign
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                     <DialogTitle>Create Valid Campaign</DialogTitle>
                     <DialogDescription>
                         Set up a new campaign to track KOL performance.
                     </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit}>
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        form.handleSubmit();
+                    }}
+                >
                     <div className="grid gap-4 py-4">
                         {/* Template Selector */}
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="template" className="text-right flex items-center gap-1">
+                            <Label htmlFor="template" className="col-span-1 text-right flex items-center justify-end gap-1">
                                 Template
                                 <TooltipProvider delayDuration={200}>
                                     <Tooltip>
@@ -82,99 +117,138 @@ export function CreateCampaignDialog() {
                                     </Tooltip>
                                 </TooltipProvider>
                             </Label>
-                            <select
-                                id="template"
-                                className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                                onChange={(e) => {
-                                    const template = CAMPAIGN_TEMPLATES.find(t => t.id === e.target.value);
-                                    if (template) {
-                                        setName(template.name);
-                                        if (template.defaultValues.platform) setPlatform(template.defaultValues.platform);
-                                        if (template.defaultValues.budget) setBudget(template.defaultValues.budget.toString());
-                                    }
-                                }}
-                            >
-                                <option value="">-- Select a template (optional) --</option>
-                                {CAMPAIGN_TEMPLATES.map(t => (
-                                    <option key={t.id} value={t.id} title={t.description}>
-                                        {t.name}
-                                    </option>
-                                ))}
-                            </select>
+                            <div className="col-span-3">
+                                <select
+                                    id="template"
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                    onChange={(e) => handleTemplateChange(e.target.value)}
+                                >
+                                    <option value="">-- Select a template (optional) --</option>
+                                    {CAMPAIGN_TEMPLATES.map(t => (
+                                        <option key={t.id} value={t.id} title={t.description}>
+                                            {t.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
+
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="name" className="text-right">
-                                Name
-                            </Label>
-                            <Input
-                                id="name"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                className="col-span-3"
-                                placeholder="e.g., Summer Sale 2025"
-                                required
-                            />
+                            <Label className="text-right">Name</Label>
+                            <div className="col-span-3">
+                                <form.Field name="name">
+                                    {(field) => (
+                                        <FormInput
+                                            value={field.state.value}
+                                            onChange={(e) => field.handleChange(e.target.value)}
+                                            placeholder="e.g., Summer Sale 2025"
+                                            error={field.state.meta.errors ? field.state.meta.errors.join(", ") : undefined}
+                                            className="w-full"
+                                        />
+                                    )}
+                                </form.Field>
+                            </div>
                         </div>
+
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="budget" className="text-right">
-                                Budget (IDR)
-                            </Label>
-                            <CurrencyInput
-                                id="budget"
-                                value={budget}
-                                onValueChange={(val) => setBudget(val.toString())}
-                                className="col-span-3"
-                                placeholder="50.000.000"
-                                required
-                            />
+                            <Label className="text-right">Budget (IDR)</Label>
+                            <div className="col-span-3">
+                                <form.Field name="budget">
+                                    {(field) => (
+                                        <div className="space-y-2">
+                                            <CurrencyInput
+                                                value={field.state.value}
+                                                onValueChange={(val) => field.handleChange(val.toString())}
+                                                placeholder="50.000.000"
+                                            />
+                                            {field.state.meta.errors && (
+                                                <p className="text-xs text-red-500">{field.state.meta.errors.join(", ")}</p>
+                                            )}
+                                        </div>
+                                    )}
+                                </form.Field>
+                            </div>
                         </div>
+
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="platform" className="text-right">Platform</Label>
-                            <select
-                                id="platform"
-                                value={platform}
-                                onChange={(e) => setPlatform(e.target.value as "TikTok" | "Instagram")}
-                                className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                            >
-                                <option value="TikTok">TikTok</option>
-                                <option value="Instagram">Instagram</option>
-                            </select>
+                            <Label className="text-right">Platform</Label>
+                            <div className="col-span-3">
+                                <form.Field name="platform">
+                                    {(field) => (
+                                        <FormSelect
+                                            value={field.state.value}
+                                            onChange={(e) => field.handleChange(e.target.value as "TikTok" | "Instagram")}
+                                            options={[
+                                                { value: "TikTok", label: "TikTok" },
+                                                { value: "Instagram", label: "Instagram" }
+                                            ]}
+                                        />
+                                    )}
+                                </form.Field>
+                            </div>
                         </div>
+
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="objective" className="text-right">Objective</Label>
-                            <select
-                                id="objective"
-                                value={objective}
-                                onChange={(e) => setObjective(e.target.value as "AWARENESS" | "CONVERSION")}
-                                className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                            >
-                                <option value="AWARENESS">Awareness (CPM Focus)</option>
-                                <option value="CONVERSION">Conversion (ROAS Focus)</option>
-                            </select>
+                            <Label className="text-right">Objective</Label>
+                            <div className="col-span-3">
+                                <form.Field name="objective">
+                                    {(field) => (
+                                        <FormSelect
+                                            value={field.state.value}
+                                            onChange={(e) => field.handleChange(e.target.value as "AWARENESS" | "CONVERSION")}
+                                            options={[
+                                                { value: "AWARENESS", label: "Awareness (CPM Focus)" },
+                                                { value: "CONVERSION", label: "Conversion (ROAS Focus)" }
+                                            ]}
+                                        />
+                                    )}
+                                </form.Field>
+                            </div>
                         </div>
+
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="startDate" className="text-right">Start Date</Label>
-                            <Input
-                                id="startDate"
-                                type="date"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                                className="col-span-3"
-                            />
+                            <Label className="text-right">Start Date</Label>
+                            <div className="col-span-3">
+                                <form.Field name="startDate">
+                                    {(field) => (
+                                        <Input
+                                            type="date"
+                                            value={field.state.value}
+                                            onChange={(e) => field.handleChange(e.target.value)}
+                                        />
+                                    )}
+                                </form.Field>
+                            </div>
                         </div>
+
                         <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="endDate" className="text-right">End Date</Label>
-                            <Input
-                                id="endDate"
-                                type="date"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                                className="col-span-3"
-                            />
+                            <Label className="text-right">End Date</Label>
+                            <div className="col-span-3">
+                                <form.Field name="endDate">
+                                    {(field) => (
+                                        <Input
+                                            type="date"
+                                            value={field.state.value}
+                                            onChange={(e) => field.handleChange(e.target.value)}
+                                        />
+                                    )}
+                                </form.Field>
+                            </div>
                         </div>
                     </div>
+
                     <DialogFooter>
-                        <Button type="submit">Create Campaign</Button>
+                        <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
+                            {([canSubmit, isSubmitting]) => (
+                                <Button type="submit" disabled={!canSubmit || isSubmitting}>
+                                    {isSubmitting ? (
+                                        <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating...</>
+                                    ) : (
+                                        "Create Campaign"
+                                    )}
+                                </Button>
+                            )}
+                        </form.Subscribe>
                     </DialogFooter>
                 </form>
             </DialogContent>

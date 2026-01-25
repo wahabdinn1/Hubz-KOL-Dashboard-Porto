@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { KOL, Campaign, Category } from "@/types";
 import { CAMPAIGN_RAMADAN } from "@/lib/static-data";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 import { CampaignTemplate } from "@/lib/campaign-templates";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Database } from "@/types/supabase";
