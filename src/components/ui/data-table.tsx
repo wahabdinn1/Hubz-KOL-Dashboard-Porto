@@ -223,7 +223,7 @@ export function DataTable<TData, TValue>({
                             <Select.Trigger className="h-8 w-[50px] min-w-[50px] px-1 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] bg-white dark:bg-slate-950 rounded-md">
                                 <Select.Value placeholder={table.getState().pagination.pageSize} />
                             </Select.Trigger>
-                            <Select.Content side="top" className="rounded-md border-2 border-black shadow-none min-w-[50px]">
+                            <Select.Content side="top" className="rounded-md border-2 border-black shadow-none min-w-[100px]">
                                 {[10, 20, 50, 100].map((pageSize) => (
                                     <Select.Item key={pageSize} value={`${pageSize}`} className="rounded-sm my-1 cursor-pointer justify-center px-1">
                                         {pageSize}
