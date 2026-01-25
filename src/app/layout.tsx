@@ -6,6 +6,8 @@ import { AuthProvider } from "@/context/auth-context";
 import QueryProvider from "@/components/providers/query-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { NetworkStatus } from "@/components/shared/network-status";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import { Epilogue } from "next/font/google";
 
@@ -45,6 +47,8 @@ export default function RootLayout({
                   {children}
                   <NetworkStatus />
                   <Toaster />
+                  <Analytics />
+                  <SpeedInsights />
                 </DataProvider>
               </AuthProvider>
             </QueryProvider>
