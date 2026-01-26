@@ -59,8 +59,16 @@ export function DashboardSkeleton() {
                 <Skeleton variant="text" className="h-4 w-[100px]" />
             </CardHeader>
             <CardContent className="space-y-4">
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-[150px] w-full" />
+                {/* 4 rows to match: Campaigns, Views, Revenue, Avg CPV */}
+                {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="flex justify-between items-center">
+                         <Skeleton variant="text" className="h-4 w-[100px]" />
+                         <div className="flex gap-8">
+                             <Skeleton variant="text" className="h-4 w-[60px]" />
+                             <Skeleton variant="text" className="h-4 w-[60px]" />
+                         </div>
+                    </div>
+                ))}
             </CardContent>
         </Card>
         
