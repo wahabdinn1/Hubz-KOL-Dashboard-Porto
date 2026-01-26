@@ -1,17 +1,18 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip } from "recharts";
 import { TrendingUp, Users, DollarSign, Activity, Zap, Eye } from "lucide-react";
 import { useData } from "@/context/data-context";
 import { useMemo, useState, useEffect } from "react";
 import { CreateCampaignDialog } from "@/components/campaigns/create-campaign-dialog";
 import { AddKOLDialog } from "@/components/kols/add-kol-dialog";
-import { BarChart } from "@/components/retroui/charts/BarChart";
 import { Progress } from "@/components/retroui/Progress";
 import { DateRangeFilter } from "@/components/shared/date-range-filter";
 import { DateRange } from "react-day-picker";
 import { isWithinInterval, parseISO } from "date-fns";
+import { Skeleton } from "@/components/retroui/Skeleton";
+import dynamic from 'next/dynamic';
+import { DashboardSkeleton } from "./dashboard-skeleton";
 
 import {
   Tooltip,
@@ -21,11 +22,27 @@ import {
 } from "@/components/ui/tooltip";
 import { HelpCircle } from "lucide-react";
 
+// Dynamically import charts to reduce initial bundle size
+const BarChart = dynamic(() => import("@/components/retroui/charts/BarChart").then(mod => mod.BarChart), {
+  loading: () => <Skeleton className="h-[350px] w-full bg-muted/20" />,
+  ssr: false
+});
+
+// Recharts components need to be dynamically imported for performance sometimes, 
+// but since they are used inside the component directly, we might just defer the specialized chart sections.
+// However, since we are doing manual composition for PieChart, let's keep it as is for now 
+// but note that 'recharts' is heavy.
+// A better approach for the PieChart section would be to wrap it in a separate component and dynamic import it.
+// For now, let's focus on BarChart which is the heaviest, and the general loading state.
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip } from "recharts";
+
 function DashboardContent() {
-  const { kols, campaigns } = useData();
+  const { kols, campaigns, loading } = useData();
   const [activeChart, setActiveChart] = useState<"revenue" | "views">("revenue");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [isMounted, setIsMounted] = useState(false);
+
+
 
   useEffect(() => {
     // eslint-disable-next-line
@@ -237,6 +254,10 @@ function DashboardContent() {
   };
 
 
+
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className="space-y-8">

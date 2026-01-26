@@ -44,7 +44,7 @@ export default function RegisterPage() {
                                     id="fullName"
                                     name="fullName"
                                     type="text"
-                                    placeholder="John Doe"
+                                    placeholder="Wahabdin Sangadji"
                                     required
                                     className="h-12"
                                 />
