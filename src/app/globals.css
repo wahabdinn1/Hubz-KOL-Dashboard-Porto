@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -46,59 +47,59 @@
 
 :root {
   --radius: 0.5rem;
-  --background: #FFFFFF;
+  --background: #ffffff;
   --foreground: #000000;
-  --muted: #F3F4F6;
-  --muted-foreground: #6B7280;
-  --card: #FFFFFF;
+  --muted: #f3f4f6;
+  --muted-foreground: #6b7280;
+  --card: #ffffff;
   --card-foreground: #000000;
-  --popover: #FFFFFF;
+  --popover: #ffffff;
   --popover-foreground: #000000;
   --border: #000000;
-  --input: #FFFFFF;
-  --primary: #FFDA5C;
-  --primary-hover: #FCD34D;
+  --input: #ffffff;
+  --primary: #ffda5c;
+  --primary-hover: #fcd34d;
   --primary-foreground: #000000;
   --secondary: #000000;
-  --secondary-foreground: #FFFFFF;
-  --accent: #FFDA5C;
+  --secondary-foreground: #ffffff;
+  --accent: #ffda5c;
   --accent-foreground: #000000;
-  --destructive: #EF4444;
-  --destructive-foreground: #FFFFFF;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
   --ring: #000000;
-  --chart-1: #FFDA5C;
+  --chart-1: #ffda5c;
   --chart-2: #000000;
-  --chart-3: #10B981;
-  --chart-4: #8B5CF6;
-  --chart-5: #EF4444;
+  --chart-3: #10b981;
+  --chart-4: #8b5cf6;
+  --chart-5: #ef4444;
 }
 
 .dark {
-  --background: #0D0D0D;
-  --foreground: #FFFFFF;
-  --muted: #1F2937;
-  --muted-foreground: #9CA3AF;
+  --background: #0d0d0d;
+  --foreground: #ffffff;
+  --muted: #1f2937;
+  --muted-foreground: #9ca3af;
   --card: #171717;
-  --card-foreground: #FFFFFF;
+  --card-foreground: #ffffff;
   --popover: #171717;
-  --popover-foreground: #FFFFFF;
-  --border: #FFFFFF;
+  --popover-foreground: #ffffff;
+  --border: #ffffff;
   --input: #171717;
-  --primary: #FFDA5C;
-  --primary-hover: #FCD34D;
+  --primary: #ffda5c;
+  --primary-hover: #fcd34d;
   --primary-foreground: #000000;
-  --secondary: #FFFFFF;
+  --secondary: #ffffff;
   --secondary-foreground: #000000;
   --accent: #374151;
-  --accent-foreground: #FFFFFF;
-  --destructive: #7F1D1D;
-  --destructive-foreground: #FFFFFF;
-  --ring: #FFFFFF;
-  --chart-1: #FFDA5C;
-  --chart-2: #FFFFFF;
-  --chart-3: #10B981;
-  --chart-4: #8B5CF6;
-  --chart-5: #EF4444;
+  --accent-foreground: #ffffff;
+  --destructive: #7f1d1d;
+  --destructive-foreground: #ffffff;
+  --ring: #ffffff;
+  --chart-1: #ffda5c;
+  --chart-2: #ffffff;
+  --chart-3: #10b981;
+  --chart-4: #8b5cf6;
+  --chart-5: #ef4444;
 }
 
 @layer base {

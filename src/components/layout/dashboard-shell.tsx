@@ -19,7 +19,8 @@ import {
     DollarSign,
     Search,
     TrendingUp,
-    Download
+    Download,
+    Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/app/auth/actions";
@@ -89,9 +90,27 @@ const NAV_ITEMS: NavItem[] = [
             { name: "Profile Lookup", href: "/tools/stalk", icon: Search },
             { name: "TikTok Trending", href: "/tools/trending", icon: TrendingUp },
             { name: "Video Info", href: "/tools/downloader", icon: Download },
+            { name: "Video Info", href: "/tools/downloader", icon: Download },
         ]
     },
-    { name: "Settings", href: "/settings", icon: Settings },
+    {
+        name: "Contracts",
+        href: "/contracts",
+        icon: FileText,
+        items: [
+            { name: "Management", href: "/contracts", icon: FileText },
+            { name: "Generator", href: "/contracts/generator", icon: Plus },
+        ]
+    },
+    { 
+        name: "Settings", 
+        href: "/settings", 
+        icon: Settings,
+        items: [
+             { name: "General", href: "/settings", icon: Settings },
+             { name: "Contract Templates", href: "/settings/templates", icon: FileText },
+        ]
+    },
 ];
 
 export function DashboardShell({ children, user }: { children: React.ReactNode; user: SupabaseUser | null }) {

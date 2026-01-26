@@ -1,78 +1,82 @@
 # Hubz KOL Dashboard
 
-A **Neo-Brutalist** Influencer Management & Analytics Dashboard built for the modern marketing era.
+A comprehensive Influencer Management & Analytics Dashboard built for the modern marketing era.
 
-## ✨ Features
+## Features
 
-### 📊 Dashboard & Analytics
+### Dashboard & Analytics
 
 - Real-time revenue & spend tracking
 - Profitability metrics and ROI calculations
 - Campaign performance analytics
 - Finance command center
 
-### 👥 KOL Management
+### KOL Management
 
 - Detailed influencer profiles with engagement rates
 - Auto-fetch TikTok & Instagram profiles
 - Tiering system (Nano, Micro, Macro, Mega)
 - Performance history tracking
 
-### 📋 Campaign Operations
+### KOL Scorecard Calculator
 
-- Kanban task board with drag-and-drop
-- Gantt chart timeline view
-- Calendar view for scheduling
+- **Real Experience Score**: Calculate value based on recent video views.
+- **Median Analysis**: Uses the median views of the last 10 videos for accuracy.
+- **CPM Assessment**: Determines if an influencer is "Super Worth It", "Fair", or "Overpriced".
+- **Shareable Output**: Generate professional scorecards for internal review.
+
+### Contract Management System
+
+- **Contract Generator**: Create legal agreements using pre-defined templates.
+- **Template Editor**: Rich text editor with "Edit" and "Preview" modes.
+- **Dynamic Variables**: Insert placeholders like `{SOW}` and `{FEE}` with a single click.
+- **PDF Export**: Generate clean PDF contracts ready for signing.
+
+### Campaign Operations
+
+- Task management board
+- Timeline views for scheduling
 - Deliverables tracking
 - AI Smart Match for influencer recommendations
 
-### 💰 Finance & Invoicing
+### Finance & Invoicing
 
 - Invoice creation and management
-- Status workflows (Draft → Paid)
+- Status workflows (Draft -> Paid)
 - PDF generation
 - Budget utilization tracking
 
-### 🔧 Tools
+### Tools
 
-- **Profile Lookup**: Fetch TikTok & Instagram profiles with platform tabs
+- **Profile Lookup**: Fetch TikTok & Instagram profiles
 - **TikTok Trending**: Browse trending videos and creators
-- **Video Downloader**: Get TikTok video info, embedded preview, and HD download (no watermark)
-- **Hashtag Search**: Discover videos by keyword with infinite scroll
-- **User Posts**: Fetch user's TikTok videos
-- **ER Calculator**: Engagement rate calculator
+- **Video Downloader**: Get TikTok video info and downloads
+- **Hashtag Search**: Discover videos by keyword
 
-### 🎨 Design System
+### Design System
 
-- Neo-Brutalist RetroUI components
-- Vibrant color palette (#FFDA5C primary)
-- Dark mode support
-- Fully responsive mobile design
-
-### ⌨️ Productivity
-
-- Command palette (`Ctrl+K`)
-- Keyboard shortcuts
-- Global date filtering
-- Quick actions
+- **RetroUI**: Custom Neo-Brutalist design system
+- **High Contrast**: Distinctive typography and borders
+- **Dark Mode**: Fully supported
+- **Responsive**: Mobile-first design
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
-| Category   | Technology                   |
-| ---------- | ---------------------------- |
-| Framework  | Next.js 16 (App Router)      |
-| Styling    | Tailwind CSS v4 + Shadcn UI  |
-| Database   | Supabase (PostgreSQL & Auth) |
-| TikTok API | @tobyg74/tiktok-api-dl       |
-| Instagram  | Custom JS scraper            |
-| Charts     | Recharts                     |
-| Forms      | React Hook Form + Zod        |
+| Category  | Technology                   |
+| --------- | ---------------------------- |
+| Framework | Next.js 16 (App Router)      |
+| Styling   | Tailwind CSS v4 + Shadcn UI  |
+| Database  | Supabase (PostgreSQL & Auth) |
+| Language  | TypeScript                   |
+| Charts    | Recharts                     |
+| Forms     | React Hook Form + Zod        |
+| PDF       | React-PDF                    |
 
 ---
 
-## ⚡ Getting Started
+## Getting Started
 
 ### 1. Install Dependencies
 
@@ -82,7 +86,7 @@ npm install
 
 ### 2. Configure Environment
 
-Create `.env`:
+Create a `.env` file in the root directory:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
@@ -95,23 +99,23 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+Open [http://localhost:3000](http://localhost:3000) with your browser.
 
 ---
 
-## 📦 Deployment
+## Deployment
 
 Deploy to Vercel:
 
-1. Push to GitHub
-2. Import to Vercel
-3. Add environment variables
-4. Deploy
+1.  Push to GitHub
+2.  Import to Vercel
+3.  Add environment variables
+4.  Deploy
 
-> **Note**: Some TikTok features (like direct user posts via Puppeteer) only work in local development due to Cloudflare protection. The fallback search-based method works on Vercel.
+**Note**: Some TikTok features (like direct user posts via Puppeteer) may have limitations in serverless environments due to platform protections.
 
 ---
 
-## 📄 License
+## License
 
 MIT License © 2026 Wahabdinn

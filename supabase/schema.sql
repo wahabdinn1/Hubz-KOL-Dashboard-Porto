@@ -357,6 +357,23 @@ COMMENT ON COLUMN campaign_deliverables.collaboration_type IS 'PAID = fixed fee 
 COMMENT ON COLUMN campaign_deliverables.fixed_fee IS 'Only for PAID type - agreed fixed payment amount';
 COMMENT ON COLUMN campaign_deliverables.commission_rate IS 'Only for AFFILIATE type - percentage (e.g., 10 = 10%)';
 
+-- B12. Contract Templates (Added 2026-01-26)
+CREATE TABLE IF NOT EXISTS public.contract_templates (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name TEXT NOT NULL,
+  content TEXT NOT NULL,
+  is_default BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.contract_templates ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Enable all access for authenticated users" ON public.contract_templates
+    FOR ALL
+    TO authenticated
+    USING (true)
+    WITH CHECK (true);
+
 -- ==========================================
 -- END OF SCHEMA
 -- ==========================================

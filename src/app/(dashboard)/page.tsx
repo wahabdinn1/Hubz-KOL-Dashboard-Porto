@@ -649,7 +649,6 @@ function DashboardContent() {
         </Card>
 
         {/* Top KOLs Leaderboard */}
-        {/* Top KOLs Leaderboard */}
         <Card className="col-span-1 lg:col-span-4 border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
