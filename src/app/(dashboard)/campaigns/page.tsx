@@ -123,6 +123,7 @@ function CampaignsListContent() {
                     data={campaignsWithMetrics} 
                     searchKey="name"
                     searchPlaceholder="Filter campaigns..."
+                    onRowClick={(row) => router.push(`/campaigns/${row.id}`)}
                 />
             }
             mobileView={mobileView}

@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useData } from "@/context/data-context";
 import { DeleteCampaignDialog } from "./delete-campaign-dialog";
-import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 
 export interface CampaignWithMetrics extends Campaign {
@@ -72,13 +71,9 @@ export const columns: ColumnDef<CampaignWithMetrics>[] = [
         ),
         cell: ({ row }) => {
             return (
-                <Link 
-                    href={`/campaigns/${row.original.id}`}
-                    className="font-medium hover:underline text-blue-600 dark:text-blue-400 block truncate max-w-[200px]"
-                    title={row.getValue("name")}
-                >
+                <span className="font-medium text-foreground block truncate max-w-[200px]" title={row.getValue("name")}>
                     {row.getValue("name")}
-                </Link>
+                </span>
             )
         }
     },

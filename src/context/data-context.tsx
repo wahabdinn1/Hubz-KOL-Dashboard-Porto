@@ -300,11 +300,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             if (data) setActiveCampaignId(data.id);
         };
 
-        toast.promise(promise(), {
+        const p = promise();
+        toast.promise(p, {
             loading: 'Creating campaign...',
             success: 'Campaign created',
-            error: 'Failed to create campaign'
+            error: (err) => `Failed to create campaign: ${err.message}`
         });
+        return p;
     };
 
     const deleteCampaign = async (id: string) => {
@@ -316,11 +318,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             if (activeCampaignId === id) setActiveCampaignId(null);
         };
 
-        toast.promise(promise(), {
+        const p = promise();
+        toast.promise(p, {
             loading: 'Deleting campaign...',
             success: 'Campaign deleted',
-            error: 'Failed to delete campaign'
+            error: (err) => `Failed to delete campaign: ${err.message}`
         });
+        return p;
     };
 
     const deleteCampaigns = async (ids: string[]) => {
@@ -331,7 +335,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             await queryClient.invalidateQueries({ queryKey: ['campaigns'] });
             if (activeCampaignId && ids.includes(activeCampaignId)) setActiveCampaignId(null);
             toast.success("Campaigns deleted");
-        } catch (e) { console.error("Error deleting campaigns:", e); }
+        } catch (e) { 
+            console.error("Error deleting campaigns:", e); 
+            const message = e instanceof Error ? e.message : 'Unknown error';
+            toast.error(`Failed to delete campaigns: ${message}`);
+        }
     };
 
     const updateCampaign = async (id: string, updates: Partial<Campaign>) => {
@@ -351,11 +359,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             queryClient.invalidateQueries({ queryKey: ['campaigns'] });
         };
 
-        toast.promise(promise(), {
+        const p = promise();
+        toast.promise(p, {
             loading: 'Updating campaign...',
             success: 'Campaign updated',
-            error: 'Failed to update campaign'
+            error: (err) => `Failed to update campaign: ${err.message}`
         });
+        return p;
     };
 
     const duplicateCampaign = async (id: string) => {
@@ -380,11 +390,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             await queryClient.invalidateQueries({ queryKey: ['campaigns'] });
         };
 
-        toast.promise(promise(), {
+        const p = promise();
+        toast.promise(p, {
             loading: 'Duplicating campaign...',
             success: 'Campaign duplicated successfully',
-            error: 'Failed to duplicate campaign'
+            error: (err) => `Failed to duplicate campaign: ${err.message}`
         });
+        return p;
     };
 
     // KOL Mutations
@@ -431,11 +443,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             }
         };
 
-        toast.promise(promise(), {
+        const p = promise();
+        toast.promise(p, {
             loading: 'Adding influencer...',
             success: 'Influencer added',
-            error: 'Failed to add influencer'
+            error: (err) => `Failed to add influencer: ${err.message}`
         });
+        return p;
     };
 
     const deleteKOL = async (id: string) => {
@@ -446,11 +460,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             queryClient.invalidateQueries({ queryKey: ['deliverables'] });
         };
 
-        toast.promise(promise(), {
+        const p = promise();
+        toast.promise(p, {
             loading: 'Deleting influencer...',
             success: 'Influencer deleted',
-            error: 'Failed to delete influencer'
+            error: (err) => `Failed to delete influencer: ${err.message}`
         });
+        return p;
     };
 
     const deleteKOLs = async (ids: string[]) => {
@@ -460,7 +476,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             queryClient.invalidateQueries({ queryKey: ['kols'] });
             queryClient.invalidateQueries({ queryKey: ['deliverables'] });
             toast.success("Influencers deleted");
-        } catch (err) { console.error("Error deleting KOLs:", err); }
+        } catch (err) { 
+            console.error("Error deleting KOLs:", err); 
+            const message = err instanceof Error ? err.message : 'Unknown error';
+            toast.error(`Failed to delete KOLs: ${message}`);
+        }
     };
 
     const updateKOL = async (id: string, updates: Partial<KOL>) => {
@@ -497,11 +517,13 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
             queryClient.invalidateQueries({ queryKey: ['kols'] });
         };
 
-        toast.promise(promise(), {
+        const p = promise();
+        toast.promise(p, {
             loading: 'Updating influencer...',
             success: 'Influencer updated',
-            error: 'Failed to update influencer'
+            error: (err) => `Failed to update influencer: ${err.message}`
         });
+        return p;
     };
 
     // Deliverable Mutations

@@ -53,7 +53,7 @@ function SearchableSelect({ value, onChange, options, placeholder = "Select..." 
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className="w-full justify-between"
+                    className="w-full justify-between !shadow-none"
                 >
                     {value && value !== "none"
                         ? options.find((framework) => framework.value === value)?.label
@@ -248,13 +248,13 @@ export default function CreateInvoicePage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Main Form Area */}
                 <div className="md:col-span-2 space-y-6">
-                    <Card>
+                    <Card className="!shadow-none">
                         <CardHeader>
                             <CardTitle>Invoice Details</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {/* Relations Section */}
-                            <div className="grid grid-cols-2 gap-4 p-4 bg-muted/20 rounded-lg border border-muted">
+                            <div className="grid grid-cols-2 gap-4 p-4 bg-muted/20 rounded-md border border-muted">
                                 <div className="space-y-2 flex flex-col">
                                     <Label className="flex items-center gap-2 mb-1">
                                         <LinkIcon className="h-3 w-3" /> Link KOL (Optional)
@@ -282,12 +282,12 @@ export default function CreateInvoicePage() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label>Invoice Number</Label>
-                                    <Input value={invoiceNumber} readOnly className="bg-muted font-mono" />
+                                    <Input value={invoiceNumber} readOnly className="bg-muted font-mono !shadow-none" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Status</Label>
                                     <Select value={status} onValueChange={setStatus}>
-                                        <SelectTrigger>
+                                        <SelectTrigger className="!shadow-none border-2 border-black">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -305,6 +305,7 @@ export default function CreateInvoicePage() {
                                     placeholder="e.g., PT Maju Mundur"
                                     value={recipientName}
                                     onChange={(e) => setRecipientName(e.target.value)}
+                                    className="!shadow-none"
                                 />
                             </div>
 
@@ -314,6 +315,7 @@ export default function CreateInvoicePage() {
                                     placeholder="Full billing address..."
                                     value={recipientAddress}
                                     onChange={(e) => setRecipientAddress(e.target.value)}
+                                    className="!shadow-none border-2 border-black"
                                 />
                             </div>
 
@@ -324,6 +326,7 @@ export default function CreateInvoicePage() {
                                         type="date"
                                         value={issuedDate}
                                         onChange={(e) => setIssuedDate(e.target.value)}
+                                        className="!shadow-none"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -332,13 +335,14 @@ export default function CreateInvoicePage() {
                                         type="date"
                                         value={dueDate}
                                         onChange={(e) => setDueDate(e.target.value)}
+                                        className="!shadow-none"
                                     />
                                 </div>
                             </div>
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card className="!shadow-none">
                         <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle>Items</CardTitle>
                             <Button size="sm" variant="secondary" onClick={handleAddItem}>
@@ -365,16 +369,14 @@ export default function CreateInvoicePage() {
                                                     placeholder="Item description"
                                                     value={item.description}
                                                     onChange={(e) => handleItemChange(item.id, 'description', e.target.value)}
+                                                    className="!shadow-none"
                                                 />
-                                                <p className="text-[10px] text-muted-foreground mt-1">
-                                                    Description of the work (e.g. &quot;Instagram Reels Creation&quot;)
-                                                </p>
                                             </TableCell>
                                             <TableCell>
                                                 <Input
                                                     type="number"
                                                     min="1"
-                                                    className="text-center"
+                                                    className="text-center !shadow-none"
                                                     value={item.quantity}
                                                     onChange={(e) => handleItemChange(item.id, 'quantity', e.target.value)}
                                                 />
@@ -385,6 +387,7 @@ export default function CreateInvoicePage() {
                                                     min="0"
                                                     value={item.price}
                                                     onChange={(e) => handleItemChange(item.id, 'price', e.target.value)}
+                                                    className="!shadow-none"
                                                 />
                                             </TableCell>
                                             <TableCell className="text-right font-medium">
@@ -416,7 +419,7 @@ export default function CreateInvoicePage() {
 
                 {/* Sidebar Summary */}
                 <div className="space-y-6">
-                    <Card className="bg-muted/30">
+                    <Card className="bg-muted/30 !shadow-none">
                         <CardHeader>
                             <CardTitle>Summary</CardTitle>
                         </CardHeader>
@@ -436,7 +439,7 @@ export default function CreateInvoicePage() {
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card className="!shadow-none">
                         <CardHeader>
                             <CardTitle className="text-sm">Bank Details</CardTitle>
                         </CardHeader>

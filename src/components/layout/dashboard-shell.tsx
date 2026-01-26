@@ -83,6 +83,8 @@ const NAV_ITEMS: NavItem[] = [
         items: [
             { name: "Hashtag Search", href: "/tools/search-feed", icon: Search },
             { name: "User Post", href: "/tools/user-feed", icon: Users },
+            { name: "KOL Scorecard", href: "/tools/kol-scorecard", icon: Calculator },
+            // { name: "ER Calculator", href: "/er-calculator", icon: Zap }, // Commenting out or moving down if preferred, or just adding new one. I will just insert.
             { name: "ER Calculator", href: "/er-calculator", icon: Zap },
             { name: "Profile Lookup", href: "/tools/stalk", icon: Search },
             { name: "TikTok Trending", href: "/tools/trending", icon: TrendingUp },

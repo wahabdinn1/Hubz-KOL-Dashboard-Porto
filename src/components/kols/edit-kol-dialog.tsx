@@ -83,31 +83,36 @@ export function EditKOLDialog({ kol }: EditKOLDialogProps) {
                 Number(value.instagramFollowers) || 0
             );
 
-            await updateKOL(kol.id, {
-                name: value.name,
-                categoryId: value.categoryId,
-                followers: totalFollowers,
-                avgViews: 0,
-                type: totalFollowers > 1000000 ? 'Macro' : totalFollowers < 100000 ? 'Micro' : 'Macro',
-                
-                tiktokUsername: value.tiktokUsername,
-                tiktokProfileLink: value.tiktokProfileLink,
-                tiktokFollowers: Number(value.tiktokFollowers) || 0,
+            try {
+                await updateKOL(kol.id, {
+                    name: value.name,
+                    categoryId: value.categoryId,
+                    followers: totalFollowers,
+                    // Removed avgViews reset to preserve existing data
+                    type: totalFollowers > 1000000 ? 'Macro' : totalFollowers < 100000 ? 'Micro' : 'Macro',
+                    
+                    tiktokUsername: value.tiktokUsername,
+                    tiktokProfileLink: value.tiktokProfileLink,
+                    tiktokFollowers: Number(value.tiktokFollowers) || 0,
 
-                instagramUsername: value.instagramUsername,
-                instagramProfileLink: value.instagramProfileLink,
-                instagramFollowers: Number(value.instagramFollowers) || 0,
+                    instagramUsername: value.instagramUsername,
+                    instagramProfileLink: value.instagramProfileLink,
+                    instagramFollowers: Number(value.instagramFollowers) || 0,
 
-                rateCardTiktok: Number(value.rateCardTiktok) || 0,
-                rateCardReels: Number(value.rateCardReels) || 0,
-                rateCardPdfLink: value.rateCardPdfLink,
-                avatar: value.avatar,
-                whatsappNumber: value.whatsappNumber,
-                collaborationType: value.collaborationType,
-                defaultCommissionRate: Number(value.defaultCommissionRate) || 0
-            });
+                    rateCardTiktok: Number(value.rateCardTiktok) || 0,
+                    rateCardReels: Number(value.rateCardReels) || 0,
+                    rateCardPdfLink: value.rateCardPdfLink,
+                    avatar: value.avatar,
+                    whatsappNumber: value.whatsappNumber,
+                    collaborationType: value.collaborationType,
+                    defaultCommissionRate: Number(value.defaultCommissionRate) || 0
+                });
 
-            setOpen(false);
+                setOpen(false);
+            } catch (e) {
+                // Error handled by global toast
+                console.error("Update KOL failed", e);
+            }
         },
     });
 
@@ -282,26 +287,26 @@ export function EditKOLDialog({ kol }: EditKOLDialogProps) {
                                         <button
                                             type="button"
                                             onClick={() => field.handleChange("PAID")}
-                                            className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all font-medium ${
+                                            className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all text-sm font-bold ${
                                                 field.state.value === 'PAID'
-                                                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                                                    : 'border-gray-200 hover:border-gray-300'
+                                                    ? 'border-black bg-primary text-primary-foreground shadow-hard-sm'
+                                                    : 'border-muted bg-transparent hover:border-black/50 text-muted-foreground'
                                             }`}
                                         >
-                                            💰 PAID
-                                            <span className="block text-xs font-normal mt-1 opacity-70">Fixed rate card pricing</span>
+                                            PAID
+                                            <span className="block text-[10px] font-normal mt-1 opacity-80">Fixed rate card pricing</span>
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => field.handleChange("AFFILIATE")}
-                                            className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all font-medium ${
+                                            className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all text-sm font-bold ${
                                                 field.state.value === 'AFFILIATE'
-                                                    ? 'border-green-500 bg-green-50 text-green-700'
-                                                    : 'border-gray-200 hover:border-gray-300'
+                                                    ? 'border-black bg-primary text-primary-foreground shadow-hard-sm'
+                                                    : 'border-muted bg-transparent hover:border-black/50 text-muted-foreground'
                                             }`}
                                         >
-                                            🤝 AFFILIATE
-                                            <span className="block text-xs font-normal mt-1 opacity-70">Commission-based, auto-settled</span>
+                                            AFFILIATE
+                                            <span className="block text-[10px] font-normal mt-1 opacity-80">Commission-based</span>
                                         </button>
                                     </div>
                                 </div>

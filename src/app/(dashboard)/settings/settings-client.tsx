@@ -97,6 +97,7 @@ import { User } from "@supabase/supabase-js";
 
 import { useAuth } from "@/context/auth-context";
 import { Users as UsersIcon } from "lucide-react";
+import { TeamMembersTable } from "./team-members-table";
 
 // --- Main Content ---
 export function SettingsClient({ user }: { user: User | null }) {
@@ -365,6 +366,25 @@ export function SettingsClient({ user }: { user: User | null }) {
                         </Card>
                     </TabsContent>
 
+
+                    {isAdmin && (
+
+                        <TabsContent value="members" className="space-y-4">
+                            <Card>
+                                <CardHeader>
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <CardTitle>Team Members</CardTitle>
+                                            <CardDescription>Manage users and their roles in your workspace.</CardDescription>
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent>
+                                    <TeamMembersTable />
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                    )}
 
                     {isAdmin && (
                         <TabsContent value="categories" className="space-y-4">

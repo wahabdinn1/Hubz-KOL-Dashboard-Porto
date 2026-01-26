@@ -52,16 +52,21 @@ export function EditCampaignDialog({ campaign }: EditCampaignDialogProps) {
             onChange: campaignFormSchema,
         },
         onSubmit: async ({ value }) => {
-            await updateCampaign(campaign.id, {
-                name: value.name,
-                budget: parseFloat(value.budget) || 0,
-                platform: value.platform,
-                objective: value.objective,
-                startDate: value.startDate || undefined,
-                endDate: value.endDate || undefined
-            });
+            try {
+                await updateCampaign(campaign.id, {
+                    name: value.name,
+                    budget: parseFloat(value.budget) || 0,
+                    platform: value.platform,
+                    objective: value.objective,
+                    startDate: value.startDate || undefined,
+                    endDate: value.endDate || undefined
+                });
 
-            setOpen(false);
+                setOpen(false);
+            } catch (e) {
+                // Error handled by global toast, keep dialog open
+                console.error("Update failed", e);
+            }
         },
     });
 
