@@ -360,13 +360,26 @@ export function SettingsClient({ user }: { user: User | null }) {
                                                 <div className="h-2 w-2 rounded-full bg-green-600 animate-pulse" />
                                                 <span className="font-bold text-green-800">Connected as {tiktokConnection.seller_name}</span>
                                                 <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    className="h-8 ml-2 border-green-600 text-green-800 hover:bg-green-200"
+                                                    onClick={() => window.location.href = "/api/tiktok/auth"}
+                                                >
+                                                    Reconnect
+                                                </Button>
+                                                <Button 
                                                     variant="ghost" 
                                                     size="sm" 
-                                                    className="h-6 w-6 p-0 hover:bg-green-200 text-green-800 ml-2"
+                                                    className="h-8 w-8 p-0 hover:bg-green-200 text-green-800"
                                                     title="Disconnect"
-                                                    // Add disconnect logic later
+                                                    onClick={async () => {
+                                                        if (confirm("Disconnect TikTok Shop?")) {
+                                                            await fetch('/api/tiktok/connection', { method: 'DELETE' });
+                                                            window.location.reload();
+                                                        }
+                                                    }}
                                                 >
-                                                    <Trash2 className="h-3 w-3" />
+                                                    <Trash2 className="h-4 w-4" />
                                                 </Button>
                                              </div>
                                         ) : (

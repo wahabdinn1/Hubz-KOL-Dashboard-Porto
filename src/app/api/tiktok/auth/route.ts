@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { TikTokShopService } from "@/lib/tiktok-shop/service";
 import { nanoid } from "nanoid";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
     // Generate a random state for CSRF protection
     const state = nanoid();
     

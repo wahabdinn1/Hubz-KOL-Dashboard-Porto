@@ -8,7 +8,7 @@ export class TikTokShopService {
      * @param body - The request body (optional).
      * @returns The calculated signature.
      */
-    static generateSignature(params: Record<string, any>, path?: string, body?: string): string {
+    static generateSignature(params: Record<string, string | number | boolean>, path?: string): string {
         const { appSecret } = TIKTOK_SHOP_CONFIG;
 
         // 1. Filter out 'sign' and 'access_token' parameters
@@ -59,7 +59,7 @@ export class TikTokShopService {
         const { appKey, appSecret, authApiBaseUrl } = TIKTOK_SHOP_CONFIG;
         const timestamp = Math.floor(Date.now() / 1000);
         
-        const params: Record<string, any> = {
+        const params: Record<string, string | number> = {
             app_key: appKey,
             app_secret: appSecret,
             auth_code: authCode,
@@ -88,48 +88,5 @@ export class TikTokShopService {
         return response.json();
     }
 
-    /**
-     * Retrieves the Creator Profile information.
-     * @param accessToken - The access token.
-     * @returns The creator profile data.
-     */
-    static async getCreatorProfile(accessToken: string) {
-        const { appKey, appSecret, apiBaseUrl } = TIKTOK_SHOP_CONFIG;
-        const timestamp = Math.floor(Date.now() / 1000);
-        
-        // Common params for business endpoints
-        const params: Record<string, any> = {
-            app_key: appKey,
-            timestamp: timestamp,
-            // access_token: accessToken, // REMOVED: Affiliate endpoints use header
-        };
-        
-        
-        const sign = this.generateSignature(params, TIKTOK_SHOP_ENDPOINTS.getCreatorProfile);
-        
-        const url = new URL(`${apiBaseUrl}${TIKTOK_SHOP_ENDPOINTS.getCreatorProfile}`);
-        Object.keys(params).forEach(key => url.searchParams.append(key, String(params[key])));
-        url.searchParams.append("sign", sign);
 
-        const response = await fetch(url.toString(), {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                "x-tts-access-token": accessToken, // ADDED
-            },
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-             // Try to parse json error
-            try {
-                const jsonErr = JSON.parse(errorText);
-                throw new Error(`TikTok API Error: ${jsonErr.message || jsonErr.error_msg || errorText}`);
-            } catch {
-                throw new Error(`TikTok API Error: ${response.status} - ${errorText}`);
-            }
-        }
-
-        return response.json();
-    }
 }

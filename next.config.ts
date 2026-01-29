@@ -13,5 +13,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  serverExternalPackages: ['@tobyg74/tiktok-api-dl'],
 };
 export default nextConfig;

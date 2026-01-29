@@ -113,7 +113,7 @@ export default function UserFeedPage() {
                     {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                     {posts.map((post: any) => (
                         <Card key={post.id} className="overflow-hidden group hover:shadow-lg transition-all border-muted">
-                            <div className="aspect-[9/16] relative bg-black">
+                            <div className="aspect-9/16 relative bg-black">
                                 {post.cover ? (
                                      /* eslint-disable-next-line @next/next/no-img-element */
                                     <img 
@@ -127,7 +127,7 @@ export default function UserFeedPage() {
                                         <Play className="h-12 w-12" />
                                     </div>
                                 )}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-90" />
+                                <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent opacity-90" />
                                 
                                 <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
                                     <p className="line-clamp-2 text-sm font-medium mb-2">{post.title}</p>

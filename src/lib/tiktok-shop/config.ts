@@ -11,5 +11,4 @@ export const TIKTOK_SHOP_ENDPOINTS = {
     getAccessToken: "/token/get",
     getRefreshToken: "/token/refresh",
     getAuthorizedShops: "/authorization/202309/shops",
-    getCreatorProfile: "/affiliate_creator/202405/profiles",
 };

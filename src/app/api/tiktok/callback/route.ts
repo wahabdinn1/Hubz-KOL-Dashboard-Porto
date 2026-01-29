@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const code = searchParams.get("code");
-    const state = searchParams.get("state");
+    // const state = searchParams.get("state");
     
     if (!code) {
         return NextResponse.json({ error: "Missing auth code" }, { status: 400 });
@@ -50,8 +50,9 @@ export async function GET(request: NextRequest) {
         
         return NextResponse.redirect(new URL("/settings?tiktok_connected=true", request.url));
 
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Callback Error:", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+        return NextResponse.json({ error: errorMessage }, { status: 500 });
     }
 }
