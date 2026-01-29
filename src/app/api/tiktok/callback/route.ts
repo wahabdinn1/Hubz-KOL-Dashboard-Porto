@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
         const data = tokenResponse.data;
         
         // Store in Supabase
-        const supabase = createClient();
+        const supabase = await createClient();
         
         // Assuming we store this in an 'integrations' or 'shops' table
         // For MVP, lets try to store in 'integrations' or create a new table if needed.
