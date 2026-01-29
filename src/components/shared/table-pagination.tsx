@@ -3,7 +3,13 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { Button } from "@/components/retroui/Button";
-import { Select } from "@/components/retroui/Select";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 interface TablePaginationProps {
     currentPage: number;
@@ -91,16 +97,16 @@ export function TablePagination({
                     value={pageSize.toString()}
                     onValueChange={(val) => onPageSizeChange(Number(val))}
                 >
-                    <Select.Trigger className="w-fit min-w-[3.5rem] h-8 bg-background text-xs px-2">
-                        <Select.Value />
-                    </Select.Trigger>
-                    <Select.Content>
+                    <SelectTrigger className="w-fit min-w-[3.5rem] h-8 bg-background text-xs px-2">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
                         {pageSizeOptions.map((size) => (
-                            <Select.Item key={size} value={size.toString()}>
+                            <SelectItem key={size} value={size.toString()}>
                                 {size}
-                            </Select.Item>
+                            </SelectItem>
                         ))}
-                    </Select.Content>
+                    </SelectContent>
                 </Select>
                 <span className="text-xs text-muted-foreground">per page</span>
             </div>
