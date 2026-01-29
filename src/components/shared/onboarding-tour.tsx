@@ -37,6 +37,12 @@ const DEFAULT_TOUR_STEPS: TourStep[] = [
         position: "right",
     },
     {
+        title: "Contract Management",
+        description: "Generate, edit, and manage legal agreements with dynamic templates and PDF export.",
+        targetSelector: '[data-tour="contracts"]',
+        position: "right",
+    },
+    {
         title: "Financial Insights",
         description: "Track revenue, spending, and ROI across all your campaigns.",
         targetSelector: '[data-tour="finance"]',
@@ -44,7 +50,7 @@ const DEFAULT_TOUR_STEPS: TourStep[] = [
     },
     {
         title: "Quick Search",
-        description: "Press Ctrl+K to quickly search campaigns, influencers, and more.",
+        description: "Press Ctrl+K (or Command+K) to quickly search campaigns, influencers, and more.",
         targetSelector: '[data-tour="search"]',
         position: "bottom",
     },

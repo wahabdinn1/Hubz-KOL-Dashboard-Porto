@@ -20,7 +20,6 @@ import {
     Search,
     TrendingUp,
     Download,
-    Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/app/auth/actions";
@@ -55,19 +54,21 @@ type NavItem = {
     href?: string;
     icon: LucideIcon;
     items?: NavItem[]; // Nested items
+    selector?: string; // For onboarding tour
 };
 
 const NAV_ITEMS: NavItem[] = [
-    { name: "Overview", href: "/", icon: BarChart3 },
+    { name: "Overview", href: "/", icon: BarChart3, selector: '[data-tour="dashboard"]' },
     {
         name: "Campaigns",
         icon: Briefcase,
+        selector: '[data-tour="campaigns"]',
         items: [
             { name: "List", href: "/campaigns", icon: Briefcase },
             { name: "Calendar", href: "/campaigns/calendar", icon: Calendar },
         ]
     },
-    { name: "Influencers", href: "/influencers", icon: Users },
+    { name: "Influencers", href: "/influencers", icon: Users, selector: '[data-tour="influencers"]' },
     { name: "Affiliates", href: "/affiliates", icon: TrendingUp },
     {
         name: "Invoices",
@@ -77,7 +78,7 @@ const NAV_ITEMS: NavItem[] = [
             { name: "Create New", href: "/invoices/new", icon: FileText }
         ]
     },
-    { name: "Finance", href: "/finance", icon: DollarSign },
+    { name: "Finance", href: "/finance", icon: DollarSign, selector: '[data-tour="finance"]' },
     {
         name: "Tools",
         icon: Calculator,
@@ -87,9 +88,8 @@ const NAV_ITEMS: NavItem[] = [
             { name: "KOL Scorecard", href: "/tools/kol-scorecard", icon: Calculator },
             // { name: "ER Calculator", href: "/er-calculator", icon: Zap }, // Commenting out or moving down if preferred, or just adding new one. I will just insert.
             { name: "ER Calculator", href: "/er-calculator", icon: Zap },
-            { name: "Profile Lookup", href: "/tools/stalk", icon: Search },
+            { name: "Profile Lookup", href: "/tools/stalk", icon: Search, selector: '[data-tour="search"]' }, // Attaching search tour here or globally? The text says Ctrl+K, but let's highlight this too or just the command palette. Actually tour says "Press Ctrl+K", pointing to "bottom". Might target the command palette button if visible or just use position center/bottom without target for keyboard shortcuts.
             { name: "TikTok Trending", href: "/tools/trending", icon: TrendingUp },
-            { name: "Video Info", href: "/tools/downloader", icon: Download },
             { name: "Video Info", href: "/tools/downloader", icon: Download },
         ]
     },
@@ -97,9 +97,9 @@ const NAV_ITEMS: NavItem[] = [
         name: "Contracts",
         href: "/contracts",
         icon: FileText,
+        selector: '[data-tour="contracts"]',
         items: [
             { name: "Management", href: "/contracts", icon: FileText },
-            { name: "Generator", href: "/contracts/generator", icon: Plus },
         ]
     },
     { 
@@ -165,7 +165,7 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className={`w-full justify-start p-0 hover:bg-transparent ${isCollapsed ? 'justify-center' : ''}`}>
                                 <div className="flex items-center gap-3 w-full">
-                                    <div className="h-9 w-9 shrink-0 rounded-none bg-secondary border-2 border-black flex items-center justify-center text-xs font-bold shadow-hard-sm hover:translate-y-[1px] hover:shadow-none transition-all text-secondary-foreground">
+                                    <div className="h-9 w-9 shrink-0 rounded-none bg-secondary border-2 border-black flex items-center justify-center text-xs font-bold shadow-hard-sm hover:translate-y-px hover:shadow-none transition-all text-secondary-foreground">
                                         {userInitials}
                                     </div>
                                     {!isCollapsed && (
@@ -223,32 +223,76 @@ export function DashboardShell({ children, user }: { children: React.ReactNode; 
                                 <span className="sr-only">Toggle navigation menu</span>
                             </Button>
                         </SheetTrigger>
-                        <SheetContent side="left" className="w-[80vw] sm:w-[300px]">
-                            <nav className="grid gap-2 text-lg font-medium">
-                                {/* Simplified Mobile Nav for now, can recursively impl later if needed */}
-                                {NAV_ITEMS.map((item) => (
-                                    <div key={item.name}>
-                                        {item.items ? (
-                                            <>
-                                                <div className="font-bold text-muted-foreground mb-1 px-2 text-sm uppercase tracking-wider">{item.name}</div>
-                                                {item.items.map(subItem => (
-                                                    <Link key={subItem.name} href={subItem.href || '#'} className="flex items-center gap-4 py-2 hover:text-primary px-4">
-                                                        <subItem.icon className="h-5 w-5" />
-                                                        {subItem.name}
-                                                    </Link>
-                                                ))}
-                                            </>
-                                        ) : (
-                                            <Link href={item.href || '#'} className="flex items-center gap-4 py-2 hover:text-primary px-2 font-bold">
-                                                <item.icon className="h-5 w-5" />
-                                                {item.name}
-                                            </Link>
-                                        )}
+                        <SheetContent side="left" className="w-[75vw] max-w-[280px] p-0 border-r-2 border-black sm:max-w-[280px]">
+                             {/* Mobile Sidebar Header */}
+                            <div className="flex h-16 items-center px-6 border-b-2 border-black bg-background">
+                                <Link href="/" className="flex items-center gap-3 font-semibold overflow-hidden">
+                                    <div className="bg-[#FFDA5C] text-black h-8 w-8 rounded-full border-2 border-black flex items-center justify-center shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                                        <span className="font-bold text-lg">*</span>
                                     </div>
-                                ))}
-                            </nav>
+                                    <span className="tracking-tight text-xl font-bold whitespace-nowrap">Hubz KOL</span>
+                                </Link>
+                            </div>
+
+                            {/* Scrollable Nav Area */}
+                            <div className="flex-1 overflow-y-auto py-4">
+                                <nav className="grid gap-1 px-4 text-lg font-medium">
+                                    {NAV_ITEMS.map((item) => (
+                                        <div key={item.name} className="mb-2">
+                                            {item.items ? (
+                                                <div className="space-y-1">
+                                                    <div className="font-black text-xs uppercase tracking-widest text-muted-foreground mb-2 mt-2 px-2 border-l-4 border-yellow-400 pl-2">
+                                                        {item.name}
+                                                    </div>
+                                                    {item.items.map(subItem => (
+                                                        <Link 
+                                                            key={subItem.name} 
+                                                            href={subItem.href || '#'} 
+                                                            className="flex items-center gap-3 py-2 px-3 text-sm font-bold border-2 border-transparent hover:border-black hover:shadow-hard-sm hover:bg-white dark:hover:bg-slate-900 hover:-translate-y-0.5 transition-all rounded-md"
+                                                        >
+                                                            <subItem.icon className="h-4 w-4" />
+                                                            {subItem.name}
+                                                        </Link>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <Link 
+                                                    href={item.href || '#'} 
+                                                    className="flex items-center gap-3 py-2 px-3 text-base font-bold border-2 border-transparent hover:border-black hover:shadow-hard-sm hover:bg-white dark:hover:bg-slate-900 hover:-translate-y-0.5 transition-all rounded-md"
+                                                >
+                                                    <item.icon className="h-5 w-5" />
+                                                    {item.name}
+                                                </Link>
+                                            )}
+                                        </div>
+                                    ))}
+                                </nav>
+                            </div>
+
+                            {/* Mobile Sidebar Footer */}
+                            <div className="p-4 border-t-2 border-black bg-muted/20">
+                                <Button variant="ghost" className="w-full justify-start p-0 hover:bg-transparent" onClick={async () => await logout()}>
+                                    <div className="flex items-center gap-3 w-full">
+                                        <div className="h-10 w-10 shrink-0 bg-red-100 text-red-600 border-2 border-black flex items-center justify-center rounded-md font-bold shadow-sm">
+                                            <LogOut className="h-5 w-5" />
+                                        </div>
+                                        <div className="text-left">
+                                            <p className="font-bold text-sm">Log Out</p>
+                                            <p className="text-xs text-muted-foreground">End your session</p>
+                                        </div>
+                                    </div>
+                                </Button>
+                            </div>
                         </SheetContent>
                     </Sheet>
+
+                    {/* Mobile Brand Logo */}
+                    <Link href="/" className="md:hidden flex items-center gap-2 mr-auto">
+                         <div className="bg-[#FFDA5C] text-black h-8 w-8 rounded-full border-2 border-black flex items-center justify-center shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                            <span className="font-bold text-lg">*</span>
+                        </div>
+                        <span className="font-bold text-lg tracking-tight">Hubz</span>
+                    </Link>
 
                     <div className="w-full flex-1">
                         {/* Can add search bar here if needed */}
@@ -313,7 +357,7 @@ function SidebarItem({ item, isCollapsed, pathname }: { item: NavItem, isCollaps
     // Expanded State - Group (Parent)
     if (hasChildren) {
         return (
-            <div className="mb-2">
+            <div className="mb-2" data-tour={item.selector ? item.selector.replace('[data-tour="', '').replace('"]', '') : undefined}>
                 <button
                     onClick={() => setIsOpen(!isOpen)}
                     className={cn(
@@ -366,6 +410,7 @@ function SidebarItem({ item, isCollapsed, pathname }: { item: NavItem, isCollaps
     return (
         <Link
             href={item.href || "#"}
+            data-tour={item.selector ? item.selector.replace('[data-tour="', '').replace('"]', '') : undefined}
             className={cn(
                 "flex items-center gap-3 px-2 py-2 text-sm font-medium transition-colors duration-200 rounded-md mb-1 group",
                 isActive

@@ -8,6 +8,7 @@ import { CampaignTemplate } from "@/lib/campaign-templates";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Database } from "@/types/supabase";
 import { toast } from "sonner";
+import { useAuth } from "./auth-context";
 
 // Note: KOLRow type reserved for future use with direct DB operations
 // type KOLRow = Database['public']['Tables']['kols']['Row'];
@@ -29,6 +30,11 @@ export interface DeliverableUpdate {
     collaborationType?: 'PAID' | 'AFFILIATE';
     fixedFee?: number;
     commissionRate?: number;
+    // NEW: Contract fields
+    contractStatus?: 'UNSENT' | 'DRAFT' | 'GENERATED' | 'SIGNED';
+    contractNumber?: string | null;
+    signedUrl?: string | null;
+    contractContent?: Record<string, unknown>; // JSONB
 }
 
 interface DataContextType {
@@ -71,6 +77,7 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export function DataProvider({ children }: { children: React.ReactNode }) {
     const queryClient = useQueryClient();
+    const { user } = useAuth();
     const [activeCampaignId, setActiveCampaignId] = useState<string | null>(null);
     const activeIdRef = useRef(activeCampaignId);
 
@@ -208,7 +215,16 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                     // NEW: Collaboration type fields
                     collaborationType: (d.collaboration_type as 'PAID' | 'AFFILIATE') || 'PAID',
                     fixedFee: d.fixed_fee || undefined,
-                    commissionRate: d.commission_rate || undefined
+                    commissionRate: d.commission_rate || undefined,
+                    // NEW: Contract fields (cast to any because types aren't regenerated)
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    contractStatus: (d as any).contract_status || 'UNSENT',
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    contractNumber: (d as any).contract_number || undefined,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    signedUrl: (d as any).signed_url || undefined,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    contractContent: (d as any).contract_content || undefined
                 }));
 
             return {
@@ -402,6 +418,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     // KOL Mutations
     const addKOL = async (newKOL: KOL, addToCurrentCampaign = true) => {
         const promise = async () => {
+            if (!user) throw new Error("You must be logged in to add an influencer.");
             // Map frontend to DB columns
             // Map ID back to Name for Text column in DB
             const catName = categories.find(c => c.id === newKOL.categoryId)?.name || newKOL.category || 'General';
@@ -411,11 +428,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
                 name: newKOL.name,
                 type: newKOL.type,
                 category: catName, // Save as Text
-                username: newKOL.tiktokUsername || newKOL.instagramUsername || 'unknown', // mandatory field in DB
                 followers: newKOL.followers,
                 avg_views: newKOL.avgViews,
-                er: 0, // Mandatory
-                platform: 'TikTok', // Mandatory
                 tiktok_username: newKOL.tiktokUsername,
                 tiktok_profile_link: newKOL.tiktokProfileLink,
                 tiktok_followers: newKOL.tiktokFollowers,
@@ -434,7 +448,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const { data, error } = await (supabase.from('kols') as any).insert([payload]).select().single();
-            if (error) throw error;
+            if (error) {
+                console.error("Supabase Insert Error:", error);
+                throw error;
+            }
 
             await queryClient.invalidateQueries({ queryKey: ['kols'] });
 
@@ -586,6 +603,15 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         if (metrics.collaborationType !== undefined) payload.collaboration_type = metrics.collaborationType;
         if (metrics.fixedFee !== undefined) payload.fixed_fee = metrics.fixedFee;
         if (metrics.commissionRate !== undefined) payload.commission_rate = metrics.commissionRate;
+        // NEW: Contract fields
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if (metrics.contractStatus !== undefined) (payload as any).contract_status = metrics.contractStatus;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if (metrics.contractNumber !== undefined) (payload as any).contract_number = metrics.contractNumber;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if (metrics.signedUrl !== undefined) (payload as any).signed_url = metrics.signedUrl;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if (metrics.contractContent !== undefined) (payload as any).contract_content = metrics.contractContent;
 
         // Optimistic Update
         await queryClient.cancelQueries({ queryKey: ['deliverables'] });

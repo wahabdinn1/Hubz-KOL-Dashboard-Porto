@@ -53,12 +53,18 @@ A comprehensive Influencer Management & Analytics Dashboard built for the modern
 - **Video Downloader**: Get TikTok video info and downloads
 - **Hashtag Search**: Discover videos by keyword
 
-### Design System
+### Design System ("Neo-Brutalist Refresh")
 
-- **RetroUI**: Custom Neo-Brutalist design system
-- **High Contrast**: Distinctive typography and borders
-- **Dark Mode**: Fully supported
-- **Responsive**: Mobile-first design
+- **RetroUI**: Custom design system featuring high contrast, bold borders (2px black), and sharp shadows (`shadow-hard`).
+- **Typography**: Optimized for readability and impact.
+- **Dark Mode**: Fully supported with consistent high-contrast styling.
+- **Micro-Interactions**: Hover states, page transitions (`Framer Motion`), and dynamic feedback.
+
+### Mobile Experience
+
+- **Responsive**: Fully optimized for mobile devices.
+- **App-Like Navigation**: Bottom navigation bar and redesigned mobile drawer.
+- **Touch-Friendly**: Generous tap targets and card-based mobile views for complex data.
 
 ---
 

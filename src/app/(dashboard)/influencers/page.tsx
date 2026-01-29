@@ -8,7 +8,13 @@ import { CompareToolDialog } from "@/components/campaigns/compare-tool-dialog";
 import { BulkImportDialog } from "@/components/kols/bulk-import-dialog";
 import { useRouter } from "next/navigation";
 import { Download, Trash2 } from "lucide-react";
-import { Select } from "@/components/retroui/Select";
+import { 
+    Select, 
+    SelectContent, 
+    SelectItem, 
+    SelectTrigger, 
+    SelectValue 
+} from "@/components/ui/select";
 import { useState, useMemo } from "react";
 import { EmptyState, EmptyStateIcons } from "@/components/retroui/EmptyState";
 import { DataView } from "@/components/shared/data-view";
@@ -458,16 +464,16 @@ function InfluencersContent() {
                             table.setPageSize(Number(value));
                         }}
                     >
-                        <Select.Trigger className="h-8 w-[50px] min-w-[50px] px-1 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] bg-white dark:bg-slate-950 rounded-md">
-                            <Select.Value placeholder={table.getState().pagination.pageSize} />
-                        </Select.Trigger>
-                        <Select.Content side="top" className="rounded-md border-2 border-black shadow-none min-w-[100px]">
+                        <SelectTrigger className="h-8 w-[70px] px-2 shadow-hard bg-white dark:bg-slate-950">
+                            <SelectValue placeholder={table.getState().pagination.pageSize} />
+                        </SelectTrigger>
+                        <SelectContent side="top">
                             {[10, 20, 50, 100].map((pageSize) => (
-                                <Select.Item key={pageSize} value={`${pageSize}`} className="rounded-sm my-1 cursor-pointer justify-center px-1">
+                                <SelectItem key={pageSize} value={`${pageSize}`}>
                                     {pageSize}
-                                </Select.Item>
+                                </SelectItem>
                             ))}
-                        </Select.Content>
+                        </SelectContent>
                     </Select>
                     <p className="text-sm font-medium text-slate-500">per page</p>
                 </div>
@@ -514,16 +520,16 @@ function InfluencersContent() {
                             value={filterTier || "all"}
                             onValueChange={(val: string) => setFilterTier(val === "all" ? null : val)}
                         >
-                            <Select.Trigger className="w-full h-8 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[1px] hover:shadow-none transition-all bg-white dark:bg-slate-950 rounded-md">
-                                <Select.Value placeholder="All Tiers" />
-                            </Select.Trigger>
-                            <Select.Content className="rounded-md border-2 border-black shadow-none">
-                                <Select.Item value="all" className="rounded-sm my-1 cursor-pointer">All Tiers</Select.Item>
-                                <Select.Item value="Mega-Tier" className="rounded-sm my-1 cursor-pointer">Mega-Tier</Select.Item>
-                                <Select.Item value="Macro-Tier" className="rounded-sm my-1 cursor-pointer">Macro-Tier</Select.Item>
-                                <Select.Item value="Micro-Tier" className="rounded-sm my-1 cursor-pointer">Micro-Tier</Select.Item>
-                                <Select.Item value="Nano-Tier" className="rounded-sm my-1 cursor-pointer">Nano-Tier</Select.Item>
-                            </Select.Content>
+                            <SelectTrigger className="w-full h-8 shadow-hard bg-white dark:bg-slate-950">
+                                <SelectValue placeholder="All Tiers" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Tiers</SelectItem>
+                                <SelectItem value="Mega-Tier">Mega-Tier</SelectItem>
+                                <SelectItem value="Macro-Tier">Macro-Tier</SelectItem>
+                                <SelectItem value="Micro-Tier">Micro-Tier</SelectItem>
+                                <SelectItem value="Nano-Tier">Nano-Tier</SelectItem>
+                            </SelectContent>
                         </Select>
                     </div>
                     <div className="w-[150px]">
@@ -531,14 +537,14 @@ function InfluencersContent() {
                             value={filterPlatform || "all"}
                             onValueChange={(val: string) => setFilterPlatform(val === "all" ? null : val)}
                         >
-                            <Select.Trigger className="w-full h-8 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[1px] hover:shadow-none transition-all bg-white dark:bg-slate-950 rounded-md">
-                                <Select.Value placeholder="All Platforms" />
-                            </Select.Trigger>
-                            <Select.Content className="rounded-md border-2 border-black shadow-none">
-                                <Select.Item value="all" className="rounded-sm my-1 cursor-pointer">All Platforms</Select.Item>
-                                <Select.Item value="TikTok" className="rounded-sm my-1 cursor-pointer">TikTok</Select.Item>
-                                <Select.Item value="Instagram" className="rounded-sm my-1 cursor-pointer">Instagram</Select.Item>
-                            </Select.Content>
+                            <SelectTrigger className="w-full h-8 shadow-hard bg-white dark:bg-slate-950">
+                                <SelectValue placeholder="All Platforms" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Platforms</SelectItem>
+                                <SelectItem value="TikTok">TikTok</SelectItem>
+                                <SelectItem value="Instagram">Instagram</SelectItem>
+                            </SelectContent>
                         </Select>
                     </div>
                 </div>

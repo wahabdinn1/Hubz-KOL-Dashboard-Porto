@@ -27,7 +27,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search } from "lucide-react";
-import { Select } from "@/components/retroui/Select";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[];
@@ -220,16 +226,16 @@ export function DataTable<TData, TValue>({
                                 table.setPageSize(Number(value));
                             }}
                         >
-                            <Select.Trigger className="h-8 w-[50px] min-w-[50px] px-1 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] bg-white dark:bg-slate-950 rounded-md">
-                                <Select.Value placeholder={table.getState().pagination.pageSize} />
-                            </Select.Trigger>
-                            <Select.Content side="top" className="rounded-md border-2 border-black shadow-none min-w-[100px]">
+                            <SelectTrigger className="h-8 w-[70px] px-2 shadow-hard bg-white dark:bg-slate-950">
+                                <SelectValue placeholder={table.getState().pagination.pageSize} />
+                            </SelectTrigger>
+                            <SelectContent side="top">
                                 {[10, 20, 50, 100].map((pageSize) => (
-                                    <Select.Item key={pageSize} value={`${pageSize}`} className="rounded-sm my-1 cursor-pointer justify-center px-1">
+                                    <SelectItem key={pageSize} value={`${pageSize}`}>
                                         {pageSize}
-                                    </Select.Item>
+                                    </SelectItem>
                                 ))}
-                            </Select.Content>
+                            </SelectContent>
                         </Select>
                         <p className="text-sm font-medium text-slate-500">per page</p>
                     </div>

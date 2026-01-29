@@ -1,15 +1,5 @@
-"use client";
-
 import { useState } from "react";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog } from "@/components/retroui/Dialog";
 import { Button } from "@/components/ui/button";
 import { useData } from "@/context/data-context";
 import { Trash2 } from "lucide-react";
@@ -26,7 +16,7 @@ export function DeleteCampaignDialog({ campaign, trigger }: DeleteCampaignDialog
     const [isDeleting, setIsDeleting] = useState(false);
 
     const handleDelete = async (e: React.MouseEvent) => {
-        e.preventDefault(); // Prevent bubbling if inside link
+        e.preventDefault(); 
         setIsDeleting(true);
         try {
             await deleteCampaign(campaign.id);
@@ -40,7 +30,7 @@ export function DeleteCampaignDialog({ campaign, trigger }: DeleteCampaignDialog
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
+            <Dialog.Trigger asChild>
                 {trigger ? trigger : (
                     <Button
                         variant="ghost"
@@ -51,23 +41,25 @@ export function DeleteCampaignDialog({ campaign, trigger }: DeleteCampaignDialog
                         <Trash2 className="h-4 w-4" />
                     </Button>
                 )}
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                    <DialogTitle>Delete Campaign</DialogTitle>
-                    <DialogDescription>
-                        Are you sure you want to delete <strong>{campaign.name}</strong>? This will remove all data associated with this campaign. This action cannot be undone.
-                    </DialogDescription>
-                </DialogHeader>
-                <DialogFooter className="mt-4 gap-4 sm:gap-4 sm:space-x-4">
+            </Dialog.Trigger>
+            <Dialog.Content>
+                <Dialog.Header>
+                    <span className="font-semibold text-lg">Delete Campaign</span>
+                </Dialog.Header>
+                <div className="p-4">
+                    <p className="text-muted-foreground">
+                         Are you sure you want to delete <strong>{campaign.name}</strong>? This will remove all data associated with this campaign. This action cannot be undone.
+                    </p>
+                </div>
+                <Dialog.Footer>
                     <Button variant="outline" onClick={(e) => { e.stopPropagation(); setOpen(false); }} disabled={isDeleting}>
                         Cancel
                     </Button>
                     <Button variant="destructive" onClick={handleDelete} disabled={isDeleting}>
                         {isDeleting ? "Deleting..." : "Delete Permanently"}
                     </Button>
-                </DialogFooter>
-            </DialogContent>
+                </Dialog.Footer>
+            </Dialog.Content>
         </Dialog>
     );
 }

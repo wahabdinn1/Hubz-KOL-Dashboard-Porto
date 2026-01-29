@@ -56,13 +56,13 @@ export function Breadcrumbs() {
                     <Fragment key={href}>
                         <ChevronRight className="mx-2 h-4 w-4" />
                         {isLast ? (
-                            <span className="font-medium text-foreground truncate max-w-[200px]">
+                            <span className="font-medium text-foreground truncate max-w-[150px] sm:max-w-[200px]">
                                 {displayName}
                             </span>
                         ) : (
                             <Link
                                 href={href}
-                                className="hover:text-foreground transition-colors"
+                                className="hover:text-foreground transition-colors truncate max-w-[100px] sm:max-w-none block"
                             >
                                 {displayName}
                             </Link>

@@ -5,15 +5,7 @@ import { Plus, HelpCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/retroui/Button";
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog } from "@/components/retroui/Dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useData } from "@/context/data-context";
@@ -82,18 +74,20 @@ export function CreateCampaignDialog() {
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
+            <Dialog.Trigger asChild>
                 <Button>
                     <Plus className="mr-2 h-4 w-4" /> New Campaign
                 </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-                <DialogHeader>
-                    <DialogTitle>Create Valid Campaign</DialogTitle>
-                    <DialogDescription>
-                        Set up a new campaign to track KOL performance.
-                    </DialogDescription>
-                </DialogHeader>
+            </Dialog.Trigger>
+            <Dialog.Content className="sm:max-w-[500px]">
+                <Dialog.Header>
+                    <div className="flex flex-col gap-1">
+                        <span className="text-lg font-bold leading-none">Create Valid Campaign</span>
+                        <Dialog.Description className="text-sm text-muted-foreground font-normal">
+                             Set up a new campaign to track KOL performance.
+                        </Dialog.Description>
+                    </div>
+                </Dialog.Header>
                 <form
                     onSubmit={(e) => {
                         e.preventDefault();
@@ -237,7 +231,7 @@ export function CreateCampaignDialog() {
                         </div>
                     </div>
 
-                    <DialogFooter>
+                    <Dialog.Footer>
                         <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
                             {([canSubmit, isSubmitting]) => (
                                 <Button type="submit" disabled={!canSubmit || isSubmitting}>
@@ -249,9 +243,9 @@ export function CreateCampaignDialog() {
                                 </Button>
                             )}
                         </form.Subscribe>
-                    </DialogFooter>
+                    </Dialog.Footer>
                 </form>
-            </DialogContent>
+            </Dialog.Content>
         </Dialog>
     );
 }

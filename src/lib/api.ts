@@ -14,11 +14,11 @@ const DEFAULT_RETRY_DELAY = 1000;
  * Centralized API client with retry logic and error handling
  */
 export const apiClient = {
-    async get<T>(url: string, options: FetchOptions = {}): Promise<ApiResponse<T>> {
+    async get<T = unknown>(url: string, options: FetchOptions = {}): Promise<ApiResponse<T>> {
         return this.fetch<T>(url, { ...options, method: 'GET' });
     },
 
-    async post<T>(url: string, body: unknown, options: FetchOptions = {}): Promise<ApiResponse<T>> {
+    async post<T = unknown>(url: string, body: unknown, options: FetchOptions = {}): Promise<ApiResponse<T>> {
         return this.fetch<T>(url, {
             ...options,
             method: 'POST',
@@ -30,7 +30,7 @@ export const apiClient = {
         });
     },
 
-    async fetch<T>(url: string, options: FetchOptions = {}): Promise<ApiResponse<T>> {
+    async fetch<T = unknown>(url: string, options: FetchOptions = {}): Promise<ApiResponse<T>> {
         const {
             retries = DEFAULT_RETRIES,
             retryDelay = DEFAULT_RETRY_DELAY,

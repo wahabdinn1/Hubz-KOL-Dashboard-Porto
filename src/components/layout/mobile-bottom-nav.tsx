@@ -38,21 +38,21 @@ export function MobileBottomNav() {
                             key={item.href}
                             href={item.href}
                             className={cn(
-                                "flex flex-col items-center justify-center gap-0.5 px-3 py-2 text-xs font-medium transition-colors min-w-[64px]",
+                                "flex flex-col items-center justify-center gap-0.5 px-3 py-2 text-xs font-medium transition-all min-w-[64px]",
                                 active
-                                    ? "text-primary"
+                                    ? "text-foreground font-bold"
                                     : "text-muted-foreground hover:text-foreground"
                             )}
                         >
                             <div
                                 className={cn(
-                                    "flex items-center justify-center w-10 h-7 rounded-full transition-colors",
-                                    active && "bg-primary/10"
+                                    "flex items-center justify-center w-10 h-7 rounded-full transition-all border-2 border-transparent",
+                                    active && "bg-black text-white border-black dark:bg-white dark:text-black dark:border-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-none translate-y-[-2px]"
                                 )}
                             >
                                 {item.icon}
                             </div>
-                            <span className={cn(active && "font-bold")}>{item.label}</span>
+                            <span className={cn(active && "font-bold scale-105 origin-top transition-transform")}>{item.label}</span>
                         </Link>
                     );
                 })}

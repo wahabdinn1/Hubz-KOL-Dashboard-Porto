@@ -3,17 +3,18 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { Plus, Save, Trash2, Copy, FileText, Eye, Bold, Italic, Underline, Heading1, Heading2, AlignCenter, AlignLeft, AlignRight, PanelRight, List, ListOrdered, ArrowUpDown, Check } from "lucide-react";
+import { Plus, Save, Trash2, Copy, FileText, Eye, PanelRight, Heading1, Heading2, List, ListOrdered } from "lucide-react";
+import { EditorToolbar } from "@/components/contracts/editor-toolbar";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "@/components/retroui/Button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { CONTRACT_VARIABLES } from "@/lib/contracts/constants";
+import { CONTRACT_VARIABLES, hydrateContract } from "@/lib/contract-templates";
 import { Skeleton } from "@/components/retroui/Skeleton";
-import { hydrateContract } from "@/lib/contracts/hydrator";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+
+// DropdownMenu imports removed
 
 // Tiptap
 import { MarginExtension, CustomLineHeight } from "@/lib/tiptap/line-height";
@@ -295,136 +296,11 @@ export default function TemplateSettingsPage() {
                                 </ToggleGroupItem>
                             </ToggleGroup>
                             
+                            
                             {viewMode === 'edit' && (
                                 <>
                                     <div className="w-px h-6 bg-border mx-1" />
-                                    
-                                    <div className="flex items-center gap-1">
-                                        <Button 
-                                            size="icon" variant="ghost" className={`h-8 w-8 ${editor.isActive('bold') ? 'bg-muted' : ''}`} 
-                                            onClick={() => editor.chain().focus().toggleBold().run()} 
-                                            title="Bold"
-                                        >
-                                            <Bold className="h-4 w-4" />
-                                        </Button>
-                                        <Button 
-                                            size="icon" variant="ghost" className={`h-8 w-8 ${editor.isActive('italic') ? 'bg-muted' : ''}`} 
-                                            onClick={() => editor.chain().focus().toggleItalic().run()} 
-                                            title="Italic"
-                                        >
-                                            <Italic className="h-4 w-4" />
-                                        </Button>
-                                        <Button 
-                                            size="icon" variant="ghost" className={`h-8 w-8 ${editor.isActive('underline') ? 'bg-muted' : ''}`} 
-                                            onClick={() => editor.chain().focus().toggleUnderline().run()} 
-                                            title="Underline"
-                                        >
-                                            <Underline className="h-4 w-4" />
-                                        </Button>
-                                        <div className="w-px h-6 bg-border mx-1" />
-                                        <Button 
-                                            size="icon" variant="ghost" className={`h-8 w-8 ${editor.isActive('heading', { level: 1 }) ? 'bg-muted' : ''}`} 
-                                            onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} 
-                                            title="Heading 1"
-                                        >
-                                            <Heading1 className="h-4 w-4" />
-                                        </Button>
-                                        <Button 
-                                            size="icon" variant="ghost" className={`h-8 w-8 ${editor.isActive('heading', { level: 2 }) ? 'bg-muted' : ''}`} 
-                                            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} 
-                                            title="Heading 2"
-                                        >
-                                            <Heading2 className="h-4 w-4" />
-                                        </Button>
-                                        <div className="w-px h-6 bg-border mx-1" />
-                                        <Button 
-                                            size="icon" variant="ghost" className={`h-8 w-8 ${editor.isActive({ textAlign: 'left' }) ? 'bg-muted' : ''}`} 
-                                            onClick={() => editor.chain().focus().setTextAlign('left').run()} 
-                                            title="Align Left"
-                                        >
-                                            <AlignLeft className="h-4 w-4" />
-                                        </Button>
-                                        <Button 
-                                            size="icon" variant="ghost" className={`h-8 w-8 ${editor.isActive({ textAlign: 'center' }) ? 'bg-muted' : ''}`} 
-                                            onClick={() => editor.chain().focus().setTextAlign('center').run()} 
-                                            title="Align Center"
-                                        >
-                                            <AlignCenter className="h-4 w-4" />
-                                        </Button>
-                                        <Button 
-                                            size="icon" variant="ghost" className={`h-8 w-8 ${editor.isActive({ textAlign: 'right' }) ? 'bg-muted' : ''}`} 
-                                            onClick={() => editor.chain().focus().setTextAlign('right').run()} 
-                                            title="Align Right"
-                                        >
-                                            <AlignRight className="h-4 w-4" />
-                                        </Button>
-                                        
-                                        <div className="w-px h-6 bg-border mx-1" />
-
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button size="icon" variant="ghost" className="h-8 w-8" title="Line & Paragraph Spacing">
-                                                    <ArrowUpDown className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent 
-                                                align="start" 
-                                                className="w-56"
-                                                onCloseAutoFocus={(e) => e.preventDefault()}
-                                            >
-                                                {/* Line Height Section */}
-                                                <DropdownMenuLabel>Line Height</DropdownMenuLabel>
-                                                {[
-                                                    { label: 'Single', value: '1.0' },
-                                                    { label: '1.15', value: '1.15' },
-                                                    { label: '1.5', value: '1.5' },
-                                                    { label: 'Double', value: '2.0' },
-                                                ].map((option) => (
-                                                    <DropdownMenuItem 
-                                                        key={option.value}
-                                                        onClick={() => editor.chain().focus().setLineHeight(option.value).run()}
-                                                    >
-                                                        <span className="w-6 flex items-center justify-center mr-2">
-                                                            {editor.isActive({ lineHeight: option.value }) && <Check className="h-4 w-4" />}
-                                                        </span>
-                                                        {option.label}
-                                                    </DropdownMenuItem>
-                                                ))}
-                                                
-                                                <DropdownMenuSeparator />
-                                                
-                                                {/* Paragraph Spacing Section */}
-                                                <DropdownMenuLabel>Paragraph Spacing</DropdownMenuLabel>
-                                                
-                                                {/* Space Before Logic */}
-                                                {editor.getAttributes('paragraph').marginTop === '0' ? (
-                                                    <DropdownMenuItem onClick={() => (editor.chain().focus() as any).setMarginTop('1em').run()}>
-                                                        <span className="w-6 mr-2" />
-                                                        Add space before paragraph
-                                                    </DropdownMenuItem>
-                                                ) : (
-                                                    <DropdownMenuItem onClick={() => (editor.chain().focus() as any).setMarginTop('0').run()}>
-                                                        <span className="w-6 mr-2" />
-                                                        Remove space before paragraph
-                                                    </DropdownMenuItem>
-                                                )}
-
-                                                {/* Space After Logic */}
-                                                {editor.getAttributes('paragraph').marginBottom === '0' ? (
-                                                     <DropdownMenuItem onClick={() => (editor.chain().focus() as any).setMarginBottom('1em').run()}>
-                                                        <span className="w-6 mr-2" />
-                                                        Add space after paragraph
-                                                    </DropdownMenuItem>
-                                                ) : (
-                                                    <DropdownMenuItem onClick={() => (editor.chain().focus() as any).setMarginBottom('0').run()}>
-                                                        <span className="w-6 mr-2" />
-                                                        Remove space after paragraph
-                                                    </DropdownMenuItem>
-                                                )}
-
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </div>
+                                    <EditorToolbar editor={editor} />
                                 </>
                             )}
                          </div>

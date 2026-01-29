@@ -3,15 +3,7 @@
 import { useState, useEffect } from "react";
 import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog";
+import { Dialog } from "@/components/retroui/Dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -87,16 +79,18 @@ export function EditCampaignDialog({ campaign }: EditCampaignDialogProps) {
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
+            <Dialog.Trigger asChild>
                 <Button variant="outline"><Settings className="mr-2 h-4 w-4" /> Settings</Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                    <DialogTitle>Edit Campaign</DialogTitle>
-                    <DialogDescription>
-                        Update details for {campaign.name}.
-                    </DialogDescription>
-                </DialogHeader>
+            </Dialog.Trigger>
+            <Dialog.Content className="sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
+                <Dialog.Header>
+                    <div className="flex flex-col gap-1">
+                        <span className="text-lg font-bold leading-none">Edit Campaign</span>
+                        <Dialog.Description className="text-sm text-muted-foreground font-normal">
+                            Update details for {campaign.name}.
+                        </Dialog.Description>
+                    </div>
+                </Dialog.Header>
 
                 <form
                     onSubmit={(e) => {
@@ -209,7 +203,7 @@ export function EditCampaignDialog({ campaign }: EditCampaignDialogProps) {
                         </div>
                     </div>
 
-                    <DialogFooter>
+                    <Dialog.Footer>
                         <form.Subscribe selector={(state) => [state.canSubmit, state.isSubmitting]}>
                             {([canSubmit, isSubmitting]) => (
                                 <Button type="submit" disabled={!canSubmit || isSubmitting}>
@@ -221,9 +215,9 @@ export function EditCampaignDialog({ campaign }: EditCampaignDialogProps) {
                                 </Button>
                             )}
                         </form.Subscribe>
-                    </DialogFooter>
+                    </Dialog.Footer>
                 </form>
-            </DialogContent>
+            </Dialog.Content>
         </Dialog>
     );
 }

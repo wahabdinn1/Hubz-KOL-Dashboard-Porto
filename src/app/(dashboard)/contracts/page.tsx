@@ -1,11 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase/client";
-import { Button } from "@/components/retroui/Button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import React, { useMemo, useState } from 'react';
+import { useData } from "@/context/data-context";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import {
     Table,
     TableBody,
@@ -14,243 +20,236 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
-import { FileText, Plus, Search, Filter } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
-import { Skeleton } from "@/components/retroui/Skeleton";
-import { format } from "date-fns";
-import { toast } from "sonner";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, FileText } from "lucide-react";
+import { DataView } from "@/components/shared/data-view";
+import { EmptyState, EmptyStateIcons } from "@/components/retroui/EmptyState";
 
-interface ContractItem {
-    id: string; // deliverable_id
-    contract_status: 'UNSENT' | 'GENERATED' | 'SIGNED';
-    kol: {
-        id: string;
-        name: string;
-        tiktok_username: string; // Changed from username
-    };
-    campaign: {
-        id: string;
-        name: string;
-    };
-    created_at: string;
-    videos_count: number;
-}
+type ContractStatus = 'UNSENT' | 'DRAFT' | 'GENERATED' | 'SIGNED';
 
 export default function ContractsPage() {
-    const [contracts, setContracts] = useState<ContractItem[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [statusFilter, setStatusFilter] = useState("ALL");
+    const { campaigns, kols, loading } = useData();
+    const [searchQuery, setSearchQuery] = useState("");
+    const [statusFilter, setStatusFilter] = useState<ContractStatus | "ALL">("ALL");
+    const [campaignFilter, setCampaignFilter] = useState<string>("ALL");
 
-    useEffect(() => {
-        fetchContracts();
-    }, []);
+    // Flatten contracts from all campaigns
+    const allContracts = useMemo(() => {
+        return campaigns.flatMap(campaign =>
+            campaign.deliverables.map(d => {
+                const kol = kols.find(k => k.id === d.kolId);
+                return {
+                    id: `${campaign.id}-${d.kolId}`, // Virtual ID for key
+                    campaignId: campaign.id,
+                    campaignName: campaign.name,
+                    kolId: d.kolId,
+                    kolName: kol?.name || "Unknown",
+                    kolAvatar: kol?.avatar,
+                    fee: d.collaborationType === 'PAID' ? d.fixedFee : `${d.commissionRate}% Commission`,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    status: (d as any).contractStatus as ContractStatus, 
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    contractNumber: (d as any).contractNumber,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    signedUrl: (d as any).signedUrl,
+                    // Link to the NEW builder page
+                    builderLink: `/contracts/builder?campaignId=${campaign.id}&kolId=${d.kolId}`
+                };
+            })
+        );
+    }, [campaigns, kols]);
 
-    const fetchContracts = async () => {
-        setLoading(true);
-        try {
-            // Fetch deliverables joined with KOLs and Campaigns
-            // We use the raw supabase client to get the verified schema data
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const { data, error } = await (supabase as any)
-                .from("campaign_deliverables")
-                .select(`
-                    id,
-                    contract_status,
-                    created_at,
-                    videos_count,
-                    kols ( id, name, tiktok_username ),
-                    campaigns ( id, name )
-                `)
-                .order('created_at', { ascending: false });
+    // Filter logic
+    const filteredContracts = useMemo(() => {
+        return allContracts.filter(contract => {
+            const matchesSearch = contract.kolName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                contract.campaignName.toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesStatus = statusFilter === "ALL" || contract.status === statusFilter;
+            const matchesCampaign = campaignFilter === "ALL" || contract.campaignId === campaignFilter;
 
-            if (error) throw error;
-            
-            // Transform data if necessary, though the select shape matches our interface mostly
-            if (data) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const formatted: ContractItem[] = data.map((item: any) => ({
-                    id: item.id,
-                    contract_status: item.contract_status || 'UNSENT',
-                    // Handle potential array or object return from join
-                    kol: Array.isArray(item.kols) ? item.kols[0] : item.kols,
-                    campaign: Array.isArray(item.campaigns) ? item.campaigns[0] : item.campaigns,
-                    created_at: item.created_at,
-                    videos_count: item.videos_count
-                }));
-                setContracts(formatted);
-            }
-        } catch (error) {
-            console.error("Error fetching contracts:", error);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            if ((error as any).message) console.error("Error Message:", (error as any).message);
-            toast.error("Failed to load contracts list");
-        } finally {
-            setLoading(false);
-        }
-    };
+            return matchesSearch && matchesStatus && matchesCampaign;
+        });
+    }, [allContracts, searchQuery, statusFilter, campaignFilter]);
 
-    const handleMarkSigned = async (id: string) => {
-        try {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const { error } = await (supabase as any)
-                .from("campaign_deliverables")
-                .update({ contract_status: 'SIGNED' })
-                .eq('id', id);
-
-            if (error) throw error;
-            
-            setContracts(prev => prev.map(c => 
-                c.id === id ? { ...c, contract_status: 'SIGNED' } : c
-            ));
-            toast.success("Marked as Signed");
-        } catch (error) {
-            console.error(error);
-            toast.error("Failed to update status");
-        }
-    };
-
-    const filteredContracts = contracts.filter(c => {
-        const matchesSearch = 
-            c.kol?.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-            c.campaign?.name.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = statusFilter === "ALL" || c.contract_status === statusFilter;
-        return matchesSearch && matchesStatus;
-    });
-
-    const getStatusBadge = (status: string) => {
+    const getStatusBadge = (status: ContractStatus) => {
         switch (status) {
-            case 'SIGNED': return <Badge className="bg-green-600">Signed</Badge>;
-            case 'GENERATED': return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Generated</Badge>;
-            default: return <Badge variant="outline" className="text-gray-500">Unsent</Badge>;
+            case 'SIGNED':
+                return <Badge className="bg-green-100 text-green-700 border-green-200 hover:bg-green-100">Signed</Badge>;
+            case 'GENERATED':
+                return <Badge className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-100">Generated</Badge>;
+            case 'DRAFT':
+                return <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-100">Draft</Badge>;
+            default:
+                return <Badge variant="outline" className="text-gray-500">Unsent</Badge>;
         }
     };
 
-    return (
-        <div className="p-6 space-y-6 max-w-[1600px] mx-auto hidden-scrollbar">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Contract Management</h1>
-                    <p className="text-muted-foreground">Monitor and generate contracts for your campaigns.</p>
+    // Mobile View Card Component
+    const mobileView = (
+        <div className="space-y-4 p-4">
+             {filteredContracts.map((contract) => (
+                <div 
+                    key={contract.id}
+                    className="p-4 border-2 border-black rounded-lg bg-white dark:bg-slate-900 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                >
+                    <div className="flex justify-between items-start mb-3">
+                        <div className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10 border border-black">
+                                <AvatarImage src={contract.kolAvatar} />
+                                <AvatarFallback>{contract.kolName.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <div className="font-bold">{contract.kolName}</div>
+                                <div className="text-sm text-gray-500">{contract.campaignName}</div>
+                            </div>
+                        </div>
+                        {getStatusBadge(contract.status)}
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2 text-sm mb-4">
+                        <div>
+                            <span className="text-gray-500 block text-xs">Contract No.</span>
+                            <span className="font-mono">{contract.contractNumber || '-'}</span>
+                        </div>
+                        <div className="text-right">
+                            <span className="text-gray-500 block text-xs">Fee Arrangement</span>
+                            <span className="font-medium">
+                                {typeof contract.fee === 'number'
+                                    ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(contract.fee)
+                                    : contract.fee || '-'}
+                            </span>
+                        </div>
+                    </div>
+
+                    <Link href={contract.builderLink} className="w-full">
+                        <Button className="w-full border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[1px] hover:shadow-none transition-all">
+                            <FileText className="h-4 w-4 mr-2" />
+                            Manage Contract
+                        </Button>
+                    </Link>
                 </div>
-                <Link href="/contracts/generator">
-                    <Button>
-                        <Plus className="h-4 w-4 mr-2" />
-                        New Contract
-                    </Button>
-                </Link>
+            ))}
+        </div>
+    );
+
+    // Desktop View Table Component
+    const desktopView = (
+        <Table>
+            <TableHeader className="bg-gray-50/50">
+                <TableRow>
+                    <TableHead>Influencer</TableHead>
+                    <TableHead>Campaign</TableHead>
+                    <TableHead>Fee Arrangement</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Contract No.</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {filteredContracts.map((contract) => (
+                    <TableRow key={contract.id} className="hover:bg-gray-50/50 transition-colors">
+                        <TableCell>
+                            <div className="flex items-center gap-3">
+                                <Avatar className="h-9 w-9 border border-black shadow-sm">
+                                    <AvatarImage src={contract.kolAvatar} />
+                                    <AvatarFallback>{contract.kolName.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div className="font-medium text-sm text-gray-900">{contract.kolName}</div>
+                            </div>
+                        </TableCell>
+                        <TableCell className="text-gray-600 font-medium">{contract.campaignName}</TableCell>
+                        <TableCell>
+                            <span className="font-mono text-xs bg-gray-100 px-2 py-1 rounded-md text-gray-700 border border-black/10">
+                                {typeof contract.fee === 'number'
+                                    ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(contract.fee)
+                                    : contract.fee || '-'}
+                            </span>
+                        </TableCell>
+                        <TableCell>{getStatusBadge(contract.status)}</TableCell>
+                        <TableCell className="font-mono text-xs text-gray-500">
+                            {contract.contractNumber || '-'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                            <Link href={contract.builderLink}>
+                                <Button size="sm" variant="outline" className="gap-2 h-8 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[1px] hover:shadow-none transition-all">
+                                    <FileText className="h-3.5 w-3.5" />
+                                    Manage
+                                </Button>
+                            </Link>
+                        </TableCell>
+                    </TableRow>
+                ))}
+            </TableBody>
+        </Table>
+    );
+
+    // Filters Component
+    const filters = (
+        <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-4 rounded-xl border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <div className="flex items-center gap-2 flex-1 w-full">
+                <div className="relative flex-1 max-w-sm w-full">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                    <Input
+                        placeholder="Search influencer or campaign..."
+                        className="pl-9 bg-white shadow-none focus-visible:ring-0 focus-visible:shadow-none"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                </div>
             </div>
 
-            <Card>
-                <CardHeader className="pb-3">
-                    <div className="flex flex-col sm:flex-row gap-4 justify-between">
-                         <div className="relative w-full sm:w-96">
-                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input 
-                                placeholder="Search KOL or Campaign..." 
-                                className="pl-8" 
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                        <div className="flex gap-2">
-                            <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                <SelectTrigger className="w-[150px]">
-                                    <SelectValue placeholder="Status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="ALL">All Status</SelectItem>
-                                    <SelectItem value="UNSENT">Unsent</SelectItem>
-                                    <SelectItem value="GENERATED">Generated</SelectItem>
-                                    <SelectItem value="SIGNED">Signed</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="rounded-md border">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>KOL</TableHead>
-                                    <TableHead>Campaign</TableHead>
-                                    <TableHead>Date Created</TableHead>
-                                    <TableHead>Deliverables</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {loading ? (
-                                    Array(5).fill(0).map((_, i) => (
-                                        <TableRow key={i}>
-                                            <TableCell><Skeleton className="h-4 w-32" /></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-24" /></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-20" /></TableCell>
-                                            <TableCell><Skeleton className="h-4 w-16" /></TableCell>
-                                            <TableCell><Skeleton className="h-6 w-20" /></TableCell>
-                                            <TableCell><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
-                                        </TableRow>
-                                    ))
-                                ) : filteredContracts.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
-                                            No contracts found matching your filters.
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    filteredContracts.map((contract) => (
-                                        <TableRow key={contract.id}>
-                                            <TableCell className="font-medium">
-                                                <div>{contract.kol?.name || "Unknown KOL"}</div>
-                                                <div className="text-xs text-muted-foreground">@{contract.kol?.tiktok_username || "unknown"}</div>
-                                            </TableCell>
-                                            <TableCell>{contract.campaign?.name || "Unknown Campaign"}</TableCell>
-                                            <TableCell>
-                                                {contract.created_at ? format(new Date(contract.created_at), "MMM d, yyyy") : "-"}
-                                            </TableCell>
-                                            <TableCell>{contract.videos_count} Video(s)</TableCell>
-                                            <TableCell>{getStatusBadge(contract.contract_status)}</TableCell>
-                                            <TableCell className="text-right">
-                                                <div className="flex justify-end gap-2">
-                                                    {contract.contract_status === 'SIGNED' ? (
-                                                        <Button variant="ghost" size="sm" disabled>
-                                                            <Filter className="h-4 w-4 mr-1" />
-                                                            Completed
-                                                        </Button>
-                                                    ) : (
-                                                        <>
-                                                            {contract.contract_status !== 'GENERATED' && (
-                                                                <Link 
-                                                                    href={`/contracts/generator?campaignId=${contract.campaign?.id}&kolId=${contract.kol?.id}`}
-                                                                >
-                                                                    <Button variant="outline" size="sm">
-                                                                        <FileText className="h-4 w-4 mr-1" />
-                                                                        Generate
-                                                                    </Button>
-                                                                </Link>
-                                                            )}
-                                                            <Button 
-                                                                variant="ghost" 
-                                                                size="sm"
-                                                                onClick={() => handleMarkSigned(contract.id)}
-                                                            >
-                                                                Mark Signed
-                                                            </Button>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
-                    </div>
-                </CardContent>
-            </Card>
+            <div className="flex flex-col sm:flex-row items-center gap-2 w-full md:w-auto">
+                <Select value={campaignFilter} onValueChange={setCampaignFilter}>
+                    <SelectTrigger className="w-full sm:w-[180px] bg-white shadow-none">
+                        <SelectValue placeholder="All Campaigns" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="ALL">All Campaigns</SelectItem>
+                        {campaigns.map(c => (
+                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
+                <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as ContractStatus | "ALL")}>
+                    <SelectTrigger className="w-full sm:w-[150px] bg-white shadow-none">
+                        <SelectValue placeholder="All Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="ALL">All Status</SelectItem>
+                        <SelectItem value="UNSENT">Unsent</SelectItem>
+                        <SelectItem value="DRAFT">Draft</SelectItem>
+                        <SelectItem value="GENERATED">Generated</SelectItem>
+                        <SelectItem value="SIGNED">Signed</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
         </div>
+    );
+
+    return (
+        <DataView
+            pageTitle="Contract Control Center"
+            pageDescription="Manage and audit contracts across all campaigns and influencers."
+            filters={filters}
+            cardTitle="All Contracts"
+            desktopView={desktopView}
+            mobileView={mobileView}
+            isEmpty={filteredContracts.length === 0}
+            isLoading={loading}
+            emptyState={
+                <EmptyState 
+                    icon={EmptyStateIcons.folder}
+                    title="No contracts found"
+                    description="To create a contract, first add a KOL to a campaign."
+                    action={
+                        <Link href="/campaigns">
+                            <Button className="border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[1px] hover:shadow-none transition-all">Go to Campaigns</Button>
+                        </Link>
+                    }
+                />
+            }
+        />
     );
 }
