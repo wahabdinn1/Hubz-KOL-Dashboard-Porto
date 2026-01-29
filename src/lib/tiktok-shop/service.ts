@@ -85,9 +85,47 @@ export class TikTokShopService {
             },
         });
 
+        return response.json();
+    }
+
+    /**
+     * Retrieves the Creator Profile information.
+     * @param accessToken - The access token.
+     * @returns The creator profile data.
+     */
+    static async getCreatorProfile(accessToken: string) {
+        const { appKey, appSecret, apiBaseUrl } = TIKTOK_SHOP_CONFIG;
+        const timestamp = Math.floor(Date.now() / 1000);
+        
+        // Common params for business endpoints
+        const params: Record<string, any> = {
+            app_key: appKey,
+            timestamp: timestamp,
+            access_token: accessToken,
+        };
+        
+        const sign = this.generateSignature(params);
+        
+        const url = new URL(`${apiBaseUrl}${TIKTOK_SHOP_ENDPOINTS.getCreatorProfile}`);
+        Object.keys(params).forEach(key => url.searchParams.append(key, String(params[key])));
+        url.searchParams.append("sign", sign);
+
+        const response = await fetch(url.toString(), {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+            },
+        });
+
         if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`TikTok API Error: ${response.status} - ${errorText}`);
+             // Try to parse json error
+            try {
+                const jsonErr = JSON.parse(errorText);
+                throw new Error(`TikTok API Error: ${jsonErr.message || jsonErr.error_msg || errorText}`);
+            } catch {
+                throw new Error(`TikTok API Error: ${response.status} - ${errorText}`);
+            }
         }
 
         return response.json();
