@@ -8,7 +8,7 @@ export class TikTokShopService {
      * @param body - The request body (optional).
      * @returns The calculated signature.
      */
-    static generateSignature(params: Record<string, any>, body?: string): string {
+    static generateSignature(params: Record<string, any>, path?: string, body?: string): string {
         const { appSecret } = TIKTOK_SHOP_CONFIG;
 
         // 1. Filter out 'sign' and 'access_token' parameters
@@ -22,10 +22,10 @@ export class TikTokShopService {
         // 3. Concatenate key-value pairs
         let inputStr = keys.map((key) => `${key}${params[key]}`).join("");
 
-        // 4. Append body if required (for non-GET/DELETE or specific content types)
-        // Note: For simple auth calls, usually body is not included in signature unless specified.
-        // Checking specific endpoint requirements is crucial. 
-        // For /token/get (GET), no body.
+        // 4. Prepend Path if provided (Critical for V2 Business Endpoints)
+        if (path) {
+            inputStr = `${path}${inputStr}`;
+        }
         
         // 5. Wrap with app_secret
         inputStr = `${appSecret}${inputStr}${appSecret}`;
@@ -72,7 +72,7 @@ export class TikTokShopService {
         // GET https://auth.tiktok-shops.com/api/v2/token/get
         
         // Calculate signature
-        const sign = this.generateSignature(params);
+        const sign = this.generateSignature(params, TIKTOK_SHOP_ENDPOINTS.getAccessToken);
         
         const url = new URL(`${authApiBaseUrl}${TIKTOK_SHOP_ENDPOINTS.getAccessToken}`);
         Object.keys(params).forEach(key => url.searchParams.append(key, String(params[key])));
@@ -101,10 +101,11 @@ export class TikTokShopService {
         const params: Record<string, any> = {
             app_key: appKey,
             timestamp: timestamp,
-            access_token: accessToken,
+            // access_token: accessToken, // REMOVED: Affiliate endpoints use header
         };
         
-        const sign = this.generateSignature(params);
+        
+        const sign = this.generateSignature(params, TIKTOK_SHOP_ENDPOINTS.getCreatorProfile);
         
         const url = new URL(`${apiBaseUrl}${TIKTOK_SHOP_ENDPOINTS.getCreatorProfile}`);
         Object.keys(params).forEach(key => url.searchParams.append(key, String(params[key])));
@@ -114,6 +115,7 @@ export class TikTokShopService {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
+                "x-tts-access-token": accessToken, // ADDED
             },
         });
 
