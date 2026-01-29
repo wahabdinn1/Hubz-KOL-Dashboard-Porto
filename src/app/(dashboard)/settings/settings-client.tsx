@@ -127,6 +127,31 @@ export function SettingsClient({ user }: { user: User | null }) {
         fetchTikTokSettings();
     }, []);
 
+    // TikTok API Connection State
+    const [tiktokConnection, setTiktokConnection] = useState<{ connected: boolean; seller_name?: string } | null>(null);
+
+    useEffect(() => {
+        const checkConnection = async () => {
+            try {
+                const res = await fetch('/api/tiktok/status');
+                const data = await res.json();
+                setTiktokConnection(data);
+            } catch (e) {
+                console.error("Failed to check tiktok status", e);
+            }
+        };
+        checkConnection();
+
+        // Check for success param
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('tiktok_connected') === 'true') {
+            // toast.success("TikTok Shop Connected Successfully!"); // Assuming sonner/toast is available
+            // Remove param clean url
+            window.history.replaceState({}, document.title, window.location.pathname);
+            checkConnection();
+        }
+    }, []);
+
     const handleSaveTikTokCookie = async () => {
         setTiktokCookieLoading(true);
         setTiktokCookieSaved(false);
@@ -322,19 +347,36 @@ export function SettingsClient({ user }: { user: User | null }) {
                                     <div className="flex items-center justify-between flex-wrap gap-4">
                                         <div className="flex items-center gap-4">
                                             <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-black bg-black text-white shrink-0">
-                                                <span className="text-xl font-bold">API</span>
+                                                <span className="text-xl font-bold">T</span>
                                             </div>
                                             <div>
                                                 <h3 className="font-bold">TikTok Shop Official API</h3>
                                                 <p className="text-sm text-gray-500">Connect your seller account to sync orders & products legally.</p>
                                             </div>
                                         </div>
-                                        <Button 
-                                            className="border-2 border-black bg-[#FFDA5C] text-black shadow-hard hover:bg-[#ffe175] hover:shadow-none hover:translate-y-0.5 transition-all"
-                                            onClick={() => window.location.href = "/api/tiktok/auth"}
-                                        >
-                                            Connect Shop (OAuth)
-                                        </Button>
+                                        
+                                        {tiktokConnection?.connected ? (
+                                             <div className="flex items-center gap-3 bg-green-100 border-2 border-green-600 px-4 py-2 rounded-md">
+                                                <div className="h-2 w-2 rounded-full bg-green-600 animate-pulse" />
+                                                <span className="font-bold text-green-800">Connected as {tiktokConnection.seller_name}</span>
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="sm" 
+                                                    className="h-6 w-6 p-0 hover:bg-green-200 text-green-800 ml-2"
+                                                    title="Disconnect"
+                                                    // Add disconnect logic later
+                                                >
+                                                    <Trash2 className="h-3 w-3" />
+                                                </Button>
+                                             </div>
+                                        ) : (
+                                            <Button 
+                                                className="border-2 border-black bg-[#FFDA5C] text-black shadow-hard hover:bg-[#ffe175] hover:shadow-none hover:translate-y-0.5 transition-all"
+                                                onClick={() => window.location.href = "/api/tiktok/auth"}
+                                            >
+                                                Connect Shop (OAuth)
+                                            </Button>
+                                        )}
                                     </div>
                                 </div>
                                 
