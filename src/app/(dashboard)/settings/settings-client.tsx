@@ -316,7 +316,37 @@ export function SettingsClient({ user }: { user: User | null }) {
                                     Configure your TikTok session cookie to enable trending features and API access.
                                 </CardDescription>
                             </CardHeader>
-                            <CardContent className="space-y-4">
+                            <CardContent className="space-y-6">
+                                {/* API Integration Section */}
+                                <div className="rounded-lg border-2 border-black bg-blue-50/50 p-4">
+                                    <div className="flex items-center justify-between flex-wrap gap-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-black bg-black text-white shrink-0">
+                                                <span className="text-xl font-bold">API</span>
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold">TikTok Shop Official API</h3>
+                                                <p className="text-sm text-gray-500">Connect your seller account to sync orders & products legally.</p>
+                                            </div>
+                                        </div>
+                                        <Button 
+                                            className="border-2 border-black bg-[#FFDA5C] text-black shadow-hard hover:bg-[#ffe175] hover:shadow-none hover:translate-y-0.5 transition-all"
+                                            onClick={() => window.location.href = "/api/tiktok/auth"}
+                                        >
+                                            Connect Shop (OAuth)
+                                        </Button>
+                                    </div>
+                                </div>
+                                
+                                <div className="relative">
+                                    <div className="absolute inset-0 flex items-center">
+                                        <span className="w-full border-t" />
+                                    </div>
+                                    <div className="relative flex justify-center text-xs uppercase">
+                                        <span className="bg-background px-2 text-muted-foreground">Or Manual Cookie (Legacy)</span>
+                                    </div>
+                                </div>
+
                                 <div className="space-y-2">
                                     <Label htmlFor="tiktokCookie">Full TikTok Cookie String</Label>
                                     <div className="flex gap-2">
